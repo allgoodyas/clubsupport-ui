@@ -1,0 +1,222 @@
+<div class="exp-container page-with-sidebar">
+
+  <div class="page-header-row">
+    <app-page-header
+      pageIcon="ti-wallet"
+      pageTitle="{{ 'EXPENSES.TITLE' | translate }}"
+      pageSubtitle="{{ 'EXPENSES.SUBTITLE' | translate }}">
+    </app-page-header>
+  </div>
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+    <div class="page-content">
+  <!-- Summary cards -->
+  <div class="summary-bar" *ngIf="summary">
+    <div class="sum-card">
+      <span class="sum-label">{{ 'EXPENSES.THIS_MONTH' | translate }}</span>
+      <span class="sum-value">{{ summary.thisMonthAmount | number:'1.2-2' }} <small>SAR</small></span>
+      <span class="sum-sub">
+        {{ summary.thisMonthCount }}
+        {{ summary.thisMonthCount === 1 ? ('EXPENSES.EXPENSE_ONE' | translate) : ('EXPENSES.EXPENSE_MANY' | translate) }}
+      </span>
+    </div>
+    <div class="sum-card accent">
+      <span class="sum-label">{{ (hasActiveFilters ? 'EXPENSES.FILTERED_TOTAL' : 'EXPENSES.ALL_TIME_TOTAL') | translate }}</span>
+      <span class="sum-value">{{ summary.totalAmount | number:'1.2-2' }} <small>SAR</small></span>
+      <span class="sum-sub">{{ summary.totalCount }} {{ 'EXPENSES.RECORDS' | translate }}</span>
+    </div>
+    <!-- Category breakdown pills -->
+    <div class="sum-categories" *ngIf="summary.byCategory.length > 0">
+      <div class="cat-pill" *ngFor="let c of summary.byCategory" [ngStyle]="getBadgeStyle(c.category)">
+        {{ getCategoryIcon(c.category) }} {{ c.category }}
+        <strong>{{ c.amount | number:'1.0-0' }} SAR</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="exp-filters">
+    <!-- Search -->
+    <div class="filter-search">
+      <input type="text" [(ngModel)]="filterSearch"
+             [placeholder]="'🔍  ' + ('EXPENSES.SEARCH_PLACEHOLDER' | translate)"
+             (ngModelChange)="onSearchChange()" />
+      <button *ngIf="filterSearch" (click)="filterSearch=''; loadExpenses()">✕</button>
+    </div>
+
+    <!-- Category -->
+    <select [(ngModel)]="filterCategory" (change)="applyFilters()">
+      <option value="all">📦 {{ 'EXPENSES.ALL_CATEGORIES' | translate }}</option>
+      <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
+    </select>
+
+    <!-- Team -->
+    <select [(ngModel)]="filterTeamId" (change)="applyFilters()">
+      <option [value]="0">👥 {{ 'EXPENSES.ALL_TEAMS' | translate }}</option>
+      <option *ngFor="let t of teams" [value]="t.teamId">{{ t.nameEn }}</option>
+    </select>
+
+    <!-- Date range -->
+    <input type="date" [(ngModel)]="filterFromDate" (change)="applyFilters()" title="From date" />
+    <input type="date" [(ngModel)]="filterToDate"   (change)="applyFilters()" title="To date" />
+
+    <!-- Clear -->
+    <button class="btn-clear-filters" *ngIf="hasActiveFilters" (click)="clearFilters()">✕ {{ 'EXPENSES.CLEAR' | translate }}</button>
+
+    <!-- Add Expense button — far right -->
+    <button class="btn-add btn-add-inline" (click)="openCreate()">{{ 'EXPENSES.ADD_EXPENSE' | translate }}</button>
+  </div>
+
+  <!-- Table -->
+  <div class="exp-body">
+
+    <div class="exp-loading" *ngIf="loading"><div class="spinner"></div></div>
+
+    <div class="exp-empty" *ngIf="!loading && expenses.length === 0">
+      <div class="empty-icon">💸</div>
+      <p>{{ 'EXPENSES.NO_EXPENSES_FOUND' | translate }}</p>
+      <button class="btn-add sm" (click)="openCreate()">{{ 'EXPENSES.ADD_FIRST_EXPENSE' | translate }}</button>
+    </div>
+
+    <div class="exp-table-wrap" *ngIf="!loading && expenses.length > 0">
+      <!-- Filtered total row -->
+      <div class="table-total">
+        <span>
+          {{ expenses.length }}
+          {{ expenses.length === 1 ? ('EXPENSES.RECORD' | translate) : ('EXPENSES.RECORDS' | translate) }}
+        </span>
+        <span class="total-amt">{{ 'EXPENSES.TOTAL' | translate }}: <strong>{{ totalFiltered | number:'1.2-2' }} SAR</strong></span>
+      </div>
+
+      <table class="exp-table">
+        <thead>
+          <tr>
+            <th>{{ 'EXPENSES.DATE' | translate }}</th>
+            <th>{{ 'EXPENSES.CATEGORY' | translate }}</th>
+            <th>{{ 'EXPENSES.COL_TITLE' | translate }}</th>
+            <th>{{ 'EXPENSES.TEAM_EVENT' | translate }}</th>
+            <th>{{ 'EXPENSES.METHOD' | translate }}</th>
+            <th class="ta-r">{{ 'EXPENSES.AMOUNT_SAR' | translate }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let e of expenses">
+            <td class="col-date">{{ e.expenseDate | date:'MMM d, y' }}</td>
+            <td>
+              <span class="cat-badge" [ngStyle]="getBadgeStyle(e.category)">
+                {{ getCategoryIcon(e.category) }} {{ e.category }}
+              </span>
+            </td>
+            <td class="col-title">
+              <span class="exp-title">{{ e.title }}</span>
+              <span class="exp-ref" *ngIf="e.referenceNumber">{{ 'EXPENSES.REF_PREFIX' | translate }} {{ e.referenceNumber }}</span>
+              <span class="exp-notes" *ngIf="e.notes" [title]="e.notes">{{ e.notes }}</span>
+            </td>
+            <td class="col-tag">
+              <span *ngIf="e.teamName"  class="tag team-tag">👥 {{ e.teamName }}</span>
+              <span *ngIf="e.eventName" class="tag event-tag">📅 {{ e.eventName }}</span>
+              <span *ngIf="!e.teamName && !e.eventName" class="col-dash">—</span>
+            </td>
+            <td class="col-method">{{ e.paymentMethod }}</td>
+            <td class="col-amount ta-r">{{ e.amount | number:'1.2-2' }}</td>
+            <td class="col-actions">
+              <button class="btn-icon" (click)="openEdit(e)" title="Edit">✏️</button>
+              <button class="btn-icon btn-del" (click)="deleteExpense(e)" title="Delete"
+                      [disabled]="deleting === e.expenseId">
+                {{ deleting === e.expenseId ? '⏳' : '🗑' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5" class="foot-label">{{ 'EXPENSES.TOTAL' | translate }}</td>
+            <td class="col-amount ta-r foot-total">{{ totalFiltered | number:'1.2-2' }}</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div><!-- /.exp-body -->
+    </div><!-- /.page-content -->
+  </div><!-- /.page-body-row -->
+</div><!-- /.exp-container -->
+
+<!-- ── Add / Edit modal ──────────────────────────────────────── -->
+<div class="overlay" *ngIf="showForm" (click)="closeForm()"></div>
+<div class="exp-modal" *ngIf="showForm">
+  <div class="modal-header">
+    <h3>{{ (editingId > 0 ? 'EXPENSES.EDIT_EXPENSE' : 'EXPENSES.NEW_EXPENSE') | translate }}</h3>
+    <button class="btn-icon" (click)="closeForm()">✕</button>
+  </div>
+
+  <div class="modal-body">
+    <!-- Row 1: Category + Amount -->
+    <div class="form-row">
+      <div class="form-field">
+        <label>{{ 'EXPENSES.LABEL_CATEGORY' | translate }} <span class="req">*</span></label>
+        <select [(ngModel)]="form.category">
+          <option *ngFor="let c of categories" [value]="c.value">{{ c.label }}</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>{{ 'EXPENSES.LABEL_AMOUNT' | translate }} <span class="req">*</span></label>
+        <input type="number" [(ngModel)]="form.amount" step="0.01" min="0.01" />
+      </div>
+    </div>
+
+    <!-- Row 2: Title -->
+    <div class="form-field">
+      <label>{{ 'EXPENSES.LABEL_TITLE' | translate }} <span class="req">*</span></label>
+      <input type="text" [(ngModel)]="form.title"
+             [placeholder]="'EXPENSES.PLACEHOLDER_TITLE' | translate" />
+    </div>
+
+    <!-- Row 3: Date + Method -->
+    <div class="form-row">
+      <div class="form-field">
+        <label>{{ 'EXPENSES.LABEL_DATE' | translate }} <span class="req">*</span></label>
+        <input type="date" [(ngModel)]="form.expenseDate" />
+      </div>
+      <div class="form-field">
+        <label>{{ 'EXPENSES.LABEL_PAYMENT_METHOD' | translate }}</label>
+        <select [(ngModel)]="form.paymentMethod">
+          <option *ngFor="let m of methods" [value]="m.value">{{ m.label }}</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Row 4: Team + Reference -->
+    <div class="form-row">
+      <div class="form-field">
+        <label>{{ 'EXPENSES.LABEL_TAG_TEAM' | translate }} <span class="optional">({{ 'EXPENSES.OPTIONAL' | translate }})</span></label>
+        <select [(ngModel)]="form.teamId">
+          <option [value]="0">{{ 'EXPENSES.NONE' | translate }}</option>
+          <option *ngFor="let t of teams" [value]="t.teamId">{{ t.nameEn }}</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label>{{ 'EXPENSES.LABEL_REFERENCE' | translate }} <span class="optional">({{ 'EXPENSES.OPTIONAL' | translate }})</span></label>
+        <input type="text" [(ngModel)]="form.referenceNumber"
+               [placeholder]="'EXPENSES.PLACEHOLDER_REFERENCE' | translate" />
+      </div>
+    </div>
+
+    <!-- Row 5: Notes -->
+    <div class="form-field">
+      <label>{{ 'EXPENSES.LABEL_NOTES' | translate }} <span class="optional">({{ 'EXPENSES.OPTIONAL' | translate }})</span></label>
+      <textarea [(ngModel)]="form.notes" rows="2"
+                [placeholder]="'EXPENSES.PLACEHOLDER_NOTES' | translate"></textarea>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn-cancel" (click)="closeForm()">{{ 'EXPENSES.CANCEL' | translate }}</button>
+    <button class="btn-save" [disabled]="saving || !form.title.trim() || form.amount <= 0" (click)="save()">
+      {{ saving
+          ? ('EXPENSES.SAVING' | translate)
+          : (editingId > 0 ? ('EXPENSES.UPDATE_EXPENSE' | translate) : ('EXPENSES.ADD_EXPENSE_BTN' | translate)) }}
+    </button>
+  </div>
+</div>

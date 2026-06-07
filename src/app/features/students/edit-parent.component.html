@@ -1,0 +1,134 @@
+<div class="edit-parent-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="cancel()">←</button>
+      <h1>👨‍👩‍👧‍👦 Edit Parent Information</h1>
+    </div>
+    <div class="header-right">
+      <app-language-switcher></app-language-switcher>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading parent information...</p>
+  </div>
+
+  <!-- Form -->
+  <div class="form-container" *ngIf="!isLoading && student">
+    
+    <!-- Student Context Card -->
+    <div class="context-card">
+      <h3>📋 Editing Parent Info for:</h3>
+      <div class="student-info">
+        <div class="student-name">{{ student.fullName }}</div>
+        <div class="student-meta">
+          {{ student.age }} years old • {{ student.gender }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Parent Info Form -->
+    <form class="parent-form">
+      
+      <!-- Parent Name -->
+      <div class="form-group">
+        <label class="form-label required">
+          Parent Name *
+        </label>
+        <input 
+          type="text" 
+          [(ngModel)]="parentName" 
+          name="parentName" 
+          class="form-input" 
+          placeholder="Enter parent's full name"
+          [class.has-changes]="parentName.trim() !== originalParentName"
+          required />
+        <div class="field-hint">Full name of the parent or guardian</div>
+      </div>
+
+      <!-- Parent Mobile -->
+      <div class="form-group">
+        <label class="form-label">
+          Mobile Number
+          <span class="readonly-badge">Read-only</span>
+        </label>
+        <input 
+          type="tel" 
+          [(ngModel)]="parentMobile" 
+          name="parentMobile" 
+          class="form-input readonly-input" 
+          placeholder="e.g., +966 50 123 4567"
+          readonly />
+        <div class="field-hint">
+          📱 Mobile number cannot be changed (used for login)
+        </div>
+      </div>
+
+      <!-- Parent Email -->
+      <div class="form-group">
+        <label class="form-label">
+          Email Address
+          <span class="optional-badge">Optional</span>
+        </label>
+        <input 
+          type="email" 
+          [(ngModel)]="parentEmail" 
+          name="parentEmail" 
+          class="form-input" 
+          placeholder="e.g., parent@example.com"
+          [class.has-changes]="(parentEmail?.trim() || '') !== originalParentEmail" />
+        <div class="field-hint">
+          📧 Email for invoices and important updates
+        </div>
+      </div>
+
+      <!-- Change Indicator -->
+      <div class="changes-indicator" *ngIf="hasChanges()">
+        <span class="indicator-icon">⚠️</span>
+        <span class="indicator-text">You have unsaved changes</span>
+      </div>
+
+      <!-- No Changes Indicator -->
+      <div class="no-changes-indicator" *ngIf="!hasChanges() && !isLoading">
+        <span class="indicator-icon">✓</span>
+        <span class="indicator-text">No changes made</span>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button 
+          type="button" 
+          class="btn btn-outline" 
+          (click)="cancel()" 
+          [disabled]="isSaving">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="saveParentInfo()" 
+          [disabled]="isSaving || !hasChanges()">
+          <span *ngIf="!isSaving">💾 Save Changes</span>
+          <span *ngIf="isSaving">⏳ Saving...</span>
+        </button>
+      </div>
+    </form>
+
+    <!-- Info Box -->
+    <div class="info-box">
+      <div class="info-icon">ℹ️</div>
+      <div class="info-content">
+        <h4>Important Notes:</h4>
+        <ul>
+          <li><strong>Mobile Number:</strong> Cannot be changed (used for login authentication)</li>
+          <li><strong>Email:</strong> Used for invoices, receipts, and event updates</li>
+          <li><strong>Parent Name:</strong> Updated name will appear in all student records</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>

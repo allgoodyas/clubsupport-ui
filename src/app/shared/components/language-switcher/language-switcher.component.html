@@ -1,0 +1,42 @@
+<div class="language-switcher" (clickOutside)="closeDropdown()">
+
+  <!-- Trigger button: SVG globe + current language label + chevron -->
+  <button
+    class="language-btn"
+    [class.is-open]="isOpen"
+    (click)="toggleDropdown()"
+    [attr.aria-expanded]="isOpen"
+    aria-haspopup="listbox"
+  >
+    <!-- SVG globe — always inherits currentColor, no emoji blue clash -->
+    <svg class="language-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="10" cy="10" r="8.25" stroke="currentColor" stroke-width="1.5"/>
+      <ellipse cx="10" cy="10" rx="3.25" ry="8.25" stroke="currentColor" stroke-width="1.5"/>
+      <line x1="2" y1="7.5"  x2="18" y2="7.5"  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="2" y1="12.5" x2="18" y2="12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+
+    <span class="lang-label" *ngIf="!iconOnly">{{ currentLabel }}</span>
+    <span class="dropdown-arrow" [class.open]="isOpen">▾</span>
+  </button>
+
+  <!-- Dropdown panel -->
+  <div class="language-dropdown" *ngIf="isOpen" role="listbox">
+    <button
+      *ngFor="let lang of languageService.availableLanguages"
+      class="language-option"
+      [class.active]="lang.code === currentLanguage"
+      (click)="selectLanguage(lang.code)"
+      role="option"
+      [attr.aria-selected]="lang.code === currentLanguage"
+    >
+      <span class="lang-flag">{{ getFlag(lang.code) }}</span>
+      <span class="lang-text">
+        <span class="language-native">{{ lang.nativeName }}</span>
+        <span class="language-english">{{ lang.name }}</span>
+      </span>
+      <span class="check-icon" *ngIf="lang.code === currentLanguage">✓</span>
+    </button>
+  </div>
+
+</div>

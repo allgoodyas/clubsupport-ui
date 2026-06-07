@@ -1,0 +1,127 @@
+<div class="subscription-catalog-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>🎯 Choose Your Subscription Plan</h1>
+    <p class="subtitle">Save money by subscribing to multiple events!</p>
+  </div>
+
+  <!-- Billing Toggle -->
+  <div class="billing-toggle">
+    <button 
+      class="billing-option" 
+      [class.active]="billingCycle === 'monthly'"
+      (click)="billingCycle = 'monthly'">
+      Monthly
+    </button>
+    <button 
+      class="billing-option" 
+      [class.active]="billingCycle === 'yearly'"
+      (click)="billingCycle = 'yearly'">
+      Yearly
+      <span class="savings-tag">Save up to 20%</span>
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading subscription plans...</p>
+  </div>
+
+  <!-- Plans Grid -->
+  <div class="plans-grid" *ngIf="!isLoading">
+    <div class="plan-card" *ngFor="let plan of plans" [attr.data-badge]="plan.badgeColor">
+      <!-- Plan Header -->
+      <div class="plan-header" [class]="'badge-' + plan.badgeColor">
+        <div class="plan-badge">
+          <span class="badge-icon">{{ getBadgeIcon(plan.badgeColor) }}</span>
+          <span class="badge-text">{{ plan.planNameEn }}</span>
+        </div>
+        <div class="popular-tag" *ngIf="plan.currentSubscribers > 10">
+          ⭐ Popular
+        </div>
+      </div>
+
+      <!-- Plan Content -->
+      <div class="plan-content">
+        <!-- Price -->
+        <div class="plan-price">
+          <span class="price-amount">{{ getPrice(plan) | number:'1.2-2' }}</span>
+          <span class="price-label">SAR{{ getPriceLabel() }}</span>
+        </div>
+
+        <!-- Description -->
+        <p class="plan-description">{{ plan.descriptionEn }}</p>
+
+        <!-- Selection Type -->
+        <div class="selection-badge">
+          <span class="badge-icon">{{ plan.requiresSelection ? '🎯' : '✨' }}</span>
+          <span class="badge-text">{{ getSelectionLabel(plan) }}</span>
+        </div>
+
+        <!-- Included Events -->
+        <div class="included-events">
+          <h4>What's Included:</h4>
+          <ul class="events-list">
+            <li *ngFor="let event of plan.eligibleEvents">
+              <span class="check-icon">✓</span>
+              <span class="event-name">{{ event.eventNameEn }}</span>
+              <span class="event-value">{{ event.basePrice }} SAR</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Savings -->
+        <div class="savings-highlight" *ngIf="plan.savingsPercentage && plan.savingsPercentage > 0">
+          💰 Save {{ plan.savingsPercentage | number:'1.0-0' }}% vs paying individually
+        </div>
+
+        <!-- Popular Count -->
+        <div class="subscribers-count" *ngIf="plan.currentSubscribers > 0">
+          👥 {{ plan.currentSubscribers }} students already subscribed
+        </div>
+      </div>
+
+      <!-- Subscribe Button -->
+      <div class="plan-footer">
+        <button class="btn-subscribe" (click)="subscribeToPlan(plan)">
+          Subscribe Now →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && plans.length === 0">
+    <div class="empty-icon">📋</div>
+    <h3>No Subscription Plans Available</h3>
+    <p>Check back later for subscription options</p>
+  </div>
+
+  <!-- Features Comparison -->
+  <div class="features-section" *ngIf="!isLoading && plans.length > 0">
+    <h2>Why Subscribe?</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">💰</div>
+        <h3>Save Money</h3>
+        <p>Pay less than individual event prices</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Flexible Access</h3>
+        <p>Choose events that match your interests</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3>Auto-Renewal</h3>
+        <p>Never worry about missing registration</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">✅</div>
+        <h3>Easy Management</h3>
+        <p>Manage everything from one dashboard</p>
+      </div>
+    </div>
+  </div>
+</div>

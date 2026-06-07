@@ -1,0 +1,40 @@
+<header class="ph-header">
+  <div class="ph-inner">
+
+    <!-- Zone 1: App logo (club logo or initials) -->
+    <div class="ph-logo">
+      <img *ngIf="hasLogo && logoUrl" [src]="logoUrl" [alt]="clubName" class="ph-logo-img" />
+      <div *ngIf="!hasLogo || !logoUrl" class="ph-logo-initials">{{ logoInitials }}</div>
+    </div>
+
+    <!-- Vertical divider -->
+    <div class="ph-divider"></div>
+
+    <!-- Zone 2: Page icon -->
+    <i *ngIf="pageIcon" class="ti {{ pageIcon }} ph-page-icon" aria-hidden="true"></i>
+
+    <!-- Zone 3: Page title + subtitle -->
+    <div class="ph-text">
+      <h1 class="ph-title">{{ pageTitle }}</h1>
+      <p *ngIf="pageSubtitle" class="ph-subtitle">{{ pageSubtitle }}</p>
+    </div>
+
+    <!-- Right side -->
+    <div class="ph-right">
+
+      <!-- Optional back button -->
+      <button
+        *ngIf="backRoute"
+        class="ph-back-btn"
+        (click)="goBack()"
+        [title]="backLabel">
+        <i class="ti ti-arrow-left" aria-hidden="true"></i>
+      </button>
+
+      <!-- Zone 4: Language switcher -->
+      <app-language-switcher [iconOnly]="true"></app-language-switcher>
+
+    </div>
+
+  </div>
+</header>

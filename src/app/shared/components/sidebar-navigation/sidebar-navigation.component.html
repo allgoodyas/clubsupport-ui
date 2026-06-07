@@ -1,0 +1,83 @@
+<nav class="sidebar-nav" [class.expanded]="isExpanded$ | async">
+
+  <!-- ── Top row — hamburger + "Menu" label when expanded ── -->
+  <div class="sb-top" (click)="toggle()" title="Toggle menu">
+    <span class="sb-icon-cell">&#9776;</span>
+    <span class="sb-label sb-menu-label">Menu</span>
+  </div>
+
+  <!-- ── Nav items ── -->
+  <ul class="sb-list">
+
+    <li class="sb-item" [class.active]="isActive('/dashboard')" (click)="navigateTo('/dashboard')" title="Dashboard">
+      <span class="sb-icon-cell">🏠</span>
+      <span class="sb-label">{{ 'DASHBOARD.TITLE' | translate }}</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActive('/students')" (click)="navigateTo('/students')" title="Students">
+      <span class="sb-icon-cell">🏃</span>
+      <span class="sb-label">{{ 'STUDENTS.TITLE' | translate }}</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActive('/users/list')" (click)="navigateTo('/users/list')" title="Users">
+      <span class="sb-icon-cell">👤</span>
+      <span class="sb-label">{{ 'USERS.TITLE' | translate }}</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActive('/events')" (click)="navigateTo('/events')" title="Events">
+      <span class="sb-icon-cell">📅</span>
+      <span class="sb-label">{{ 'EVENTS.TITLE' | translate }}</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActive('/payments')" (click)="navigateTo('/payments/history')" title="Payments">
+      <span class="sb-icon-cell">💰</span>
+      <span class="sb-label">{{ 'NAV.PAYMENTS' | translate }}</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActiveExact('/reports')" (click)="navigateTo('/reports')" title="Reports">
+      <span class="sb-icon-cell">📊</span>
+      <span class="sb-label">{{ 'NAV.REPORTS' | translate }}</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActive('/reports/financial')" (click)="navigateTo('/reports/financial')" title="Financial Report">
+      <span class="sb-icon-cell">📈</span>
+      <span class="sb-label">Financial Report</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActive('/expenses')" (click)="navigateTo('/expenses')" title="Expenses">
+      <span class="sb-icon-cell">💸</span>
+      <span class="sb-label">{{ 'NAV.EXPENSES' | translate }}</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActive('/adhoc-charges')" (click)="navigateTo('/adhoc-charges')" title="Adhoc Charges">
+      <span class="sb-icon-cell">🧾</span>
+      <span class="sb-label">{{ 'NAV.ADHOC_CHARGES' | translate }}</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActive('/teams')" (click)="navigateTo('/teams')" title="Teams">
+      <span class="sb-icon-cell">👥</span>
+      <span class="sb-label">{{ 'NAV.TEAMS' | translate }}</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActive('/wallets')" (click)="navigateTo('/wallets')" title="Wallets">
+      <span class="sb-icon-cell">👛</span>
+      <span class="sb-label">Parent Wallets</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActive('/club/notifications')" (click)="navigateTo('/club/notifications')" title="Notifications">
+      <span class="sb-icon-cell">🔔</span>
+      <span class="sb-label">Notifications</span>
+    </li>
+
+    <li class="sb-item" [class.active]="isActive('/club/settings')" (click)="navigateTo('/club/settings')" title="Settings">
+      <span class="sb-icon-cell">⚙️</span>
+      <span class="sb-label">{{ 'DASHBOARD.CLUB_SETTINGS' | translate }}</span>
+    </li>
+
+    <li class="sb-item sb-logout" (click)="logout()" title="Logout">
+      <span class="sb-icon-cell">🚪</span>
+      <span class="sb-label">{{ 'COMMON.LOGOUT' | translate }}</span>
+    </li>
+
+  </ul>
+</nav>

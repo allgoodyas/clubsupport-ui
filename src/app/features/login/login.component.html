@@ -1,0 +1,119 @@
+<div class="login-container" [class.club-branded]="!!clubBranding">
+
+  <!-- Language Switcher -->
+  <div class="login-language-switcher">
+    <app-language-switcher></app-language-switcher>
+  </div>
+
+  <!-- Branding loading shimmer -->
+  <div class="branding-loading" *ngIf="brandingLoading">
+    <div class="shimmer-logo"></div>
+    <div class="shimmer-text"></div>
+  </div>
+
+  <div class="login-card" *ngIf="!brandingLoading">
+
+    <!-- ── CLUB-BRANDED HEADER ── -->
+    <div class="login-header club-header" *ngIf="clubBranding">
+      <div class="club-logo-wrap">
+        <div class="club-logo-img-container" *ngIf="clubBranding.hasLogo">
+          <img
+            [src]="apiUrl + '/ClubTheme/public/' + clubBranding.clubCode + '/logo'"
+            [alt]="clubBranding.clubNameEn"
+            class="club-logo-img"
+            (error)="clubBranding.hasLogo = false"
+          />
+        </div>
+        <div class="logo-circle club-initials" *ngIf="!clubBranding.hasLogo">
+          {{ clubBranding.clubNameEn.slice(0,2).toUpperCase() }}
+        </div>
+      </div>
+      <h1 class="login-title club-name">{{ clubBranding.clubNameEn }}</h1>
+      <p class="club-name-ar" *ngIf="clubBranding.clubNameAr">{{ clubBranding.clubNameAr }}</p>
+      <p class="login-subtitle">{{ 'AUTH.SIGN_IN_TO_CONTINUE' | translate }}</p>
+    </div>
+
+    <!-- ── DEFAULT / MASTER ADMIN HEADER ── -->
+    <div class="login-header" *ngIf="!clubBranding">
+      <div class="logo">
+        <div class="logo-circle">CM</div>
+      </div>
+      <h1 class="login-title">{{ 'AUTH.LOGIN_TITLE' | translate }}</h1>
+      <p class="login-subtitle">{{ 'AUTH.SIGN_IN_TO_CONTINUE' | translate }}</p>
+    </div>
+
+    <!-- ── LOGIN FORM ── -->
+    <form (ngSubmit)="login()" class="login-form">
+
+      <!-- Mobile Number -->
+      <div class="form-group">
+        <label for="mobileNumber">{{ 'AUTH.MOBILE_NUMBER' | translate }}</label>
+        <div class="input-wrap">
+          <input
+            type="tel"
+            id="mobileNumber"
+            [(ngModel)]="mobileNumber"
+            name="mobileNumber"
+            placeholder="+966501234567"
+            (input)="formatMobileNumber()"
+            [disabled]="isLoading"
+            required
+            autocomplete="tel"
+          />
+        </div>
+        <small class="form-hint">{{ 'AUTH.ENTER_MOBILE_HINT' | translate }}</small>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">{{ 'AUTH.PASSWORD' | translate }}</label>
+        <input
+          type="password"
+          id="password"
+          [(ngModel)]="password"
+          name="password"
+          [placeholder]="'AUTH.ENTER_PASSWORD' | translate"
+          [disabled]="isLoading"
+          required
+          autocomplete="current-password"
+        />
+      </div>
+
+      <!-- Remember Me -->
+      <div class="form-group remember-row">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" [disabled]="isLoading" />
+          <span>{{ 'AUTH.REMEMBER_ME' | translate }}</span>
+        </label>
+      </div>
+
+      <!-- Club deactivated banner -->
+      <div class="club-deactivated-banner" *ngIf="clubDeactivated">
+        <div class="deactivated-icon">🚫</div>
+        <div class="deactivated-body">
+          <strong>Club Deactivated</strong>
+          <p>This club has been deactivated. Please contact your administrator or service provider.</p>
+        </div>
+      </div>
+
+      <!-- General error -->
+      <div class="error-banner" *ngIf="errorMessage && !clubDeactivated">
+        ⚠️ {{ errorMessage }}
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="btn btn-primary btn-block" [disabled]="isLoading">
+        <span class="btn-spinner" *ngIf="isLoading"></span>
+        <span *ngIf="!isLoading">{{ 'COMMON.LOGIN' | translate }}</span>
+        <span *ngIf="isLoading">{{ 'AUTH.LOGGING_IN' | translate }}</span>
+      </button>
+
+    </form>
+
+    <!-- Footer -->
+    <div class="login-footer">
+      <p>{{ 'AUTH.COPYRIGHT' | translate }}</p>
+    </div>
+
+  </div>
+</div>

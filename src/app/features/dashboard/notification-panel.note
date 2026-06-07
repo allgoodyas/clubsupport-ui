@@ -1,0 +1,10 @@
+// ── Send Notification Panel ────────────────────────────────
+
+<!-- Trigger button in Quick Actions section (add after last action-btn) -->
+<!-- Find this in dashboard.component.html quick-actions section and add: -->
+<!--
+  <button class="action-btn" (click)="openSendNotification()">
+    <span class="action-icon">📢</span>
+    <span class="action-text">Send Notification</span>
+  </button>
+-->

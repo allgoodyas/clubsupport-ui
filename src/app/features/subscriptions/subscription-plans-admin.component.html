@@ -1,0 +1,138 @@
+<div class="subscription-plans-admin-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      
+      <div class="header-text">
+        <h1>📋 {{ 'SUBSCRIPTIONS.TITLE' | translate }}</h1>
+        <p class="subtitle">{{ 'SUBSCRIPTIONS.SUBTITLE' | translate }}</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button class="btn btn-primary" (click)="createNewPlan()">
+          <span class="btn-icon">➕</span>
+          {{ 'SUBSCRIPTIONS.NEW_PLAN' | translate }}
+        </button>
+        <button class="btn btn-primary" (click)="goToDashboard()" [title]="'DASHBOARD.TITLE' | translate">
+          <span class="btn-icon">🏠</span>
+          {{ 'COMMON.HOME' | translate }}
+        </button>
+        <app-language-switcher [iconOnly]="true"></app-language-switcher>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <label class="checkbox-label">
+      <input type="checkbox" [(ngModel)]="showInactive" (change)="toggleShowInactive()">
+      {{ 'SUBSCRIPTIONS.SHOW_INACTIVE' | translate }}
+    </label>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'SUBSCRIPTIONS.LOADING' | translate }}</p>
+  </div>
+
+  <!-- Plans List -->
+  <div class="plans-grid" *ngIf="!isLoading">
+    <div class="plan-card" *ngFor="let plan of plans" [class.inactive]="!plan.isActive">
+      <!-- Plan Header -->
+      <div class="plan-header" [class]="getBadgeClass(plan.badgeColor)">
+        <div class="plan-badge">
+          <span class="badge-icon">{{ plan.badgeColor === 'gold' ? '🥇' : plan.badgeColor === 'silver' ? '🥈' : '🥉' }}</span>
+          <span class="badge-text">{{ plan.planNameEn }}</span>
+        </div>
+        <div class="plan-status">
+          <span class="status-badge" [class.active]="plan.isActive" [class.inactive]="!plan.isActive">
+            {{ plan.isActive ? ('✓ ' + ('SUBSCRIPTIONS.ACTIVE' | translate)) : ('✕ ' + ('SUBSCRIPTIONS.INACTIVE' | translate)) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Plan Content -->
+      <div class="plan-content">
+        <!-- Pricing -->
+        <div class="plan-pricing">
+          <div class="price-monthly">
+            <span class="price-amount">{{ plan.priceMonthly | number:'1.2-2' }}</span>
+            <span class="price-currency">SAR/month</span>
+          </div>
+          <div class="price-yearly" *ngIf="plan.priceYearly">
+            <span class="price-amount-small">{{ plan.priceYearly | number:'1.2-2' }}</span>
+            <span class="price-currency-small">SAR/year</span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        <p class="plan-description" *ngIf="plan.descriptionEn">{{ plan.descriptionEn }}</p>
+
+        <!-- Selection Type -->
+        <div class="selection-type">
+          <span class="selection-icon">{{ plan.requiresSelection ? '🎯' : '✨' }}</span>
+          <span class="selection-text">{{ getSelectionTypeLabel(plan) }}</span>
+        </div>
+
+        <!-- Included Events -->
+        <div class="included-events">
+          <h4>{{ 'SUBSCRIPTIONS.ELIGIBLE_EVENTS' | translate }} ({{ plan.eligibleEvents?.length || 0 }}):</h4>
+          <div class="events-list">
+            <span class="event-pill" *ngFor="let event of plan.eligibleEvents">
+              {{ event.eventNameEn }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Savings -->
+        <div class="savings-badge" *ngIf="plan.savingsPercentage && plan.savingsPercentage > 0">
+          💰 {{ 'SUBSCRIPTIONS.SAVE' | translate }} {{ plan.savingsPercentage | number:'1.0-0' }}% {{ 'SUBSCRIPTIONS.VS_INDIVIDUAL' | translate }}
+        </div>
+
+        <!-- Stats -->
+        <div class="plan-stats">
+          <div class="stat-item">
+            <span class="stat-icon">👥</span>
+            <span class="stat-value">{{ plan.currentSubscribers }}</span>
+            <span class="stat-label">{{ 'SUBSCRIPTIONS.ACTIVE_SUBSCRIBERS' | translate }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Plan Actions -->
+      <div class="plan-actions">
+        <button class="btn btn-success btn-sm" (click)="purchaseForStudent(plan.planId)" *ngIf="plan.isActive"
+        title="Add Subscriber">
+          <span class="btn-icon">➕ 👥</span>          
+        </button>
+        <button class="btn btn-secondary btn-sm" (click)="editPlan(plan.planId)" title="Edit">
+          <span class="btn-icon">✏️</span>
+          
+        </button>
+        <button class="btn btn-info btn-sm" (click)="viewSubscribers(plan.planId)" title="Subscribers">
+          <span class="btn-icon">👥</span>          
+        </button>
+        <button 
+          class="btn btn-danger btn-sm" 
+          (click)="deactivatePlan(plan)"
+          *ngIf="plan.isActive" title="Deactivate Plan">
+          <span class="btn-icon">🗑️</span>
+          
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && plans.length === 0">
+    <div class="empty-icon">📋</div>
+    <h3>{{ 'SUBSCRIPTIONS.NO_PLANS_YET' | translate }}</h3>
+    <p>{{ 'SUBSCRIPTIONS.CREATE_FIRST_PLAN_DESC' | translate }}</p>
+    <button class="btn btn-primary" (click)="createNewPlan()">
+      <span class="btn-icon">➕</span>
+      {{ 'SUBSCRIPTIONS.CREATE_FIRST_PLAN' | translate }}
+    </button>
+  </div>
+</div>

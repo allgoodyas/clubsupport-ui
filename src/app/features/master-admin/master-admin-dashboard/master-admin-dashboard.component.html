@@ -1,0 +1,128 @@
+<div class="master-admin-container">
+
+  <!-- Slim Sticky Header -->
+  <header class="master-header">
+    <div class="container">
+      <div class="header-inner">
+        <div class="logo-section">
+          <div class="logo-circle">MA</div>
+          <div class="system-info">
+            <h2>Master Administration</h2>
+            <p>Club Management System</p>
+          </div>
+        </div>
+        <div class="user-section">
+          <div class="user-info">
+            <strong>{{ currentUser?.fullName }}</strong>
+            <span class="role-badge">Master Admin</span>
+          </div>
+          <button class="btn-logout" (click)="logout()">⛔ {{ 'COMMON.LOGOUT' | translate }}</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="master-main">
+    <div class="container">
+
+      <!-- Welcome -->
+      <div class="welcome-section">
+        <h1>Welcome, {{ currentUser?.fullName }}!</h1>
+        <p>System-wide administration and management</p>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="stats-grid">
+        <div class="stat-card success">
+          <div class="stat-icon">👥</div>
+          <div class="stat-info">
+            <h3>Total Users</h3>
+            <p class="stat-value">{{ totalUsers }}</p>
+            <small>Across all clubs</small>
+          </div>
+        </div>
+        <div class="stat-card warning">
+          <div class="stat-icon">🎓</div>
+          <div class="stat-info">
+            <h3>Total Students</h3>
+            <p class="stat-value">{{ totalStudents }}</p>
+            <small>Enrolled students</small>
+          </div>
+        </div>
+        <div class="stat-card info">
+          <div class="stat-icon">📊</div>
+          <div class="stat-info">
+            <h3>System Health</h3>
+            <p class="stat-value">100%</p>
+            <small>All systems operational</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions-section">
+        <h2>Quick Actions</h2>
+        <div class="action-cards">
+
+          <div class="action-card" (click)="navigateToCreateClub()">
+            <div class="action-icon create">🏗️</div>
+            <h3>Create New Club</h3>
+            <p>Set up a new club with admin and theme</p>
+          </div>
+
+          <div class="action-card" (click)="navigateToClubsList()">
+            <div class="action-icon list">🏟️</div>
+            <h3>Manage Clubs</h3>
+            <p>View and edit existing clubs</p>
+            <div class="action-card-badge">{{ totalClubs }} clubs &middot; {{ activeClubs }} active</div>
+          </div>
+
+          <div class="action-card" (click)="router.navigate(['/master-admin/analytics'])">
+            <div class="action-icon reports">📡</div>
+            <h3>Analytics</h3>
+            <p>Sport demand, pricing, club health</p>
+          </div>
+
+          <div class="action-card" (click)="router.navigate(['/master-admin/billing/services'])">
+            <div class="action-icon" style="background: linear-gradient(135deg,#f59e0b,#d97706);">🗂️</div>
+            <h3>Service Catalogue</h3>
+            <p>Define platform service charges</p>
+          </div>
+
+          <div class="action-card" (click)="router.navigate(['/master-admin/billing/clubs'])">
+            <div class="action-icon" style="background: linear-gradient(135deg,#f59e0b,#d97706);">💰</div>
+            <h3>Club Pricing</h3>
+            <p>Per-club overrides &amp; discounts</p>
+          </div>
+
+          <div class="action-card" (click)="router.navigate(['/master-admin/billing/invoices'])">
+            <div class="action-icon" style="background: linear-gradient(135deg,#f59e0b,#d97706);">🧾</div>
+            <h3>Invoices</h3>
+            <p>Generate &amp; track club invoices</p>
+          </div>
+
+          <div class="action-card">
+            <div class="action-icon settings">⚙️</div>
+            <h3>System Settings</h3>
+            <p>Configure global settings</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="recent-activity">
+        <h2>Recent Activity</h2>
+        <div class="activity-card">
+          <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <p>No recent activity</p>
+            <small>Activity logs will appear here</small>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>

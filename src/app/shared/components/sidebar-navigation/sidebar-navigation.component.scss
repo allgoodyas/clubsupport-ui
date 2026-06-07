@@ -1,0 +1,150 @@
+/* ====================================================
+   SIDEBAR NAVIGATION — always-visible icon rail
+   Collapsed: 56px (icons only)
+   Expanded:  220px (icons + labels)
+   ==================================================== */
+
+:host {
+  display: block;
+  flex-shrink: 0;
+  height: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  align-self: flex-start;
+}
+
+.sidebar-nav {
+  width: 56px;
+  height: calc(100% - 12px);       // leave a gap at the top
+  margin-top: 12px;                // nudge the rail down so the top curve shows
+  overflow: hidden;
+  background: var(--bg-card, #1A2235);
+  border-right: 1px solid var(--bg-border, #1E2D45);
+  border-radius: 0 16px 16px 0;   // curved outer (right) edge of the rail
+  transition: width 0.25s ease;
+  display: flex;
+  flex-direction: column;
+
+  &.expanded {
+    width: 220px;
+  }
+}
+
+/* ── Top row — hamburger / Menu ─────────────────────── */
+.sb-top {
+  display: flex;
+  align-items: center;
+  height: 52px;
+  flex-shrink: 0;
+  cursor: pointer;
+  border-bottom: 1px solid var(--bg-border, #1E2D45);
+  background: var(--gradient-primary, linear-gradient(135deg, #00D4FF, #A855F7));
+  transition: opacity 0.15s;
+
+  &:hover { opacity: 0.88; }
+}
+
+.sb-menu-label {
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  font-size: 0.9rem !important;
+}
+
+/* ── Icon cell — fixed 56px, centred ───────────────── */
+.sb-icon-cell {
+  width: 56px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  color: white;
+}
+
+/* ── Label — hidden when collapsed ─────────────────── */
+.sb-label {
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary, #94A3B8);
+  opacity: 0;
+  width: 0;
+  transition: opacity 0.2s ease, width 0.25s ease;
+}
+
+.sidebar-nav.expanded .sb-label {
+  opacity: 1;
+  width: auto;
+}
+
+/* ── Nav list ────────────────────────────────────────── */
+.sb-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  flex: 1;
+
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 212, 255, 0.3) transparent;
+
+  &::-webkit-scrollbar       { width: 3px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb {
+    background: rgba(0, 212, 255, 0.25);
+    border-radius: 99px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 212, 255, 0.5);
+  }
+}
+
+/* ── Nav item ────────────────────────────────────────── */
+.sb-item {
+  display: flex;
+  align-items: center;
+  height: 46px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--bg-border, #1E2D45);
+  transition: background 0.15s;
+  position: relative;
+
+  &:last-child { border-bottom: none; }
+
+  &:hover {
+    background: var(--bg-panel, #111827);
+
+    .sb-label { color: var(--text-primary, #E2E8F0); }
+    .sb-icon-cell { color: var(--text-primary, #E2E8F0); }
+  }
+
+  .sb-icon-cell {
+    color: var(--text-secondary, #94A3B8);
+    font-size: 1.1rem;
+  }
+
+  &.active {
+    background: rgba(0, 212, 255, 0.08);
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent-primary, #00D4FF);
+    }
+
+    .sb-icon-cell { color: var(--accent-primary, #00D4FF); }
+    .sb-label     { color: var(--accent-primary, #00D4FF); font-weight: 600; }
+  }
+
+  &.sb-logout {
+    .sb-icon-cell { color: var(--accent-danger, #EF4444); }
+    .sb-label     { color: var(--accent-danger, #EF4444); }
+
+    &:hover { background: rgba(239, 68, 68, 0.08); }
+  }
+}

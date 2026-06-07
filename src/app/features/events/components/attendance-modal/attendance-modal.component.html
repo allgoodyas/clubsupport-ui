@@ -1,0 +1,176 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="close()">
+  <div class="modal-container compact" (click)="$event.stopPropagation()">
+    
+    <!-- Header -->
+    <div class="modal-header">
+      <div class="header-title">
+        <h2>📋 Mark Attendance</h2>
+        <p class="event-name">{{ eventName }}</p>
+      </div>
+      <button class="btn-close" (click)="close()">✕</button>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-container">
+      <div class="spinner-emoji">⏳</div>
+      <p>Loading attendance...</p>
+    </div>
+
+    <!-- Content -->
+    <div *ngIf="!loading" class="modal-body compact-body">
+      
+      <!-- COMPACT TOP BAR - Everything in One Row -->
+      <div class="compact-controls">
+        <div class="controls-left">
+          <div class="date-picker-inline">
+            <label>📅</label>
+            <input 
+              type="date" 
+              class="date-input-compact"
+              [(ngModel)]="selectedDate"
+              (change)="onDateChange()"
+              [max]="maxDate">
+          </div>
+          
+          <button class="btn-quick success" (click)="markAllPresent()" title="Mark All Present">
+            ✅ All Present
+          </button>
+          
+          <button class="btn-quick danger" (click)="markAllAbsent()" title="Mark All Absent">
+            ❌ All Absent
+          </button>
+          
+          <div class="search-filter">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              class="search-input"
+              placeholder="Filter students..."
+              [(ngModel)]="filterText"
+              (input)="onFilterChange()">
+            <button 
+              *ngIf="filterText" 
+              class="clear-filter" 
+              (click)="clearFilter()"
+              title="Clear filter">
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div class="stats-inline" *ngIf="attendanceData">
+          <span class="stat-item total">
+            <strong>{{ attendanceData.students.length }}</strong> Total
+          </span>
+          <span class="stat-divider">|</span>
+          <span class="stat-item present">
+            <strong>{{ getTotalPresent() }}</strong> Present
+          </span>
+          <span class="stat-divider">|</span>
+          <span class="stat-item absent">
+            <strong>{{ getTotalAbsent() }}</strong> Absent
+          </span>
+          <span class="stat-divider">|</span>
+          <span class="stat-item percentage" [class.good]="getAttendancePercentage() >= 80">
+            <strong>{{ getAttendancePercentage() }}%</strong> ✅
+          </span>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!attendanceData || attendanceData.students.length === 0" class="empty-state-compact">
+        <div class="empty-icon">🚫</div>
+        <p>No students enrolled in this event</p>
+      </div>
+
+      <!-- No Filter Results -->
+      <div *ngIf="attendanceData && attendanceData.students.length > 0 && getFilteredStudents().length === 0" class="empty-state-compact">
+        <div class="empty-icon">🔍</div>
+        <p>No students match "{{ filterText }}"</p>
+        <button class="btn-clear-search" (click)="clearFilter()">✕ Clear Filter</button>
+      </div>
+
+      <!-- COMPACT STUDENT GRID -->
+      <div class="students-grid" *ngIf="attendanceData && attendanceData.students.length > 0">
+        <div *ngFor="let student of getFilteredStudents()" 
+             class="student-card-compact"
+             [class.marked]="student.isMarked"
+             [class.card-late]="getStatus(student.enrollmentId) === 'Late'">
+          
+          <!-- Student Info -->
+          <div class="student-header-compact">
+            <div class="avatar-compact">{{ getInitials(student.studentName) }}</div>
+            <div class="name-compact" [title]="student.studentName">
+              {{ student.studentName }}
+            </div>
+          </div>
+
+          <!-- Per-student saving spinner -->
+          <div class="card-saving" *ngIf="isSaving(student.enrollmentId)">
+            <div class="card-spinner"></div>
+            <span>Saving...</span>
+          </div>
+
+          <!-- Emoji Status Buttons -->
+          <div class="status-emojis" *ngIf="!isSaving(student.enrollmentId)">
+            <button 
+              class="emoji-btn present"
+              [class.active]="getStatus(student.enrollmentId) === 'Present'"
+              (click)="markStudent(student.enrollmentId, student.studentId, 'Present')"
+              title="Present">✅</button>
+
+            <button 
+              class="emoji-btn absent"
+              [class.active]="getStatus(student.enrollmentId) === 'Absent'"
+              (click)="markStudent(student.enrollmentId, student.studentId, 'Absent')"
+              title="Absent">❌</button>
+
+            <button 
+              class="emoji-btn late"
+              [class.active]="getStatus(student.enrollmentId) === 'Late'"
+              (click)="onLateClicked(student.enrollmentId, student.studentId)"
+              title="Late">⏰</button>
+
+            <button 
+              class="emoji-btn excused"
+              [class.active]="getStatus(student.enrollmentId) === 'Excused'"
+              (click)="markStudent(student.enrollmentId, student.studentId, 'Excused')"
+              title="Excused">🎯</button>
+          </div>
+
+          <!-- Late Remarks Input — shown inline when Late is selected -->
+          <div class="late-remarks" *ngIf="getStatus(student.enrollmentId) === 'Late' && !isSaving(student.enrollmentId)">
+            <input
+              type="text"
+              class="remarks-input"
+              placeholder="Reason for being late..."
+              [value]="getNotes(student.enrollmentId)"
+              (input)="updateNotes(student.enrollmentId, $any($event.target).value)"
+              (keyup.enter)="saveLateWithRemarks(student.enrollmentId, student.studentId)">
+            <button
+              class="btn-save-remarks"
+              (click)="saveLateWithRemarks(student.enrollmentId, student.studentId)"
+              title="Save">
+              💾
+            </button>
+          </div>
+
+          <!-- Saved indicator -->
+          <div class="marked-badge" *ngIf="student.isMarked">✓</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer: auto-save — no Save button needed -->
+    <div class="modal-footer compact-footer">
+      <div class="autosave-info" *ngIf="attendanceData && attendanceData.students.length > 0">
+        <span class="autosave-dot"></span>
+        <span class="autosave-label">⚡ Each tap saves instantly · ⏰ Late requires remarks</span>
+      </div>
+      <button class="btn btn-secondary" (click)="close()">
+        Close
+      </button>
+    </div>
+    
+  </div>
+</div>

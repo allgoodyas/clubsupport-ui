@@ -1,0 +1,140 @@
+<div class="my-subscriptions-container">
+  <!-- Header -->
+  <div class="page-header">
+    <h1>📋 My Subscriptions</h1>
+    <p class="subtitle">Manage your active subscription plans</p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading your subscriptions...</p>
+  </div>
+
+  <!-- Subscriptions List -->
+  <div class="subscriptions-list" *ngIf="!isLoading">
+    <div class="subscription-card" *ngFor="let sub of subscriptions" [attr.data-status]="sub.status">
+      <!-- Card Header -->
+      <div class="card-header" [class]="'badge-' + sub.badgeColor">
+        <div class="header-left">
+          <span class="badge-icon">{{ getBadgeIcon(sub.badgeColor) }}</span>
+          <div>
+            <h2 class="plan-name">{{ sub.planNameEn }}</h2>
+            <p class="billing-info">{{ sub.billingCycle }} subscription</p>
+          </div>
+        </div>
+        <div class="header-right">
+          <span class="status-badge" [class]="getStatusClass(sub.status)">
+            {{ sub.status }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Card Content -->
+      <div class="card-content">
+        <!-- Subscription Period -->
+        <div class="period-section">
+          <div class="period-info">
+            <div class="date-item">
+              <span class="date-label">Start Date:</span>
+              <span class="date-value">{{ formatDate(sub.startDate) }}</span>
+            </div>
+            <div class="date-item">
+              <span class="date-label">End Date:</span>
+              <span class="date-value">{{ formatDate(sub.endDate) }}</span>
+            </div>
+          </div>
+          
+          <!-- Progress Bar -->
+          <div class="progress-bar-container">
+            <div class="progress-bar">
+              <div class="progress-fill" [style.width.%]="getProgressPercentage(sub)"></div>
+            </div>
+            <p class="progress-text" [class.expiring]="sub.isExpiringSoon">
+              {{ getDaysRemainingText(sub.daysRemaining) }}
+            </p>
+          </div>
+        </div>
+
+        <!-- Selected Events -->
+        <div class="events-section">
+          <h3>
+            {{ sub.requiresSelection ? 'Your Selected Events' : 'Included Events' }}
+            <span class="event-count">({{ (sub.selectedEvents || sub.availableEvents)?.length }})</span>
+          </h3>
+          
+          <div class="events-grid">
+            <div class="event-pill" *ngFor="let event of (sub.selectedEvents || sub.availableEvents)">
+              <span class="pill-icon">✓</span>
+              <span class="pill-text">{{ event.eventNameEn }}</span>
+              <span class="pill-usage" *ngIf="event.sessionsUsed">
+                {{ event.sessionsUsed }} sessions
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Savings Info -->
+        <div class="savings-section" *ngIf="sub.totalSavings > 0">
+          <div class="savings-card">
+            <div class="savings-icon">💰</div>
+            <div class="savings-info">
+              <span class="savings-label">Total Savings</span>
+              <span class="savings-amount">{{ sub.totalSavings | number:'1.2-2' }} SAR</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Info -->
+        <div class="payment-section">
+          <div class="payment-row">
+            <span class="payment-label">Subscription Amount:</span>
+            <span class="payment-value">{{ sub.totalAmount | number:'1.2-2' }} SAR</span>
+          </div>
+          <div class="payment-row">
+            <span class="payment-label">Amount Paid:</span>
+            <span class="payment-value paid">{{ sub.amountPaid | number:'1.2-2' }} SAR</span>
+          </div>
+        </div>
+
+        <!-- Auto-Renewal Info -->
+        <div class="renewal-section">
+          <div class="renewal-status" [class.active]="sub.autoRenew">
+            <span class="renewal-icon">{{ sub.autoRenew ? '🔄' : '⏸️' }}</span>
+            <div class="renewal-info">
+              <span class="renewal-label">Auto-Renewal</span>
+              <span class="renewal-value">{{ sub.autoRenew ? 'ON' : 'OFF' }}</span>
+            </div>
+          </div>
+          <div class="next-billing" *ngIf="sub.autoRenew && sub.nextBillingDate">
+            <span class="billing-label">Next Billing:</span>
+            <span class="billing-date">{{ formatDate(sub.nextBillingDate) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card Actions -->
+      <div class="card-actions">
+        <button class="btn btn-secondary" *ngIf="sub.requiresSelection">
+          Change Event Selections
+        </button>
+        <button class="btn btn-secondary">
+          Manage Auto-Renewal
+        </button>
+        <button class="btn btn-danger" *ngIf="sub.status === 'active'">
+          Cancel Subscription
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!isLoading && subscriptions.length === 0">
+    <div class="empty-icon">🎯</div>
+    <h3>No Active Subscriptions</h3>
+    <p>You don't have any active subscription plans yet</p>
+    <a href="/subscriptions/catalog" class="btn btn-primary">
+      Browse Subscription Plans →
+    </a>
+  </div>
+</div>

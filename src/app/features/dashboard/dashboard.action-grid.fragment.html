@@ -1,0 +1,63 @@
+          <button class="action-btn" *ngIf="hasPermission('create_student')" (click)="registerStudent()">
+            <span class="action-icon">➕</span>
+            <span class="action-text">{{ 'DASHBOARD.ADD_STUDENT' | translate }}</span>
+          </button>
+
+          <button class="action-btn" *ngIf="hasPermission('view_students')" (click)="viewStudents()">
+            <span class="action-icon">🏋️</span>
+            <span class="action-text">{{ 'DASHBOARD.VIEW_STUDENTS' | translate }}</span>
+          </button>
+
+          <button class="action-btn" *ngIf="hasPermission('create_event')" (click)="createEvent()">
+            <span class="action-icon">📆</span>
+            <span class="action-text">{{ 'DASHBOARD.CREATE_EVENT' | translate }}</span>
+          </button>
+
+          <button class="action-btn" *ngIf="hasPermission('create_user')" (click)="registerUser()">
+            <span class="action-icon">👤</span>
+            <span class="action-text">{{ 'DASHBOARD.ADD_USER' | translate }}</span>
+          </button>
+
+          <button class="action-btn" (click)="viewReports()">
+            <span class="action-icon">📊</span>
+            <span class="action-text">{{ 'DASHBOARD.VIEW_REPORTS' | translate }}</span>
+          </button>
+
+          <button class="action-btn" (click)="showAttendancePanel = true">
+            <span class="action-icon">✅</span>
+            <span class="action-text">{{ 'DASHBOARD.MARK_ATTENDANCE' | translate }}</span>
+          </button>
+
+          <button class="action-btn" (click)="manageSubscriptions()">
+            <span class="action-icon">📋</span>
+            <span class="action-text">{{ 'DASHBOARD.SUBSCRIPTION_PLANS' | translate }}</span>
+          </button>
+
+          <button class="action-btn" (click)="browseSubscriptions()">
+            <span class="action-icon">🎯</span>
+            <span class="action-text">{{ 'DASHBOARD.BROWSE_PLANS' | translate }}</span>
+          </button>
+
+          <!-- 📢 Send Notification -->
+          <button class="action-btn notif-btn" (click)="openSendNotification()">
+            <span class="action-icon">📢</span>
+            <span class="action-text">Send Notification</span>
+          </button>
+
+          <!-- 🔔 User Notification Preferences -->
+          <button class="action-btn" (click)="goToUserNotifPreferences()">
+            <span class="action-icon">🔔</span>
+            <span class="action-text">User Notification Preferences</span>
+          </button>
+
+          <!-- 📊 Notification Analytics Log — NEW -->
+          <button class="action-btn action-btn--notif-log" (click)="goToNotifLog()">
+            <span class="action-icon">📈</span>
+            <span class="action-text">Notification Analytics</span>
+          </button>
+
+          <!-- 👛 Wallets -->
+          <button class="action-btn" (click)="goToWallets()">
+            <span class="action-icon">👛</span>
+            <span class="action-text">Parent Wallets</span>
+          </button>

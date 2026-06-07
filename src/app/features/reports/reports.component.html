@@ -1,0 +1,267 @@
+<div class="rpt-container page-with-sidebar">
+
+  <div class="page-header-row">
+    <app-page-header
+      pageIcon="ti-chart-bar"
+      pageTitle="Report Summary">
+    </app-page-header>
+  </div>
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+    <div class="page-content">
+  <!-- Filters + Tabs -->
+  <div class="rpt-filters">
+
+    <!-- Date / team filters — LEFT -->
+    <div class="filter-group">
+      <label>{{ 'REPORTS.FILTER_FROM' | translate }}</label>
+      <input type="date" [(ngModel)]="filterFromDate" (change)="applyFilters()" />
+    </div>
+    <div class="filter-group">
+      <label>{{ 'REPORTS.FILTER_TO' | translate }}</label>
+      <input type="date" [(ngModel)]="filterToDate" (change)="applyFilters()" />
+    </div>
+    <div class="filter-group">
+      <label>{{ 'REPORTS.FILTER_TEAM' | translate }}</label>
+      <select [(ngModel)]="filterTeamId" (change)="applyFilters()">
+        <option [value]="0">{{ 'REPORTS.FILTER_ALL_TEAMS' | translate }}</option>
+        <option *ngFor="let t of teams" [value]="t.teamId">{{ t.nameEn }}</option>
+      </select>
+    </div>
+    <button class="btn-clear-f" *ngIf="hasFilters" (click)="clearFilters()">✕ {{ 'REPORTS.FILTER_CLEAR' | translate }}</button>
+
+    <!-- Divider -->
+    <div class="rpt-filters-divider"></div>
+
+    <!-- Tab buttons — RIGHT (margin-left:auto on .rpt-tabs pushes them right) -->
+    <div class="rpt-tabs">
+      <button class="rpt-tab" [class.active]="activeTab==='balance'"  (click)="switchTab('balance')">💰 {{ 'REPORTS.TAB_BALANCE' | translate }}</button>
+      <button class="rpt-tab" [class.active]="activeTab==='revenue'"  (click)="switchTab('revenue')">📈 {{ 'REPORTS.TAB_REVENUE' | translate }}</button>
+      <button class="rpt-tab" [class.active]="activeTab==='expenses'" (click)="switchTab('expenses')">📉 {{ 'REPORTS.TAB_EXPENSES' | translate }}</button>
+      <button class="rpt-tab rpt-tab-financial" (click)="goToFinancialReport()" title="Detail Income · Expenses · Net Balance">📊 Report Summary</button>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB 1 — CASH BALANCE
+  ══════════════════════════════════════════ -->
+  <div class="rpt-body" *ngIf="activeTab==='balance'">
+
+    <div class="rpt-loading" *ngIf="loadingBalance"><div class="spinner"></div></div>
+
+    <ng-container *ngIf="!loadingBalance && balance">
+
+      <!-- 3 headline cards -->
+      <div class="kpi-row">
+        <div class="kpi-card income">
+          <div class="kpi-icon">📥</div>
+          <div class="kpi-info">
+            <span class="kpi-label">{{ 'REPORTS.TOTAL_INCOME' | translate }}</span>
+            <span class="kpi-value">{{ balance.totalIncome | number:'1.2-2' }} <small>SAR</small></span>
+            <span class="kpi-sub">{{ balance.totalIncomeCount }} {{ 'REPORTS.PAYMENTS' | translate }}</span>
+          </div>
+        </div>
+
+        <div class="kpi-card expense">
+          <div class="kpi-icon">📤</div>
+          <div class="kpi-info">
+            <span class="kpi-label">{{ 'REPORTS.TOTAL_EXPENSES' | translate }}</span>
+            <span class="kpi-value">{{ balance.totalExpenses | number:'1.2-2' }} <small>SAR</small></span>
+            <span class="kpi-sub">{{ balance.totalExpenseCount }} {{ 'REPORTS.RECORDS' | translate }}</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" [class.net-profit]="balance.netBalance >= 0" [class.net-loss]="balance.netBalance < 0">
+          <div class="kpi-icon">{{ balance.netBalance >= 0 ? '✅' : '⚠️' }}</div>
+          <div class="kpi-info">
+            <span class="kpi-label">{{ 'REPORTS.NET_BALANCE' | translate }}</span>
+            <span class="kpi-value">{{ balance.netBalance | number:'1.2-2' }} <small>SAR</small></span>
+            <span class="kpi-sub">{{ (balance.netBalance >= 0 ? 'REPORTS.PROFITABLE' : 'REPORTS.IN_DEFICIT') | translate }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- This month vs last month -->
+      <div class="month-comparison">
+        <h3>{{ 'REPORTS.THIS_VS_LAST' | translate }}</h3>
+        <div class="mc-grid">
+
+          <div class="mc-card">
+            <span class="mc-label">💰 {{ 'REPORTS.INCOME_THIS_MONTH' | translate }}</span>
+            <span class="mc-value">{{ balance.thisMonthIncome | number:'1.2-2' }} SAR</span>
+            <span class="mc-trend" [class]="trendClass(balance.incomeChangePercent)">
+              {{ trendIcon(balance.incomeChangePercent) }} {{ absPercent(balance.incomeChangePercent) }}{{ 'REPORTS.VS_LAST_MONTH' | translate }}
+            </span>
+          </div>
+
+          <div class="mc-card">
+            <span class="mc-label">💸 {{ 'REPORTS.EXPENSES_THIS_MONTH' | translate }}</span>
+            <span class="mc-value">{{ balance.thisMonthExpenses | number:'1.2-2' }} SAR</span>
+            <span class="mc-trend" [class]="trendClass(-balance.expenseChangePercent)">
+              {{ trendIcon(balance.expenseChangePercent) }} {{ absPercent(balance.expenseChangePercent) }}{{ 'REPORTS.VS_LAST_MONTH' | translate }}
+            </span>
+          </div>
+
+          <div class="mc-card" [class.mc-profit]="balance.thisMonthNet >= 0" [class.mc-loss]="balance.thisMonthNet < 0">
+            <span class="mc-label">📊 {{ 'REPORTS.NET_THIS_MONTH' | translate }}</span>
+            <span class="mc-value">{{ balance.thisMonthNet | number:'1.2-2' }} SAR</span>
+            <span class="mc-sub">{{ 'REPORTS.LAST_MONTH' | translate }} {{ balance.lastMonthNet | number:'1.2-2' }} SAR</span>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Quick links -->
+      <div class="quick-links">
+        <button class="ql-btn income-btn"  (click)="switchTab('revenue')">📈 {{ 'REPORTS.VIEW_REVENUE' | translate }}</button>
+        <button class="ql-btn expense-btn" (click)="switchTab('expenses')">📉 {{ 'REPORTS.VIEW_EXPENSES_REPORT' | translate }}</button>
+        <button class="ql-btn neutral-btn" (click)="goToExpenses()">➕ {{ 'REPORTS.ADD_EXPENSE' | translate }}</button>
+      </div>
+
+    </ng-container>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB 2 — REVENUE
+  ══════════════════════════════════════════ -->
+  <div class="rpt-body" *ngIf="activeTab==='revenue'">
+
+    <div class="rpt-loading" *ngIf="loadingRevenue"><div class="spinner"></div></div>
+
+    <ng-container *ngIf="!loadingRevenue && revenue">
+
+      <!-- Summary row -->
+      <div class="kpi-row">
+        <div class="kpi-card income">
+          <div class="kpi-icon">💰</div>
+          <div class="kpi-info">
+            <span class="kpi-label">{{ 'REPORTS.TOTAL_COLLECTED' | translate }}</span>
+            <span class="kpi-value">{{ revenue.totalRevenue | number:'1.2-2' }} <small>SAR</small></span>
+            <span class="kpi-sub">{{ revenue.totalPayments }} {{ 'REPORTS.PAYMENTS' | translate }}</span>
+          </div>
+        </div>
+        <div class="kpi-card" style="border-color: rgba(255,71,87,0.3)">
+          <div class="kpi-icon">⏳</div>
+          <div class="kpi-info">
+            <span class="kpi-label">{{ 'REPORTS.OUTSTANDING' | translate }}</span>
+            <span class="kpi-value" style="color:#FF4757">{{ revenue.totalOutstanding | number:'1.2-2' }} <small>SAR</small></span>
+            <span class="kpi-sub">{{ 'REPORTS.UNPAID_INVOICES' | translate }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly bar chart -->
+      <div class="chart-card" *ngIf="revenue.byMonth.length > 0">
+        <h3>📅 {{ 'REPORTS.MONTHLY_REVENUE' | translate }}</h3>
+        <div class="chart-wrap"><canvas #revenueBarCanvas></canvas></div>
+      </div>
+      <div class="no-data" *ngIf="revenue.byMonth.length === 0">{{ 'REPORTS.NO_MONTHLY_DATA' | translate }}</div>
+
+      <!-- By type + by method -->
+      <div class="charts-2col">
+        <div class="chart-card" *ngIf="revenue.byType.length > 0">
+          <h3>📄 {{ 'REPORTS.BY_INVOICE_TYPE' | translate }}</h3>
+          <div class="chart-wrap donut-wrap"><canvas #typeDonutCanvas></canvas></div>
+          <div class="legend-list">
+            <div class="ll-row" *ngFor="let t of revenue.byType; let i = index">
+              <span class="ll-dot" [style.background]="i < 10 ? ['#00D4FF','#A855F7','#10B981','#F59E0B','#EF4444','#3B82F6','#EC4899','#8B5CF6','#14B8A6','#F97316'][i] : '#6B7280'"></span>
+              <span class="ll-label">{{ typeIcon(t.label) }} {{ t.label }}</span>
+              <span class="ll-amount">{{ t.amount | number:'1.0-0' }} SAR</span>
+              <span class="ll-count">({{ t.count }})</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card" *ngIf="revenue.byMethod.length > 0">
+          <h3>💳 {{ 'REPORTS.BY_PAYMENT_METHOD' | translate }}</h3>
+          <div class="chart-wrap"><canvas #methodBarCanvas></canvas></div>
+        </div>
+      </div>
+
+      <!-- By team -->
+      <div class="chart-card" *ngIf="revenue.byTeam.length > 0">
+        <h3>👥 {{ 'REPORTS.REVENUE_BY_TEAM' | translate }}</h3>
+        <div class="bar-list">
+          <div class="bl-row" *ngFor="let t of revenue.byTeam">
+            <span class="bl-label">{{ t.label }}</span>
+            <div class="bl-track">
+              <div class="bl-fill income-fill" [style.width]="barWidth(t.amount, maxRevByTeam)"></div>
+            </div>
+            <span class="bl-amount">{{ t.amount | number:'1.0-0' }} SAR</span>
+          </div>
+        </div>
+      </div>
+
+    </ng-container>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB 3 — EXPENSES
+  ══════════════════════════════════════════ -->
+  <div class="rpt-body" *ngIf="activeTab==='expenses'">
+
+    <div class="rpt-loading" *ngIf="loadingExpenses"><div class="spinner"></div></div>
+
+    <ng-container *ngIf="!loadingExpenses && expenses">
+
+      <!-- Summary row -->
+      <div class="kpi-row">
+        <div class="kpi-card expense">
+          <div class="kpi-icon">📤</div>
+          <div class="kpi-info">
+            <span class="kpi-label">{{ 'REPORTS.TOTAL_SPENT' | translate }}</span>
+            <span class="kpi-value">{{ expenses.totalExpenses | number:'1.2-2' }} <small>SAR</small></span>
+            <span class="kpi-sub">{{ expenses.totalCount }} {{ 'REPORTS.EXPENSES_COUNT' | translate }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monthly bar -->
+      <div class="chart-card" *ngIf="expenses.byMonth.length > 0">
+        <h3>📅 {{ 'REPORTS.MONTHLY_EXPENSES' | translate }}</h3>
+        <div class="chart-wrap"><canvas #expenseBarCanvas></canvas></div>
+      </div>
+      <div class="no-data" *ngIf="expenses.byMonth.length === 0">{{ 'REPORTS.NO_MONTHLY_DATA' | translate }}</div>
+
+      <!-- By category + by method -->
+      <div class="charts-2col">
+        <div class="chart-card" *ngIf="expenses.byCategory.length > 0">
+          <h3>📦 {{ 'REPORTS.BY_CATEGORY' | translate }}</h3>
+          <div class="chart-wrap donut-wrap"><canvas #catDonutCanvas></canvas></div>
+          <div class="legend-list">
+            <div class="ll-row" *ngFor="let c of expenses.byCategory; let i = index">
+              <span class="ll-dot" [style.background]="i < 10 ? ['#00D4FF','#A855F7','#10B981','#F59E0B','#EF4444','#3B82F6','#EC4899','#8B5CF6','#14B8A6','#F97316'][i] : '#6B7280'"></span>
+              <span class="ll-label">{{ catIcon(c.label) }} {{ c.label }}</span>
+              <span class="ll-amount">{{ c.amount | number:'1.0-0' }} SAR</span>
+              <span class="ll-count">({{ c.count }})</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-card" *ngIf="expenses.byMethod.length > 0">
+          <h3>💳 {{ 'REPORTS.BY_PAYMENT_METHOD' | translate }}</h3>
+          <div class="chart-wrap"><canvas #expMethodCanvas></canvas></div>
+        </div>
+      </div>
+
+      <!-- By team -->
+      <div class="chart-card" *ngIf="expenses.byTeam.length > 0">
+        <h3>👥 {{ 'REPORTS.EXPENSES_BY_TEAM' | translate }}</h3>
+        <div class="bar-list">
+          <div class="bl-row" *ngFor="let t of expenses.byTeam">
+            <span class="bl-label">{{ t.label }}</span>
+            <div class="bl-track">
+              <div class="bl-fill expense-fill" [style.width]="barWidth(t.amount, maxExpByTeam)"></div>
+            </div>
+            <span class="bl-amount">{{ t.amount | number:'1.0-0' }} SAR</span>
+          </div>
+        </div>
+      </div>
+
+    </ng-container>
+  </div><!-- /.rpt-body expenses -->
+
+    </div><!-- /.page-content -->
+  </div><!-- /.page-body-row -->
+</div><!-- /.rpt-container -->

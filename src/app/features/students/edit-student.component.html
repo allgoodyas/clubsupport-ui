@@ -1,0 +1,112 @@
+<div class="edit-student-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="cancel()">←</button>
+      <h1>{{ 'EDIT_STUDENT.TITLE' | translate }}</h1>
+    </div>
+    <div class="header-right">
+      <app-language-switcher></app-language-switcher>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'EDIT_STUDENT.LOADING' | translate }}</p>
+  </div>
+
+  <!-- Form -->
+  <div class="form-container" *ngIf="!isLoading && student">
+    <form>
+      <!-- Name -->
+      <div class="form-group">
+        <label class="form-label">{{ 'EDIT_STUDENT.STUDENT_NAME' | translate }} *</label>
+        <input type="text" [(ngModel)]="fullName" name="fullName" class="form-input" [placeholder]="'EDIT_STUDENT.NAME_PLACEHOLDER' | translate" />
+      </div>
+
+      <!-- Date of Birth -->
+      <div class="form-group">
+        <label class="form-label">{{ 'EDIT_STUDENT.DATE_OF_BIRTH' | translate }} *</label>
+        <input type="date" [(ngModel)]="dateOfBirth" name="dateOfBirth" class="form-input" />
+      </div>
+
+      <!-- Gender -->
+      <div class="form-group">
+        <label class="form-label">{{ 'EDIT_STUDENT.GENDER' | translate }} *</label>
+        <div class="gender-toggle">
+          <button type="button" class="gender-btn" [class.active]="gender === 'Male'" (click)="selectGender('Male')">
+            🚹 {{ 'EDIT_STUDENT.MALE' | translate }}
+          </button>
+          <button type="button" class="gender-btn" [class.active]="gender === 'Female'" (click)="selectGender('Female')">
+            🚺 {{ 'EDIT_STUDENT.FEMALE' | translate }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Photo -->
+      <div class="form-group">
+        <label class="form-label">{{ 'EDIT_STUDENT.PHOTO' | translate }}</label>
+        
+        <!-- Existing Photo -->
+        <div class="photo-preview" *ngIf="existingPhotoUrl && !photoPreview && !removePhoto">
+          <img [src]="existingPhotoUrl" [alt]="'EDIT_STUDENT.CURRENT_PHOTO' | translate" />
+          <div class="photo-actions">
+            <button type="button" class="btn-sm btn-outline" (click)="fileInput.click()">{{ 'EDIT_STUDENT.CHANGE' | translate }}</button>
+            <button type="button" class="btn-sm btn-danger" (click)="removeExistingPhoto()">{{ 'EDIT_STUDENT.REMOVE' | translate }}</button>
+          </div>
+        </div>
+
+        <!-- New Photo Preview -->
+        <div class="photo-preview" *ngIf="photoPreview">
+          <img [src]="photoPreview" [alt]="'EDIT_STUDENT.NEW_PHOTO' | translate" />
+          <div class="photo-actions">
+            <button type="button" class="btn-sm btn-outline" (click)="fileInput.click()">{{ 'EDIT_STUDENT.CHANGE' | translate }}</button>
+            <button type="button" class="btn-sm btn-danger" (click)="photoFile = null; photoPreview = null">{{ 'EDIT_STUDENT.REMOVE' | translate }}</button>
+          </div>
+        </div>
+
+        <!-- Photo Removed State -->
+        <div class="photo-removed" *ngIf="removePhoto">
+          <span>📷 {{ 'EDIT_STUDENT.PHOTO_WILL_BE_REMOVED' | translate }}</span>
+          <button type="button" class="btn-sm btn-outline" (click)="undoRemovePhoto()">{{ 'EDIT_STUDENT.UNDO' | translate }}</button>
+        </div>
+
+        <!-- Upload Button -->
+        <button type="button" class="btn-upload" *ngIf="!existingPhotoUrl && !photoPreview && !removePhoto" (click)="fileInput.click()">
+          📷 {{ 'EDIT_STUDENT.UPLOAD_PHOTO' | translate }}
+        </button>
+
+        <input #fileInput type="file" accept="image/*" (change)="onPhotoSelected($event)" style="display: none;" />
+      </div>
+
+      <!-- Medical Notes -->
+      <div class="form-group">
+        <button type="button" class="medical-toggle" (click)="toggleMedicalNotes()">
+          <span>🏥 {{ 'EDIT_STUDENT.MEDICAL_NOTES_OPTIONAL' | translate }}</span>
+          <span class="toggle-icon">{{ medicalNotesExpanded ? '▲' : '▼' }}</span>
+        </button>
+        
+        <textarea 
+          *ngIf="medicalNotesExpanded"
+          [(ngModel)]="medicalNotes" 
+          name="medicalNotes" 
+          class="medical-textarea"
+          [placeholder]="'EDIT_STUDENT.MEDICAL_NOTES_PLACEHOLDER' | translate"
+          rows="4">
+        </textarea>
+      </div>
+
+      <!-- Buttons -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline" (click)="cancel()" [disabled]="isSaving">
+          {{ 'EDIT_STUDENT.CANCEL' | translate }}
+        </button>
+        <button type="button" class="btn btn-primary" (click)="saveStudent()" [disabled]="isSaving">
+          <span *ngIf="!isSaving">💾 {{ 'EDIT_STUDENT.SAVE_CHANGES' | translate }}</span>
+          <span *ngIf="isSaving">{{ 'EDIT_STUDENT.SAVING' | translate }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

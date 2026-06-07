@@ -1,0 +1,394 @@
+<div class="ac-container page-with-sidebar">
+
+  <div class="page-header-row">
+    <app-page-header
+      pageIcon="ti-receipt"
+      pageTitle="Adhoc Charges"
+      pageSubtitle="One-time charges for individual or multiple students">
+    </app-page-header>
+  </div>
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+    <div class="page-content">
+  <!-- Tab row — below header -->
+  <div class="ac-tab-bar">
+    <button class="ac-tab" [class.active]="activeTab==='wizard'"  (click)="switchTab('wizard')">+ Create Charge</button>
+    <button class="ac-tab" [class.active]="activeTab==='history'" (click)="switchTab('history')">History</button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       WIZARD
+  ══════════════════════════════════════════════════════════ -->
+  <div class="ac-body" *ngIf="activeTab==='wizard'">
+
+    <!-- Progress bar -->
+    <div class="wizard-progress" *ngIf="step <= 4">
+      <div class="wp-step" [class.done]="step>1" [class.active]="step===1">
+        <div class="wp-dot">{{ step>1 ? '✓' : '1' }}</div><span>Template</span>
+      </div>
+      <div class="wp-line" [class.done]="step>1"></div>
+      <div class="wp-step" [class.done]="step>2" [class.active]="step===2">
+        <div class="wp-dot">{{ step>2 ? '✓' : '2' }}</div><span>Amount</span>
+      </div>
+      <div class="wp-line" [class.done]="step>2"></div>
+      <div class="wp-step" [class.done]="step>3" [class.active]="step===3">
+        <div class="wp-dot">{{ step>3 ? '✓' : '3' }}</div><span>Students</span>
+      </div>
+      <div class="wp-line" [class.done]="step>3"></div>
+      <div class="wp-step" [class.active]="step===4">
+        <div class="wp-dot">4</div><span>Confirm</span>
+      </div>
+    </div>
+
+    <!-- ── STEP 1: Pick template ───────────────────────────────── -->
+    <div class="wizard-panel" *ngIf="step===1">
+      <div class="wp-header">
+        <h2>Select charge type</h2>
+        <button class="btn-tpl-manage" (click)="openCreateTemplate()">+ New template</button>
+      </div>
+
+      <div class="tpl-loading" *ngIf="loadingTemplates"><div class="spinner"></div></div>
+
+      <div class="tpl-grid" *ngIf="!loadingTemplates">
+        <!-- Built-in / saved templates -->
+        <div class="tpl-card" *ngFor="let t of templates"
+             [class.selected]="selectedTemplate?.templateId === t.templateId"
+             (click)="pickTemplate(t)">
+          <div class="tpl-card-top">
+            <div class="tpl-cat-badge" *ngIf="t.category">{{ t.category }}</div>
+            <div class="tpl-actions">
+              <button class="btn-icon" (click)="openEditTemplate(t, $event)" title="Edit">✏️</button>
+              <button class="btn-icon btn-del" (click)="deleteTemplate(t, $event)" title="Remove">🗑</button>
+            </div>
+          </div>
+          <p class="tpl-name">{{ t.nameEn }}</p>
+          <p class="tpl-name-ar" *ngIf="t.nameAr">{{ t.nameAr }}</p>
+          <p class="tpl-amount">{{ t.defaultAmount | number:'1.2-2' }} SAR</p>
+        </div>
+
+        <!-- Custom charge card -->
+        <div class="tpl-card tpl-custom" [class.selected]="showCustom && !selectedTemplate"
+             (click)="pickTemplate(null)">
+          <div class="tpl-custom-icon">+</div>
+          <p class="tpl-name">Custom charge</p>
+          <p class="tpl-desc">Set your own title and amount</p>
+        </div>
+      </div>
+
+      <div class="wizard-footer">
+        <span></span>
+        <button class="btn-next" [disabled]="!selectedTemplate && !showCustom" (click)="goStep2()">
+          Next: set amount →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Amount & title ─────────────────────────────── -->
+    <div class="wizard-panel" *ngIf="step===2">
+      <h2>Charge details</h2>
+
+      <div class="selected-tpl-badge" *ngIf="selectedTemplate">
+        <span class="tpl-cat-badge" *ngIf="selectedTemplate.category">{{ selectedTemplate.category }}</span>
+        {{ selectedTemplate.nameEn }}
+        <span *ngIf="selectedTemplate.nameAr" class="tpl-ar"> · {{ selectedTemplate.nameAr }}</span>
+      </div>
+
+      <div class="form-field">
+        <label>Charge title <span class="req">*</span></label>
+        <input type="text" [(ngModel)]="chargeTitle" placeholder="e.g. Jersey printing — Spring 2026" />
+      </div>
+      <div class="form-field">
+        <label>Amount per student (SAR) <span class="req">*</span></label>
+        <input type="number" [(ngModel)]="chargeAmount" step="0.01" min="0.01" style="width:180px;" />
+      </div>
+      <div class="form-field">
+        <label>Notes <span class="optional">(optional)</span></label>
+        <input type="text" [(ngModel)]="chargeNotes" placeholder="Any notes visible on invoice..." />
+      </div>
+
+      <div class="wizard-footer">
+        <button class="btn-back" (click)="goBack()">← Back</button>
+        <button class="btn-next" [disabled]="!chargeTitle.trim() || chargeAmount <= 0" (click)="goStep3()">
+          Next: select students →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Select students ────────────────────────────── -->
+    <div class="wizard-panel" *ngIf="step===3">
+      <div class="step3-header">
+        <h2>Select students</h2>
+        <div class="step3-sel-count" *ngIf="selectedIds.size > 0">
+          {{ selectedIds.size }} selected
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="step3-filters">
+        <select [(ngModel)]="selectedTeamId" (change)="onTeamFilter()" class="team-select">
+          <option [value]="0">👥 All students</option>
+          <option *ngFor="let t of teams" [value]="t.teamId">{{ t.nameEn }}</option>
+        </select>
+
+        <div class="search-wrap">
+          <input type="text" [(ngModel)]="studentSearch" placeholder="Search by name..."
+                 (ngModelChange)="onSearchChange()" />
+          <button *ngIf="studentSearch" (click)="studentSearch=''; loadStudents()">✕</button>
+        </div>
+
+        <button class="btn-sel-all" (click)="selectAll()" *ngIf="students.length > 0">Select all</button>
+        <button class="btn-clear"   (click)="clearSelection()" *ngIf="selectedIds.size > 0">Clear</button>
+      </div>
+
+      <div class="student-loading" *ngIf="loadingStudents"><div class="spinner"></div></div>
+
+      <div class="student-empty" *ngIf="!loadingStudents && students.length === 0">
+        <p>No students found</p>
+      </div>
+
+      <div class="student-list" *ngIf="!loadingStudents && students.length > 0">
+        <div class="student-row"
+             *ngFor="let s of students"
+             [class.checked]="selectedIds.has(s.studentId)"
+             (click)="toggleStudent(s.studentId)">
+          <input type="checkbox" [checked]="selectedIds.has(s.studentId)"
+                 (click)="$event.stopPropagation(); $event.preventDefault(); toggleStudent(s.studentId)" />
+          <div class="s-avatar">{{ getInitials(s.fullName) }}</div>
+          <div class="s-info">
+            <p class="s-name">{{ s.fullName }}</p>
+            <p class="s-meta">Age {{ s.age }} · {{ s.gender }}
+              <span *ngIf="s.teamName" class="s-team-badge" [ngStyle]="getBadgeStyle(s.teamColor)">
+                {{ s.teamName }}<span *ngIf="s.ageGroup"> · {{ s.ageGroup }}</span>
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="wizard-footer">
+        <button class="btn-back" (click)="goBack()">← Back</button>
+        <button class="btn-next" [disabled]="selectedIds.size === 0" (click)="goStep4()">
+          Next: review →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 4: Confirm ────────────────────────────────────── -->
+    <div class="wizard-panel" *ngIf="step===4">
+      <h2>Confirm & create</h2>
+
+      <div class="confirm-summary">
+        <div class="cs-row"><span>Charge title</span><strong>{{ chargeTitle }}</strong></div>
+        <div class="cs-row"><span>Amount per student</span><strong>{{ chargeAmount | number:'1.2-2' }} SAR</strong></div>
+        <div class="cs-row"><span>Students</span><strong>{{ selectedIds.size }}</strong></div>
+        <div class="cs-row total">
+          <span>Total invoices value</span>
+          <strong class="total-amount">{{ selectedIds.size * chargeAmount | number:'1.2-2' }} SAR</strong>
+        </div>
+      </div>
+
+      <div class="confirm-students">
+        <p class="cs-label">Invoices will be created for:</p>
+        <div class="cs-student-row" *ngFor="let s of selectedStudents">
+          <div class="s-avatar sm">{{ getInitials(s.fullName) }}</div>
+          <span>{{ s.fullName }}</span>
+          <span class="s-team-badge sm" *ngIf="s.teamName" [ngStyle]="getBadgeStyle(s.teamColor)">{{ s.teamName }}</span>
+          <span class="cs-amt">{{ chargeAmount | number:'1.2-2' }} SAR</span>
+        </div>
+      </div>
+
+      <div class="wizard-footer">
+        <button class="btn-back" (click)="goBack()">← Back</button>
+        <button class="btn-confirm" [disabled]="submitting" (click)="submit()">
+          <span *ngIf="!submitting">✓ Create {{ selectedIds.size }} invoice{{ selectedIds.size !== 1 ? 's' : '' }}</span>
+          <span *ngIf="submitting">⏳ Creating...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 5: Success ────────────────────────────────────── -->
+    <div class="wizard-panel success-panel" *ngIf="step===5 && result">
+      <div class="success-icon">✅</div>
+      <h2>Charges created!</h2>
+      <p class="success-sub">{{ result.invoicesCreated }} invoice{{ result.invoicesCreated !== 1 ? 's' : '' }} created — {{ result.totalAmount | number:'1.2-2' }} SAR total</p>
+
+      <div class="success-items">
+        <div class="si-row" *ngFor="let item of result.items">
+          <div class="s-avatar sm">{{ getInitials(item.studentName) }}</div>
+          <span class="si-name">{{ item.studentName }}</span>
+          <span class="si-inv">{{ item.invoiceNumber }}</span>
+        </div>
+      </div>
+
+      <div class="success-actions">
+        <button class="btn-back" (click)="resetWizard()">+ Create another</button>
+        <button class="btn-next" (click)="switchTab('history')">View history →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════
+       HISTORY TAB
+  ══════════════════════════════════════════════════════════ -->
+  <div class="ac-body history-body" *ngIf="activeTab==='history'">
+
+    <div class="history-filters">
+      <!-- Search -->
+      <div class="search-wrap">
+        <input type="text" [(ngModel)]="historySearch" placeholder="Search student..."
+               (ngModelChange)="onHistorySearch()" />
+        <button *ngIf="historySearch" (click)="historySearch=''; loadCharges(true)">✕</button>
+      </div>
+
+      <!-- Date from -->
+      <div class="hf-date-wrap">
+        <label class="hf-date-label">From</label>
+        <input type="date" class="hf-date-input" [(ngModel)]="dateFrom"
+               (ngModelChange)="loadCharges(true)" />
+      </div>
+
+      <!-- Date to -->
+      <div class="hf-date-wrap">
+        <label class="hf-date-label">To</label>
+        <input type="date" class="hf-date-input" [(ngModel)]="dateTo"
+               (ngModelChange)="loadCharges(true)" />
+      </div>
+
+      <!-- Clear dates -->
+      <button class="hf-clear-date" *ngIf="dateFrom || dateTo" (click)="clearDateFilter()" title="Clear date filter">✕ Dates</button>
+
+      <!-- Status tabs -->
+      <div class="status-tabs">
+        <button [class.active]="historyStatus==='all'"     (click)="setHistoryStatus('all')">All</button>
+        <button [class.active]="historyStatus==='pending'" (click)="setHistoryStatus('pending')">⏳ Pending</button>
+        <button [class.active]="historyStatus==='Paid'"    (click)="setHistoryStatus('Paid')">✅ Paid</button>
+        <button [class.active]="historyStatus==='Overdue'" (click)="setHistoryStatus('Overdue')">🔴 Overdue</button>
+      </div>
+
+      <!-- Spacer -->
+      <div style="flex:1"></div>
+
+      <!-- Page size -->
+      <select class="hf-page-size" [(ngModel)]="pageSize" (ngModelChange)="loadCharges(true)">
+        <option [value]="15">15</option>
+        <option [value]="25">25</option>
+        <option [value]="50">50</option>
+      </select>
+
+      <!-- Pager -->
+      <div class="hf-pager" *ngIf="totalPages > 1">
+        <button class="hf-pg-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">&#8249;</button>
+        <ng-container *ngFor="let p of pageNums">
+          <button class="hf-pg-btn" [class.active]="p === currentPage"
+                  *ngIf="p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)"
+                  (click)="goToPage(p)">{{ p }}</button>
+          <span class="hf-pg-dots"
+                *ngIf="(p === currentPage - 2 && currentPage > 3) || (p === currentPage + 2 && currentPage < totalPages - 2)">&hellip;</span>
+        </ng-container>
+        <button class="hf-pg-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">&#8250;</button>
+        <span class="hf-pg-info">{{ (currentPage - 1) * pageSize + 1 }}–{{ pageEnd }} / {{ totalCount }}</span>
+      </div>
+    </div>
+
+    <div class="history-loading" *ngIf="loadingCharges"><div class="spinner"></div></div>
+    <div class="history-empty" *ngIf="!loadingCharges && charges.length === 0"><p>No charges found</p></div>
+
+    <table class="history-table" *ngIf="!loadingCharges && charges.length > 0">
+      <thead>
+        <tr>
+          <th>Student</th>
+          <th>Title</th>
+          <th>Amount</th>
+          <th>Paid</th>
+          <th>Due</th>
+          <th>Invoice</th>
+          <th>Status</th>
+          <th>Date</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of charges">
+          <td class="ht-student">
+            <div class="s-avatar sm">{{ getInitials(c.studentName) }}</div>
+            {{ c.studentName }}
+          </td>
+          <td>{{ c.title }}</td>
+          <td class="ht-num">{{ c.amount | number:'1.2-2' }}</td>
+          <td class="ht-num paid">{{ c.amountPaid | number:'1.2-2' }}</td>
+          <td class="ht-num" [class.due-red]="c.amountDue > 0">{{ c.amountDue | number:'1.2-2' }}</td>
+          <td class="ht-inv">{{ c.invoiceNumber || '—' }}</td>
+          <td>
+            <span class="status-badge" [ngClass]="getStatusClass(c.invoiceStatus || c.status)">
+              {{ c.invoiceStatus || c.status }}
+            </span>
+          </td>
+          <td class="ht-date">{{ c.createdAt | date:'MMM d, y' }}</td>
+          <td class="ht-action">
+            <button
+              *ngIf="c.amountDue > 0"
+              class="btn-pay"
+              (click)="openPayment(c)"
+              [title]="'Pay ' + (c.amountDue | number:'1.2-2') + ' SAR'">
+              💳 Pay
+            </button>
+            <span *ngIf="c.amountDue <= 0" class="ht-paid-mark">✓ Paid</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div><!-- /.ac-body history -->
+    </div><!-- /.page-content -->
+  </div><!-- /.page-body-row -->
+</div><!-- /.ac-container -->
+
+<!-- Payment panel -->
+<app-payment-panel
+  *ngIf="showPayPanel && payData"
+  [isOpen]="showPayPanel"
+  [eventId]="payData.eventId"
+  [eventName]="payData.eventName"
+  [preSelectPayment]="payData"
+  [disableOverlayClose]="false"
+  (closePanel)="closePayment()"
+  (paymentRecorded)="onPaymentRecorded()">
+</app-payment-panel>
+
+<!-- ── Template form modal ─────────────────────────────────── -->
+<div class="overlay" *ngIf="showTemplateForm" (click)="closeTemplateForm()"></div>
+<div class="tpl-modal" *ngIf="showTemplateForm">
+  <div class="tpl-modal-header">
+    <h3>{{ editingTemplate ? 'Edit template' : 'New template' }}</h3>
+    <button class="btn-icon" (click)="closeTemplateForm()">✕</button>
+  </div>
+  <div class="tpl-modal-body">
+    <div class="form-field">
+      <label>Name (English) <span class="req">*</span></label>
+      <input type="text" [(ngModel)]="tplForm.nameEn" placeholder="e.g. Jersey printing" />
+    </div>
+    <div class="form-field">
+      <label>الاسم (عربي)</label>
+      <input type="text" [(ngModel)]="tplForm.nameAr" placeholder="مثال: طباعة الجيرسي" dir="rtl" />
+    </div>
+    <div class="form-field">
+      <label>Category</label>
+      <select [(ngModel)]="tplForm.category">
+        <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+      </select>
+    </div>
+    <div class="form-field">
+      <label>Default amount (SAR)</label>
+      <input type="number" [(ngModel)]="tplForm.defaultAmount" step="0.01" min="0" style="width:150px;" />
+    </div>
+    <div class="form-field">
+      <label>Description <span class="optional">(optional)</span></label>
+      <input type="text" [(ngModel)]="tplForm.description" placeholder="Short description..." />
+    </div>
+  </div>
+  <div class="tpl-modal-footer">
+    <button class="btn-back" (click)="closeTemplateForm()">Cancel</button>
+    <button class="btn-next" [disabled]="savingTemplate || !tplForm.nameEn.trim()" (click)="saveTemplate()">
+      {{ savingTemplate ? 'Saving...' : 'Save template' }}
+    </button>
+  </div>
+</div>

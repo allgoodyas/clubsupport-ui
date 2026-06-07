@@ -1,0 +1,171 @@
+<!-- enrolled-students-list.component.html -->
+<!-- Display and manage enrolled students for an event -->
+
+<div class="enrolled-students-container">
+  <!-- Header with Stats and Enroll Button -->
+  <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+      <h3>📋 Enrolled Students</h3>
+      <div class="stats" *ngIf="!loading">
+        <span class="stat-item stat-enrolled">
+          ✓ {{ getEnrollmentCount().enrolled }} Enrolled
+        </span>
+        <span class="stat-item stat-waitlist" *ngIf="getEnrollmentCount().waitlist > 0">
+          ⏳ {{ getEnrollmentCount().waitlist }} Waitlist
+        </span>
+        <span class="stat-item stat-total">
+          Total: {{ getEnrollmentCount().total }}
+        </span>
+      </div>
+    </div>
+    
+    <!-- ADDED: Enroll Student Button -->
+    <button 
+      class="btn btn-primary" 
+      (click)="showEnrollDialog = true"
+      style="padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500;">
+      ➕ Enroll Student
+    </button>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-group">
+      <input 
+        type="text" 
+        class="search-input" 
+        placeholder="🔍 Search students..."
+        [(ngModel)]="searchTerm"
+      />
+    </div>
+
+    <div class="filter-group">
+      <select class="filter-select" [(ngModel)]="filterStatus">
+        <option value="all">All Statuses</option>
+        <option value="Enrolled">Enrolled</option>
+        <option value="Waitlist">Waitlist</option>
+        <option value="Cancelled">Cancelled</option>
+        <option value="Completed">Completed</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <select class="filter-select" [(ngModel)]="filterPayment">
+        <option value="all">All Payments</option>
+        <option value="Paid">Paid</option>
+        <option value="Pending">Pending</option>
+        <option value="Waived">Waived</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <p>⏳ Loading enrollments...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && enrollments.length === 0" class="empty-state">
+    <div class="empty-icon">📝</div>
+    <h4>No Students Enrolled Yet</h4>
+    <p>Click "Enroll Student" above to start enrolling students</p>
+  </div>
+
+  <!-- Enrollments Table -->
+  <div *ngIf="!loading && getFilteredEnrollments().length > 0" class="enrollments-table">
+    <div class="table-header">
+      <div class="col col-student">Student</div>
+      <div class="col col-info">Info</div>
+      <div class="col col-status">Status</div>
+      <div class="col col-payment">Payment</div>
+      <div class="col col-attendance">Attendance</div>
+      <div class="col col-actions">Actions</div>
+    </div>
+
+    <div 
+      *ngFor="let enrollment of getFilteredEnrollments()" 
+      class="table-row"
+      [class.has-warnings]="enrollment.hasWarnings"
+    >
+      <!-- Student Name -->
+      <div class="col col-student">
+        <div class="student-name">
+          {{ enrollment.studentNameEn }}
+          <span *ngIf="enrollment.hasWarnings" class="warning-icon" title="Has eligibility warnings">
+            ⚠️
+          </span>
+        </div>
+        <div class="student-meta">
+          Age: {{ enrollment.studentAge }} • {{ enrollment.studentGender }}
+        </div>
+      </div>
+
+      <!-- Info -->
+      <div class="col col-info">
+        <div class="info-line">
+          <strong>Enrolled:</strong> {{ formatDate(enrollment.enrollmentDate) }}
+        </div>
+        <div class="info-line" *ngIf="enrollment.enrollmentNotes">
+          <strong>Notes:</strong> {{ enrollment.enrollmentNotes }}
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="col col-status">
+        <span [class]="'badge ' + getStatusBadgeClass(enrollment.status)">
+          {{ enrollment.status }}
+        </span>
+      </div>
+
+      <!-- Payment -->
+      <div class="col col-payment">
+        <span [class]="'badge ' + getPaymentBadgeClass(enrollment.paymentStatus)">
+          {{ enrollment.paymentStatus }}
+        </span>
+      </div>
+
+      <!-- Attendance -->
+      <div class="col col-attendance">
+        <span class="attendance-status">{{ enrollment.attendanceStatus }}</span>
+      </div>
+
+      <!-- Actions -->
+      <div class="col col-actions">
+        <button 
+          class="btn-action btn-cancel"
+          (click)="cancelEnrollment(enrollment)"
+          *ngIf="enrollment.status !== 'Cancelled'"
+          title="Cancel enrollment"
+        >
+          ❌
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- No Results After Filter -->
+  <div *ngIf="!loading && enrollments.length > 0 && getFilteredEnrollments().length === 0" class="no-results">
+    <p>No students match the current filters</p>
+  </div>
+							  
+													   
+			
+							  
+									   
+																																		 
+							
+			 
+		
+
+  <!-- ============================================ -->
+  <!-- ADDED: Enrollment Dialog Component -->
+  <!-- ============================================ -->
+  <app-enroll-student-dialog
+    *ngIf="showEnrollDialog"
+    [eventId]="eventId"
+    [eventName]="'Current Event'"
+    [eventFee]="eventFee"
+    (closed)="showEnrollDialog = false"
+    (enrolled)="onStudentEnrolled()">
+  </app-enroll-student-dialog>
+</div>

@@ -1,0 +1,265 @@
+<div class="create-event-container">
+  <div class="page-header">
+    <h1 class="page-title">✏️ Edit Event</h1>
+  </div>
+
+  <form [formGroup]="eventForm" (ngSubmit)="onSubmit()" class="event-form" *ngIf="!loading">
+    
+    <div class="form-section">
+      <h2 class="section-title">📋 Basic Information</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Event Name (English) <span class="required">*</span></label>
+          <input type="text" class="form-control" formControlName="eventNameEn" [class.is-invalid]="hasError('eventNameEn')" />
+          <div class="error-message" *ngIf="hasError('eventNameEn')">Required</div>
+        </div>
+        <div class="form-group">
+          <label>Event Name (Arabic)</label>
+          <input type="text" class="form-control" formControlName="eventNameAr" dir="rtl" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Event Type <span class="required">*</span></label>
+          <select class="form-control" formControlName="eventType" [class.is-invalid]="hasError('eventType')">
+            <option value="">Select Type</option>
+            <option *ngFor="let type of eventTypes" [value]="type.value">{{ type.label }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Sport</label>
+          <select class="form-control" formControlName="sport">
+            <option value="">Select Sport</option>
+            <option *ngFor="let sport of sports" [value]="sport">{{ sport }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-control" formControlName="description" rows="3"></textarea>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="section-title">📅 Schedule</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Date <span class="required">*</span></label>
+          <input type="date" class="form-control" formControlName="startDate" [class.is-invalid]="hasError('startDate')" />
+        </div>
+        <div class="form-group">
+          <label>End Date <span class="required">*</span></label>
+          <input type="date" class="form-control" formControlName="endDate" [class.is-invalid]="hasError('endDate')" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Time <span class="required">*</span></label>
+          <input type="time" class="form-control" formControlName="startTime" [class.is-invalid]="hasError('startTime')" />
+        </div>
+        <div class="form-group">
+          <label>End Time <span class="required">*</span></label>
+          <input type="time" class="form-control" formControlName="endTime" [class.is-invalid]="hasError('endTime')" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="isRecurring" />
+          Recurring Event
+        </label>
+      </div>
+      <div *ngIf="eventForm.get('isRecurring')?.value" class="recurring-section">
+        <div class="form-group">
+          <label>Recurrence Pattern</label>
+          <select class="form-control" formControlName="recurrenceType">
+            <option *ngFor="let type of recurrenceTypes" [value]="type.value">{{ type.label }}</option>
+          </select>
+        </div>
+        <div *ngIf="eventForm.get('recurrenceType')?.value === 'Weekly'" class="form-group">
+          <label>Days of Week</label>
+          <div class="days-selector">
+            <button *ngFor="let day of weekDays" type="button" class="day-button" [class.selected]="isRecurrenceDaySelected(day.value)" (click)="onRecurrenceDayToggle(day.value)">
+              {{ day.label.substring(0, 3) }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="section-title">📍 Location & Capacity</h2>
+      <div class="form-group">
+        <label>Venue Name</label>
+        <input type="text" class="form-control" formControlName="venueName" />
+      </div>
+      <div class="form-group">
+        <label>Venue Address</label>
+        <input type="text" class="form-control" formControlName="venueAddress" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Max Participants <span class="required">*</span></label>
+          <input type="number" class="form-control" formControlName="maxParticipants" min="1" [class.is-invalid]="hasError('maxParticipants')" />
+        </div>
+        <div class="form-group">
+          <label>Min Participants</label>
+          <input type="number" class="form-control" formControlName="minParticipants" min="1" />
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="section-title">👥 Eligibility</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Min Age</label>
+          <input type="number" class="form-control" formControlName="minAge" />
+        </div>
+        <div class="form-group">
+          <label>Max Age</label>
+          <input type="number" class="form-control" formControlName="maxAge" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Gender</label>
+          <select class="form-control" formControlName="gender">
+            <option *ngFor="let option of genderOptions" [value]="option.value">{{ option.label }}</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Skill Level</label>
+          <select class="form-control" formControlName="skillLevel">
+            <option *ngFor="let level of skillLevels" [value]="level.value">{{ level.label }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="section-title">💰 Pricing</h2>
+      <div class="form-group">
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" [value]="false" formControlName="isPaid" />
+            Free Event
+          </label>
+          <label class="radio-label">
+            <input type="radio" [value]="true" formControlName="isPaid" />
+            Paid Event
+          </label>
+        </div>
+      </div>
+      <div *ngIf="eventForm.get('isPaid')?.value">
+        <div class="form-group">
+          <label>Price (SAR)</label>
+          <input type="number" class="form-control" formControlName="basePrice" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="allowMultipleOffers" />
+            Allow Multiple Offers
+          </label>
+        </div>
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="allowCoupons" />
+            Allow Coupon Codes
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="section-title">📝 Registration</h2>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Registration Opens</label>
+          <input type="date" class="form-control" formControlName="registrationStartDate" />
+        </div>
+        <div class="form-group">
+          <label>Registration Closes</label>
+          <input type="date" class="form-control" formControlName="registrationEndDate" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="enableWaitlist" />
+          Enable Waitlist
+        </label>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="siblingQuotaEnabled" />
+          Sibling Quota Enabled
+          <span class="field-hint">Families enrolling multiple siblings will be eligible for sibling quota during enrollment &amp; payment.</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="section-title">📋 Requirements</h2>
+      <div class="form-group">
+        <label>What to Bring</label>
+        <textarea class="form-control" formControlName="whatToBring" rows="2"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Medical Requirements</label>
+        <textarea class="form-control" formControlName="medicalRequirements" rows="2"></textarea>
+      </div>
+      <div class="checkboxes-group">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="requiresParentalConsent" />
+          Requires Parental Consent
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="certificateProvided" />
+          Certificate Provided
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="mealsIncluded" />
+          Meals Included
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="transportationProvided" />
+          Transportation Provided
+        </label>
+      </div>
+    </div>
+
+    <div class="form-section">
+      <h2 class="section-title">🎯 Publish Settings</h2>
+      <div class="form-group">
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" [value]="false" formControlName="isPublished" />
+            Save as Draft
+          </label>
+          <label class="radio-label">
+            <input type="radio" [value]="true" formControlName="isPublished" />
+            Publish Now
+          </label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="checkbox-label">
+          <input type="checkbox" formControlName="isFeatured" />
+          Featured Event
+        </label>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="onCancel()" [disabled]="loading">Cancel</button>
+      <button type="submit" class="btn btn-primary" [disabled]="loading">
+        <span *ngIf="!loading">💾 Update Event</span>
+        <span *ngIf="loading">Updating...</span>
+      </button>
+    </div>
+  </form>
+
+  <div class="loading-container" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Loading event data...</p>
+  </div>
+</div>

@@ -1,0 +1,411 @@
+<div class="events-container page-with-sidebar">
+  <div class="page-header-row">
+    <app-page-header
+      pageIcon="ti-calendar"
+      pageTitle="{{ 'EVENTS.TITLE' | translate }}"
+      pageSubtitle="Manage training sessions and competitions">
+    </app-page-header>
+  </div>
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+    <div class="page-content">
+  <div class="filters-section">
+    <div class="filters-row">
+      <div class="filter-item search-box">
+        <input type="text" class="form-control"
+          [placeholder]="'🔍 ' + ('EVENTS.SEARCH_PLACEHOLDER' | translate)"
+          [(ngModel)]="searchTerm" (ngModelChange)="onSearchChange()" />
+      </div>
+      <div class="filter-item">
+        <select class="form-control" [(ngModel)]="filterType" (ngModelChange)="onTypeFilterChange()">
+          <option value="">{{ 'EVENTS.ALL_TYPES' | translate }}</option>
+          <option value="Training">{{ 'EVENTS.TRAINING' | translate }}</option>
+          <option value="Competition">{{ 'EVENTS.COMPETITION' | translate }}</option>
+          <option value="Camp">{{ 'EVENTS.CAMP' | translate }}</option>
+          <option value="Workshop">{{ 'EVENTS.WORKSHOP' | translate }}</option>
+          <option value="Subscription">🔄 Subscription</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <select class="form-control" [(ngModel)]="filterStatus" (ngModelChange)="onStatusFilterChange()">
+          <option value="">{{ 'EVENTS.ALL_STATUS' | translate }}</option>
+          <option value="Published">{{ 'EVENTS.PUBLISHED' | translate }}</option>
+          <option value="Draft">{{ 'EVENTS.DRAFT' | translate }}</option>
+          <option value="Cancelled">{{ 'EVENTS.STATUS_CANCELLED' | translate }}</option>
+        </select>
+      </div>
+      <button class="btn btn-outline-secondary" (click)="clearFilters()"
+        *ngIf="searchTerm || filterType || filterStatus">
+        {{ 'EVENTS.CLEAR' | translate }}
+      </button>
+      <div class="view-controls">
+        <div class="results-count">
+          <strong>{{ filteredEvents.length }}</strong> {{ 'EVENTS.EVENT_S' | translate }}
+        </div>
+        <div class="view-toggle">
+          <button class="btn btn-sm" [class.active]="viewMode === 'grid'"
+            (click)="viewMode = 'grid'; closePopover()" title="Grid">
+            📱 {{ 'EVENTS.GRID' | translate }}
+          </button>
+          <button class="btn btn-sm" [class.active]="viewMode === 'table'"
+            (click)="viewMode = 'table'; closePopover()" title="Table">
+            📊 {{ 'EVENTS.TABLE' | translate }}
+          </button>
+          <button class="btn btn-sm" [class.active]="viewMode === 'scheduler'"
+            (click)="viewMode = 'scheduler'; closePopover()" title="Scheduler">
+            📅 Scheduler
+          </button>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-create-event" (click)="createEvent()">
+        ➕ {{ 'EVENTS.CREATE_EVENT' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>{{ 'COMMON.LOADING' | translate }}</p>
+  </div>
+
+  <div *ngIf="!loading && filteredEvents.length === 0" class="empty-state">
+    <div class="empty-icon">📅</div>
+    <h3>{{ 'EVENTS.NO_EVENTS' | translate }}</h3>
+    <p *ngIf="searchTerm || filterType || filterStatus">Try adjusting your filters or search term.</p>
+    <p *ngIf="!searchTerm && !filterType && !filterStatus">Get started by creating your first event.</p>
+    <button class="btn btn-primary" (click)="createEvent()">➕ {{ 'EVENTS.CREATE_EVENT' | translate }}</button>
+  </div>
+
+  <!-- ══════════════════════════ GRID VIEW ══════════════════════════ -->
+  <ng-container *ngIf="!loading && filteredEvents.length > 0 && viewMode === 'grid'">
+    <div class="events-grid">
+      <div *ngFor="let event of pagedEvents" class="event-card">
+
+        <div class="event-banner" *ngIf="event.hasBanner">
+          <img [src]="getBannerUrl(event.eventId)" [alt]="event.eventNameEn" />
+        </div>
+        <div class="event-banner placeholder" *ngIf="!event.hasBanner">
+          <span class="event-icon">{{ getEventIcon(event.eventType) }}</span>
+        </div>
+
+        <div class="event-content">
+          <div class="event-header">
+            <h3 class="event-title">{{ event.eventNameEn }}</h3>
+            <span class="badge badge-subscription" *ngIf="event.isSubscription">🔄 Sub</span>
+            <span class="badge" [ngClass]="getStatusBadgeClass(event.status)">{{ event.status || 'Draft' }}</span>
+          </div>
+          <div class="event-meta">
+            <span class="meta-item">
+              <strong>{{ event.eventType }}</strong>
+              <span *ngIf="event.sport"> • {{ event.sport }}</span>
+            </span>
+          </div>
+          <div class="event-details">
+            <div class="detail-row"><span class="icon">📅</span><span>{{ formatDateRange(event.startDate, event.endDate) }}</span></div>
+            <div class="detail-row"><span class="icon">🕐</span><span>{{ event.startTime }} - {{ event.endTime }}</span></div>
+            <div class="detail-row" *ngIf="event.venueName"><span class="icon">📍</span><span>{{ event.venueName }}</span></div>
+          </div>
+          <div class="event-capacity">
+            <div class="capacity-label">
+              <span>👥 {{ event.currentEnrollment }}/{{ event.maxParticipants }} {{ 'EVENTS.ENROLLED' | translate }}</span>
+              <span class="capacity-percentage" [ngClass]="getCapacityClass(event)">
+                {{ getCapacityPercentage(event) | number:'1.0-0' }}%
+              </span>
+            </div>
+            <div class="capacity-bar">
+              <div class="capacity-fill" [style.width.%]="getCapacityPercentage(event)" [ngClass]="getCapacityClass(event)"></div>
+            </div>
+          </div>
+          <div class="event-price" *ngIf="event.isPaid">
+            <span class="price-label">💰 {{ 'EVENTS.PRICE' | translate }}:</span>
+            <span class="price-amount">{{ event.basePrice | number:'1.2-2' }} SAR</span>
+          </div>
+          <div class="event-price" *ngIf="!event.isPaid">
+            <span class="free-badge">{{ 'EVENTS.FREE' | translate }}</span>
+          </div>
+
+          <!-- Card actions: Enrol | Pay | ⋮ (menu opens RIGHT) -->
+          <div class="card-action-row">
+            <button class="ca-btn ca-enrol"
+              (click)="openEnrollDialog(event); $event.stopPropagation()"
+              [title]="'EVENTS.ENROLL_STUDENTS' | translate">👥</button>
+
+            <button class="ca-btn ca-pay"
+              [class.ca-pay--free]="!event.isPaid"
+              [disabled]="!event.isPaid"
+              (click)="event.isPaid && openPaymentPanel(event); $event.stopPropagation()"
+              [title]="event.isPaid ? ('EVENTS.RECEIVE_PAYMENT' | translate) : ('EVENTS.FREE' | translate)">💳</button>
+
+            <div class="ca-menu-wrap" (click)="$event.stopPropagation()">
+              <button class="ca-btn ca-more"
+                [class.ca-more--open]="activeMenuId === event.eventId"
+                (click)="toggleMenu(event.eventId, $event)"
+                title="More actions">⋮</button>
+              <div class="ca-menu ca-menu--right" *ngIf="activeMenuId === event.eventId">
+                <button class="ca-menu-item" (click)="menuView(event.eventId, $event)">👁️ <span>View details</span></button>
+                <button class="ca-menu-item" (click)="menuEdit(event.eventId, $event)">✏️ <span>Edit event</span></button>
+                <button class="ca-menu-item" (click)="menuRecreate(event.eventId, $event)">🔄 <span>Recreate</span></button>
+                <div class="ca-menu-divider"></div>
+                <button class="ca-menu-item" (click)="menuTrainers(event, $event)">🤝 <span>Assign trainers</span></button>
+                <button class="ca-menu-item" (click)="menuAttendance(event, $event)">📋 <span>Mark attendance</span></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination — grid -->
+    <ng-container *ngTemplateOutlet="paginationBar"></ng-container>
+  </ng-container>
+
+  <!-- ══════════════════════════ TABLE VIEW ══════════════════════════ -->
+  <ng-container *ngIf="!loading && filteredEvents.length > 0 && viewMode === 'table'">
+    <div class="events-table">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>{{ 'EVENTS.EVENT' | translate }}</th>
+            <th>{{ 'EVENTS.TYPE' | translate }}</th>
+            <th>{{ 'EVENTS.DATE' | translate }}</th>
+            <th>{{ 'EVENTS.TIME' | translate }}</th>
+            <th>{{ 'EVENTS.VENUE' | translate }}</th>
+            <th>{{ 'EVENTS.CAPACITY' | translate }}</th>
+            <th>{{ 'EVENTS.PRICE' | translate }}</th>
+            <th>{{ 'EVENTS.STATUS' | translate }}</th>
+            <th>{{ 'COMMON.ACTIONS' | translate }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let event of pagedEvents">
+            <td>
+              <div class="table-event-name">
+                <span class="event-icon-sm">{{ getEventIcon(event.eventType) }}</span>
+                <div>
+                  <strong>{{ event.eventNameEn }}</strong>
+                  <span class="badge badge-subscription badge-xs" *ngIf="event.isSubscription">🔄 Sub</span>
+                  <div class="sport-label" *ngIf="event.sport">{{ event.sport }}</div>
+                </div>
+              </div>
+            </td>
+            <td>{{ event.eventType }}</td>
+            <td>{{ formatDateRange(event.startDate, event.endDate) }}</td>
+            <td>{{ event.startTime }} - {{ event.endTime }}</td>
+            <td>{{ event.venueName || '-' }}</td>
+            <td>
+              <div class="table-capacity">
+                <span>{{ event.currentEnrollment }}/{{ event.maxParticipants }}</span>
+                <div class="mini-capacity-bar">
+                  <div class="mini-capacity-fill"
+                    [style.width.%]="getCapacityPercentage(event)"
+                    [ngClass]="getCapacityClass(event)"></div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span *ngIf="event.isPaid">{{ event.basePrice | number:'1.2-2' }} SAR</span>
+              <span *ngIf="!event.isPaid" class="free-badge-sm">{{ 'EVENTS.FREE' | translate }}</span>
+            </td>
+            <td>
+              <span class="badge badge-sm" [ngClass]="getStatusBadgeClass(event.status)">
+                {{ event.status || 'Draft' }}
+              </span>
+            </td>
+            <td>
+              <!-- Table actions: Enrol | Pay | ⋮ (menu opens DOWN) -->
+              <div class="table-action-row" (click)="$event.stopPropagation()">
+                <button class="ca-btn ca-enrol"
+                  (click)="openEnrollDialog(event); $event.stopPropagation()"
+                  [title]="'EVENTS.ENROLL_STUDENTS' | translate">👥</button>
+
+                <button class="ca-btn ca-pay"
+                  [class.ca-pay--free]="!event.isPaid"
+                  [disabled]="!event.isPaid"
+                  (click)="event.isPaid && openPaymentPanel(event); $event.stopPropagation()"
+                  [title]="event.isPaid ? ('EVENTS.RECEIVE_PAYMENT' | translate) : ('EVENTS.FREE' | translate)">💳</button>
+
+                <div class="ca-menu-wrap">
+                  <button class="ca-btn ca-more"
+                    [class.ca-more--open]="activeMenuId === event.eventId"
+                    (click)="toggleMenu(event.eventId, $event)"
+                    title="More actions">⋮</button>
+                  <div class="ca-menu" *ngIf="activeMenuId === event.eventId">
+                    <button class="ca-menu-item" (click)="menuView(event.eventId, $event)">👁️ <span>View details</span></button>
+                    <button class="ca-menu-item" (click)="menuEdit(event.eventId, $event)">✏️ <span>Edit event</span></button>
+                    <button class="ca-menu-item" (click)="menuRecreate(event.eventId, $event)">🔄 <span>Recreate</span></button>
+                    <div class="ca-menu-divider"></div>
+                    <button class="ca-menu-item" (click)="menuTrainers(event, $event)">🤝 <span>Assign trainers</span></button>
+                    <button class="ca-menu-item" (click)="menuAttendance(event, $event)">📋 <span>Mark attendance</span></button>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination — table -->
+    <ng-container *ngTemplateOutlet="paginationBar"></ng-container>
+  </ng-container>
+
+  <!-- ══════════════════════════ SCHEDULER VIEW ══════════════════════ -->
+  <div *ngIf="!loading && viewMode === 'scheduler'" class="scheduler-wrap" (click)="closePopover()">
+    <div class="sched-toolbar">
+      <div class="sched-nav">
+        <button class="sched-nav-btn" (click)="schedulerNav(-1); $event.stopPropagation()">&#8592;</button>
+        <button class="sched-today-btn" (click)="goToToday(); $event.stopPropagation()">Today</button>
+        <button class="sched-nav-btn" (click)="schedulerNav(1); $event.stopPropagation()">&#8594;</button>
+        <span class="sched-title">{{ schedulerSubMode === 'week' ? getWeekRangeLabel() : getMonthLabel() }}</span>
+      </div>
+      <div class="sched-sub-toggle">
+        <button [class.active]="schedulerSubMode === 'week'"
+          (click)="schedulerSubMode = 'week'; closePopover(); $event.stopPropagation()">Week</button>
+        <button [class.active]="schedulerSubMode === 'month'"
+          (click)="schedulerSubMode = 'month'; closePopover(); $event.stopPropagation()">Month</button>
+      </div>
+    </div>
+    <div class="sched-legend">
+      <span class="legend-item"><span class="legend-dot training"></span>Training</span>
+      <span class="legend-item"><span class="legend-dot competition"></span>Competition</span>
+      <span class="legend-item"><span class="legend-dot camp"></span>Camp</span>
+      <span class="legend-item"><span class="legend-dot workshop"></span>Workshop</span>
+    </div>
+    <div class="sched-week" *ngIf="schedulerSubMode === 'week'">
+      <div class="week-hdr-row">
+        <div class="week-hdr-cell" *ngFor="let d of getWeekDays()" [class.today-hdr]="isToday(d)">
+          <span class="dow">{{ d | date:'EEE' }}</span>
+          <span class="dom" [class.today-circle]="isToday(d)">{{ d | date:'d' }}</span>
+        </div>
+      </div>
+      <div class="week-body-row">
+        <div class="week-cell" *ngFor="let d of getWeekDays()"
+          [class.today-col]="isToday(d)"
+          [class.has-pop]="popoverDay && isSameDay(popoverDay, d)"
+          (click)="openPopover(d, getEventsForDay(d), $event)">
+          <div class="event-chip" *ngFor="let ev of getEventsForDay(d).slice(0, 3)"
+            [class]="getChipClass(ev.eventType)"
+            (click)="openPopover(d, getEventsForDay(d), $event)">{{ ev.eventNameEn }}</div>
+          <div class="chip-more" *ngIf="getEventsForDay(d).length > 3"
+            (click)="openPopover(d, getEventsForDay(d), $event)">+{{ getEventsForDay(d).length - 3 }} more</div>
+        </div>
+      </div>
+    </div>
+    <div class="sched-month" *ngIf="schedulerSubMode === 'month'">
+      <div class="month-hdr-row">
+        <div class="month-hdr-cell" *ngFor="let h of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']">{{ h }}</div>
+      </div>
+      <div class="month-grid-body">
+        <div class="month-cell" *ngFor="let d of getMonthCells()"
+          [class.other-month]="isOtherMonth(d)"
+          [class.today-cell]="isToday(d)"
+          [class.has-pop]="popoverDay && isSameDay(popoverDay, d)"
+          (click)="openPopover(d, getEventsForDay(d), $event)">
+          <span class="month-day-num" [class.today-circle]="isToday(d)">{{ d | date:'d' }}</span>
+          <div class="event-chip-sm" *ngFor="let ev of getEventsForDay(d).slice(0, 2)"
+            [class]="getChipClass(ev.eventType)">{{ ev.eventNameEn }}</div>
+          <div class="month-more" *ngIf="getEventsForDay(d).length > 2">+{{ getEventsForDay(d).length - 2 }}</div>
+        </div>
+      </div>
+    </div>
+    <div class="sched-popover" *ngIf="popoverDay" (click)="$event.stopPropagation()">
+      <div class="pop-header">
+        <span class="pop-day-label">{{ popoverDayLabel() }}</span>
+        <button class="pop-close" (click)="closePopover()">&#x2715;</button>
+      </div>
+      <div class="pop-event-list">
+        <div class="pop-event" *ngFor="let ev of popoverEvents">
+          <div class="pop-dot" [class]="getChipClass(ev.eventType)"></div>
+          <div class="pop-info">
+            <div class="pop-name">{{ ev.eventNameEn }}</div>
+            <div class="pop-meta">
+              <span>{{ ev.startTime }} – {{ ev.endTime }}</span>
+              <span *ngIf="ev.venueName"> · {{ ev.venueName }}</span>
+            </div>
+            <div class="pop-meta">{{ ev.currentEnrollment }}/{{ ev.maxParticipants }} enrolled</div>
+            <div class="pop-meta" *ngIf="ev.isPaid">{{ ev.basePrice | number:'1.2-2' }} SAR</div>
+          </div>
+          <div class="pop-actions">
+            <button class="pop-btn" title="Mark Attendance" (click)="popoverOpenAttendance(ev)">📋</button>
+            <button class="pop-btn" title="View Event" (click)="popoverViewEvent(ev)">👁️</button>
+            <button class="pop-btn" title="Receive Payment" *ngIf="ev.isPaid" (click)="popoverOpenPayment(ev)">💳</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /.scheduler-wrap -->
+
+    </div><!-- /.page-content -->
+  </div><!-- /.page-body-row -->
+</div><!-- /.events-container -->
+
+<!-- ══════════════════════════ PAGINATION TEMPLATE ══════════════════ -->
+<ng-template #paginationBar>
+  <div class="pagination-bar" *ngIf="totalPages > 1">
+
+    <!-- "Showing 1–15 of 47 events" -->
+    <span class="pg-summary">
+      Showing <strong>{{ pageStart }}</strong>–<strong>{{ pageEnd }}</strong>
+      of <strong>{{ filteredEvents.length }}</strong> events
+    </span>
+
+    <div class="pg-controls">
+      <!-- Previous -->
+      <button class="pg-btn" [disabled]="currentPage === 1"
+        (click)="goToPage(currentPage - 1)" title="Previous page">&#8592;</button>
+
+      <!-- Page numbers with smart ellipsis -->
+      <ng-container *ngFor="let p of pageNumbers; let i = index">
+        <span class="pg-ellipsis" *ngIf="i > 0 && p - pageNumbers[i - 1] > 1">…</span>
+        <button class="pg-btn pg-num"
+          [class.pg-active]="p === currentPage"
+          (click)="goToPage(p)">{{ p }}</button>
+      </ng-container>
+
+      <!-- Next -->
+      <button class="pg-btn" [disabled]="currentPage === totalPages"
+        (click)="goToPage(currentPage + 1)" title="Next page">&#8594;</button>
+    </div>
+
+    <!-- Per-page label -->
+    <span class="pg-per-page">15 per page</span>
+  </div>
+</ng-template>
+
+<!-- ── Modals ── -->
+<app-enroll-student-dialog
+  *ngIf="showEnrollDialog && selectedEventForEnrollment"
+  [eventId]="selectedEventForEnrollment.eventId"
+  [eventName]="selectedEventForEnrollment.eventNameEn"
+  [eventFee]="selectedEventForEnrollment.basePrice || 0"
+  (closed)="closeEnrollDialog()"
+  (enrolled)="onStudentEnrolled()">
+</app-enroll-student-dialog>
+
+<app-trainer-assignment-modal
+  *ngIf="selectedEventForManagement"
+  [eventId]="selectedEventForManagement.eventId"
+  [eventName]="selectedEventForManagement.eventNameEn"
+  [isOpen]="showTrainerModal"
+  (closeModal)="closeTrainerModal()"
+  (trainerAssigned)="onTrainerAssigned()">
+</app-trainer-assignment-modal>
+
+<app-attendance-modal
+  *ngIf="selectedEventForManagement"
+  [eventId]="selectedEventForManagement.eventId"
+  [eventName]="selectedEventForManagement.eventNameEn"
+  [isOpen]="showAttendanceModal"
+  (closeModal)="closeAttendanceModal()"
+  (attendanceMarked)="onAttendanceMarked()">
+</app-attendance-modal>
+
+<app-payment-panel
+  *ngIf="selectedEventForManagement"
+  [eventId]="selectedEventForManagement.eventId"
+  [eventName]="selectedEventForManagement.eventNameEn"
+  [isOpen]="showPaymentPanel"
+  [disableOverlayClose]="true"
+  (closePanel)="closePaymentPanel()"
+  (paymentRecorded)="onPaymentRecorded()">
+</app-payment-panel>

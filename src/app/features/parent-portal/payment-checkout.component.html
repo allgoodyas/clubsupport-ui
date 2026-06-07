@@ -1,0 +1,162 @@
+<div class="payment-checkout">
+  <!-- Header -->
+  <div class="checkout-header">
+    <h1>💳 Complete Payment</h1>
+    <p class="subtitle">Review and confirm your payment</p>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading payment details...</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="error-container">
+    <div class="error-icon">⚠️</div>
+    <p>{{ error }}</p>
+    <button class="btn-retry" (click)="cancel()">Back to Invoices</button>
+  </div>
+
+  <!-- Checkout Content -->
+  <div *ngIf="!isLoading && !error" class="checkout-content">
+    
+    <div class="checkout-grid">
+      
+      <!-- Left Column: Order Summary -->
+      <div class="order-summary">
+        <h2 class="section-title">📋 Order Summary</h2>
+
+        <div class="invoice-list">
+          <div class="invoice-item" *ngFor="let invoice of invoices">
+            <div class="invoice-item-header">
+              <div class="invoice-item-number">{{ invoice.invoiceNumber }}</div>
+              <div class="invoice-item-amount">{{ formatCurrency(invoice.amountDue) }}</div>
+            </div>
+            
+            <div class="invoice-item-details">
+              <div class="detail-line">
+                <span class="icon">👦</span>
+                <span>{{ invoice.studentName }}</span>
+              </div>
+              <div class="detail-line" *ngIf="invoice.eventName">
+                <span class="icon">📅</span>
+                <span>{{ invoice.eventName }}</span>
+              </div>
+              <div class="detail-line">
+                <span class="icon">📆</span>
+                <span>Due: {{ formatDate(invoice.dueDate) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="summary-totals">
+          <div class="total-line">
+            <span>Subtotal:</span>
+            <span>{{ formatCurrency(getTotalAmount()) }}</span>
+          </div>
+          <div class="total-line final">
+            <span>Total Amount:</span>
+            <span class="amount">{{ formatCurrency(getTotalAmount()) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Payment Details -->
+      <div class="payment-details">
+        <h2 class="section-title">💳 Payment Details</h2>
+
+        <!-- Payment Method Selection -->
+        <div class="form-group">
+          <label class="form-label">Payment Method</label>
+          <div class="payment-methods">
+            <div class="payment-method" 
+                 [class.active]="paymentMethod === 'cash'"
+                 (click)="paymentMethod = 'cash'">
+              <input type="radio" 
+                     name="paymentMethod" 
+                     value="cash" 
+                     [(ngModel)]="paymentMethod"
+                     id="method-cash">
+              <label for="method-cash">
+                <span class="method-icon">💵</span>
+                <span class="method-name">Cash</span>
+              </label>
+            </div>
+
+            <div class="payment-method" 
+                 [class.active]="paymentMethod === 'bank_transfer'"
+                 (click)="paymentMethod = 'bank_transfer'">
+              <input type="radio" 
+                     name="paymentMethod" 
+                     value="bank_transfer" 
+                     [(ngModel)]="paymentMethod"
+                     id="method-bank">
+              <label for="method-bank">
+                <span class="method-icon">🏦</span>
+                <span class="method-name">Bank Transfer</span>
+              </label>
+            </div>
+
+            <div class="payment-method" 
+                 [class.active]="paymentMethod === 'card'"
+                 (click)="paymentMethod = 'card'">
+              <input type="radio" 
+                     name="paymentMethod" 
+                     value="card" 
+                     [(ngModel)]="paymentMethod"
+                     id="method-card">
+              <label for="method-card">
+                <span class="method-icon">💳</span>
+                <span class="method-name">Credit/Debit Card</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Payment Notes -->
+        <div class="form-group">
+          <label class="form-label" for="notes">Notes (Optional)</label>
+          <textarea 
+            id="notes"
+            class="form-textarea"
+            [(ngModel)]="notes"
+            placeholder="Add any notes about this payment..."
+            rows="3"></textarea>
+        </div>
+
+        <!-- Payment Info -->
+        <div class="payment-info">
+          <div class="info-icon">ℹ️</div>
+          <div class="info-text">
+            <p><strong>Payment will be recorded immediately.</strong></p>
+            <p>You'll receive a receipt via email and can view it in your payment history.</p>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="checkout-actions">
+          <button 
+            class="btn-secondary" 
+            (click)="cancel()"
+            [disabled]="isProcessing">
+            Cancel
+          </button>
+          <button 
+            class="btn-primary btn-large" 
+            (click)="processPayment()"
+            [disabled]="isProcessing">
+            <span *ngIf="!isProcessing">
+              💳 Pay {{ formatCurrency(getTotalAmount()) }}
+            </span>
+            <span *ngIf="isProcessing" class="processing">
+              <span class="spinner-small"></span>
+              Processing...
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

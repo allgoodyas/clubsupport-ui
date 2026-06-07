@@ -1,0 +1,237 @@
+<div class="teams-container page-with-sidebar">
+
+  <div class="page-header-row">
+    <app-page-header
+      pageIcon="ti-users"
+      pageTitle="Teams"
+      [pageSubtitle]="teams.length + ' team' + (teams.length !== 1 ? 's' : '')">
+    </app-page-header>
+  </div>
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+    <div class="page-content">
+  <!-- Main layout -->
+  <div class="teams-layout">
+
+    <!-- Left: Teams list -->
+    <aside class="teams-sidebar">
+
+      <!-- New Team button — top left above the list -->
+      <div class="teams-sidebar-toolbar">
+        <button class="btn-create" (click)="openCreate()">+ New Team</button>
+      </div>
+      <div class="teams-loading" *ngIf="loadingTeams">
+        <div class="spinner"></div>
+      </div>
+
+      <div class="teams-empty" *ngIf="!loadingTeams && teams.length === 0">
+        <p>No teams yet.</p>
+        <button class="btn-create" (click)="openCreate()">Create first team</button>
+      </div>
+
+      <div class="team-card"
+           *ngFor="let team of teams"
+           [class.selected]="selectedTeam?.teamId === team.teamId"
+           (click)="selectTeam(team)">
+        <div class="team-color-strip" [style.background-color]="team.color || '#3B82F6'"></div>
+        <div class="team-card-body">
+          <div class="team-card-top">
+            <div>
+              <p class="team-name-en">{{ team.nameEn }}</p>
+              <p class="team-name-ar" *ngIf="team.nameAr">{{ team.nameAr }}</p>
+            </div>
+            <div class="team-actions">
+              <button class="btn-icon" (click)="openEdit(team, $event)" title="Edit">✏️</button>
+              <button class="btn-icon btn-del" (click)="deleteTeam(team, $event)" title="Deactivate">🗑</button>
+            </div>
+          </div>
+          <div class="team-meta">
+            <span class="badge-age" *ngIf="team.ageGroup"
+                  [ngStyle]="getTeamBadgeStyle(team.color)">{{ team.ageGroup }}</span>
+            <span class="member-count">👤 {{ team.memberCount }}</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right: Team detail -->
+    <main class="team-detail" *ngIf="selectedTeam; else noSelection">
+
+      <!-- Team heading -->
+      <div class="detail-header">
+        <div class="detail-color-dot" [style.background-color]="selectedTeam.color || '#3B82F6'"></div>
+        <div>
+          <h2>{{ selectedTeam.nameEn }}</h2>
+          <p class="detail-ar" *ngIf="selectedTeam.nameAr">{{ selectedTeam.nameAr }}</p>
+          <p class="detail-desc" *ngIf="selectedTeam.description">{{ selectedTeam.description }}</p>
+        </div>
+        <button class="btn-assign" (click)="openAssignPanel()">+ Assign Students</button>
+      </div>
+
+      <!-- Members list -->
+      <div class="members-loading" *ngIf="loadingMembers">
+        <div class="spinner"></div>
+      </div>
+
+      <div class="members-empty" *ngIf="!loadingMembers && members.length === 0">
+        <p>No students in this team yet.</p>
+        <button class="btn-assign" (click)="openAssignPanel()">Assign students</button>
+      </div>
+
+      <table class="members-table" *ngIf="!loadingMembers && members.length > 0">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Age</th>
+            <th>Gender</th>
+            <th>Parent</th>
+            <th>Joined</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let m of members">
+            <td class="member-name">
+              <div class="member-avatar"
+                   [style.background-color]="(selectedTeam.color || '#3B82F6') + '22'"
+                   [style.color]="selectedTeam.color || '#3B82F6'">
+                {{ getInitials(m.fullName) }}
+              </div>
+              {{ m.fullName }}
+            </td>
+            <td>{{ m.age }}</td>
+            <td>{{ m.gender }}</td>
+            <td class="parent-cell">
+              <span>{{ m.parentName || '—' }}</span>
+              <span class="parent-mobile" *ngIf="m.parentMobile">{{ m.parentMobile }}</span>
+            </td>
+            <td>{{ m.joinedDate | date:'MMM d, y' }}</td>
+            <td>
+              <button class="btn-remove" (click)="removeStudent(m.studentId)" title="Remove from team">✕</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+
+    <!-- No team selected -->
+    <ng-template #noSelection>
+      <main class="team-detail no-selection">
+        <div>
+          <p>👈 Select a team to see its roster</p>
+          <p class="hint">or create a new one</p>
+        </div>
+      </main>
+    </ng-template>
+
+  </div><!-- /.teams-layout -->
+    </div><!-- /.page-content -->
+  </div><!-- /.page-body-row -->
+</div><!-- /.teams-container -->
+
+<!-- ── Create / Edit form overlay ───────────────────── -->
+<div class="overlay" *ngIf="showForm" (click)="closeForm()"></div>
+<div class="form-modal" *ngIf="showForm">
+  <div class="modal-header">
+    <h3>{{ isEditMode ? 'Edit team' : 'Create team' }}</h3>
+    <button class="btn-icon" (click)="closeForm()">✕</button>
+  </div>
+
+  <div class="form-body">
+    <div class="field">
+      <label>Team name (English) <span class="req">*</span></label>
+      <input type="text" [(ngModel)]="form.nameEn" placeholder="e.g. Under 12" />
+    </div>
+    <div class="field">
+      <label>اسم الفريق (عربي)</label>
+      <input type="text" [(ngModel)]="form.nameAr" placeholder="مثال: تحت ١٢" dir="rtl" />
+    </div>
+    <div class="field">
+      <label>Age group</label>
+      <select [(ngModel)]="form.ageGroup">
+        <option value="">— None —</option>
+        <option *ngFor="let ag of ageGroups" [value]="ag">{{ ag }}</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Description</label>
+      <input type="text" [(ngModel)]="form.description" placeholder="Optional description" />
+    </div>
+    <div class="field">
+      <label>Team color</label>
+      <div class="color-picker">
+        <div class="color-swatch"
+             *ngFor="let c of colorOptions"
+             [style.background-color]="c"
+             [class.selected]="form.color === c"
+             (click)="form.color = c">
+          <span *ngIf="form.color === c">✓</span>
+        </div>
+      </div>
+    </div>
+    <div class="field field-row" *ngIf="isEditMode">
+      <label>Active</label>
+      <input type="checkbox" [(ngModel)]="form.isActive" />
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn-cancel" (click)="closeForm()">Cancel</button>
+    <button class="btn-save" [disabled]="saving || !form.nameEn.trim()" (click)="saveTeam()">
+      {{ saving ? 'Saving...' : (isEditMode ? 'Save changes' : 'Create team') }}
+    </button>
+  </div>
+</div>
+
+<!-- ── Assign Students panel ─────────────────────────── -->
+<div class="overlay" *ngIf="showAssignPanel" (click)="closeAssignPanel()"></div>
+<div class="assign-panel" [class.open]="showAssignPanel">
+
+  <div class="assign-header">
+    <div>
+      <h3>Assign students</h3>
+      <p class="assign-sub">to {{ selectedTeam?.nameEn }}</p>
+    </div>
+    <button class="btn-icon" (click)="closeAssignPanel()">✕</button>
+  </div>
+
+  <div class="assign-search">
+    <input type="text" [(ngModel)]="assignSearch" placeholder="Search by name or parent..." />
+  </div>
+
+  <div class="assign-count" *ngIf="selectedStudentIds.size > 0">
+    {{ selectedStudentIds.size }} student{{ selectedStudentIds.size !== 1 ? 's' : '' }} selected
+  </div>
+
+  <div class="assign-loading" *ngIf="loadingAvailable"><div class="spinner"></div></div>
+
+  <div class="assign-empty" *ngIf="!loadingAvailable && filteredAvailable.length === 0">
+    <p>No available students found.</p>
+  </div>
+
+  <div class="assign-list">
+    <div class="assign-row"
+         *ngFor="let s of filteredAvailable"
+         [class.checked]="selectedStudentIds.has(s.studentId)"
+         (click)="toggleStudent(s.studentId)">
+      <input type="checkbox" [checked]="selectedStudentIds.has(s.studentId)"
+             (click)="$event.stopPropagation(); $event.preventDefault(); toggleStudent(s.studentId)" />
+      <div class="assign-avatar">{{ getInitials(s.fullName) }}</div>
+      <div class="assign-info">
+        <p class="assign-name">{{ s.fullName }}</p>
+        <p class="assign-meta">Age {{ s.age }} · {{ s.gender }}
+          <span *ngIf="s.currentTeam"> · {{ s.currentTeam }}</span>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="assign-footer">
+    <button class="btn-cancel" (click)="closeAssignPanel()">Cancel</button>
+    <button class="btn-save"
+            [disabled]="assigning || selectedStudentIds.size === 0"
+            (click)="assignStudents()">
+      {{ assigning ? 'Assigning...' : 'Assign ' + selectedStudentIds.size + ' student(s)' }}
+    </button>
+  </div>
+</div>

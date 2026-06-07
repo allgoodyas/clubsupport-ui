@@ -1,0 +1,314 @@
+/* enrolled-students-list.component.css — dark-theme-aware */
+
+/* ── CONTAINER — dark card, same as Schedule / Location / Eligibility ─────── */
+.enrolled-students-container {
+  background: var(--bg-card, #1A2235);
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--bg-border, #1E2D45);
+  margin-top: 24px;
+}
+
+/* ── HEADER — matches .card-title in event-details.component.scss ─────────── */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 14px;
+  /* same accent underline as Schedule / Location / Eligibility card titles */
+  border-bottom: 2px solid var(--accent-primary, #00D4FF);
+}
+
+.header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  /* exactly matches .card-title color in event-details */
+  color: var(--text-primary, #E2E8F0);
+}
+
+/* ── ➕ ENROLL STUDENT BUTTON ─────────────────────────────────────────────── */
+.btn.btn-primary,
+button.btn-primary {
+  background: var(--gradient-primary,
+    linear-gradient(135deg, var(--accent-primary, #00D4FF), var(--accent-info, #A855F7)));
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.btn.btn-primary:hover,
+button.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.35);
+}
+
+/* ── STAT BADGES ─────────────────────────────────────────────────────────── */
+.stats {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.stat-item {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.stat-enrolled {
+  background: rgba(0, 255, 157, 0.13);
+  color: var(--accent-success, #00FF9D);
+}
+
+.stat-waitlist {
+  background: rgba(255, 140, 66, 0.13);
+  color: var(--accent-warning, #FF8C42);
+}
+
+.stat-total {
+  background: rgba(168, 85, 247, 0.13);
+  color: var(--accent-info, #A855F7);
+}
+
+/* ── FILTERS ─────────────────────────────────────────────────────────────── */
+.filters {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  flex: 1;
+  min-width: 180px;
+}
+
+.search-input,
+.filter-select {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1.5px solid var(--bg-border, #1E2D45);
+  border-radius: 7px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: var(--bg-panel, #111827);
+  color: var(--text-primary, #E2E8F0);
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.search-input::placeholder {
+  color: var(--text-disabled, #4A5568);
+}
+
+.search-input:focus,
+.filter-select:focus {
+  outline: none;
+  border-color: var(--accent-primary, #00D4FF);
+  box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.12);
+}
+
+/* ── LOADING / EMPTY STATES ──────────────────────────────────────────────── */
+.loading-state,
+.empty-state,
+.no-results {
+  text-align: center;
+  padding: 48px 20px;
+  color: var(--text-secondary, #94A3B8);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+.empty-state h4 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  color: var(--text-primary, #E2E8F0);
+}
+
+.empty-state p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #94A3B8);
+}
+
+/* ── TABLE ───────────────────────────────────────────────────────────────── */
+.enrollments-table {
+  overflow-x: auto;
+}
+
+.table-header,
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 2fr 1fr 1fr 1.5fr 0.8fr;
+  gap: 14px;
+  padding: 12px 14px;
+  align-items: center;
+}
+
+/* Table header — visible accent text on dark background */
+.table-header {
+  background: var(--bg-panel, #111827);
+  border-radius: 8px 8px 0 0;
+  font-weight: 700;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  /* Use accent-primary so it's clearly visible and on-theme */
+  color: var(--accent-primary, #00D4FF);
+  border-bottom: 1px solid var(--bg-border, #1E2D45);
+}
+
+.table-row {
+  border-bottom: 1px solid var(--bg-border, #1E2D45);
+  transition: all 0.2s;
+}
+
+.table-row:last-child {
+  border-bottom: none;
+}
+
+.table-row:hover {
+  background: var(--bg-panel, #111827);
+  transform: translateX(3px);
+}
+
+.table-row.has-warnings {
+  border-left: 3px solid var(--accent-warning, #FF8C42);
+  background: rgba(255, 140, 66, 0.05);
+}
+
+.col {
+  overflow: hidden;
+}
+
+/* ── STUDENT COLUMN ──────────────────────────────────────────────────────── */
+.student-name {
+  font-weight: 600;
+  /* bright primary text — clearly visible on dark card */
+  color: var(--text-primary, #E2E8F0);
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.88rem;
+}
+
+.student-meta {
+  font-size: 0.78rem;
+  color: var(--text-secondary, #94A3B8);
+}
+
+/* ── INFO COLUMN ─────────────────────────────────────────────────────────── */
+.info-line {
+  font-size: 0.82rem;
+  margin-bottom: 3px;
+  /* visible secondary text on dark bg */
+  color: var(--text-secondary, #94A3B8);
+}
+
+/* "Enrolled:", "Notes:" labels — bright so they stand out */
+.info-line strong {
+  color: var(--text-primary, #E2E8F0);
+  font-weight: 600;
+}
+
+/* ── STATUS / PAYMENT BADGES ─────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.badge-success   { background: rgba(0, 255, 157, 0.13);  color: var(--accent-success, #00FF9D); }
+.badge-warning   { background: rgba(255, 140, 66, 0.13);  color: var(--accent-warning, #FF8C42); }
+.badge-danger    { background: rgba(255, 71,  87, 0.13);  color: var(--accent-danger,  #FF4757); }
+.badge-info      { background: rgba(168, 85, 247, 0.13);  color: var(--accent-info,    #A855F7); }
+.badge-secondary { background: var(--bg-border, #1E2D45); color: var(--text-secondary, #94A3B8); }
+.badge-default   { background: var(--bg-border, #1E2D45); color: var(--text-secondary, #94A3B8); }
+
+/* ── ATTENDANCE ──────────────────────────────────────────────────────────── */
+.attendance-status {
+  font-size: 0.82rem;
+  color: var(--text-secondary, #94A3B8);
+}
+
+/* ── ROW ACTIONS ─────────────────────────────────────────────────────────── */
+.col-actions {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.btn-action {
+  background: transparent;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.2s;
+  color: var(--text-secondary, #94A3B8);
+}
+
+.btn-action:hover {
+  background: var(--bg-panel, #111827);
+  transform: scale(1.1);
+  color: var(--text-primary, #E2E8F0);
+}
+
+.btn-cancel:hover {
+  background: rgba(255, 71, 87, 0.15);
+  color: var(--accent-danger, #FF4757);
+}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .table-header,
+  .table-row {
+    grid-template-columns: 2fr 2fr 1fr 1fr;
+  }
+  .col-attendance,
+  .col-actions { display: none; }
+}
+
+@media (max-width: 768px) {
+  .header { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .stats  { flex-wrap: wrap; }
+  .filters { flex-direction: column; }
+  .filter-group { width: 100%; }
+
+  .table-header { display: none; }
+
+  .table-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    border: 1px solid var(--bg-border, #1E2D45);
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: var(--bg-card, #1A2235);
+  }
+
+  .col { display: block; }
+}

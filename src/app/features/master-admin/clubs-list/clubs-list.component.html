@@ -1,0 +1,209 @@
+<div class="clubs-list-container">
+
+  <!-- Slim Header Bar (same pattern as create-club) -->
+  <div class="page-header">
+    <div class="container">
+      <div class="header-inner">
+        <button class="btn-back" (click)="goToDashboard()">
+          ← Back to Dashboard
+        </button>
+        <div class="header-title-block">
+          <h1>Clubs Management</h1>
+          <p>Manage all clubs in the system</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn-create" (click)="createNewClub()">
+            ➕ New Club
+          </button>          
+          <app-language-switcher></app-language-switcher>
+          <button class="btn-logout" (click)="logout()" title="Logout">
+            ⛔ {{ 'COMMON.LOGOUT' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="page-body">
+    <div class="container">
+
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input
+            type="text"
+            placeholder="Search by name or code..."
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange(searchTerm)"
+          />
+        </div>
+
+        <div class="filters">
+          <button class="filter-btn" [class.active]="statusFilter === 'all'"
+            (click)="onStatusFilterChange('all')">All <span class="count">{{ clubs.length }}</span></button>
+          <button class="filter-btn" [class.active]="statusFilter === 'active'"
+            (click)="onStatusFilterChange('active')">Active <span class="count">{{ activeCount }}</span></button>
+          <button class="filter-btn" [class.active]="statusFilter === 'inactive'"
+            (click)="onStatusFilterChange('inactive')">Inactive <span class="count">{{ inactiveCount }}</span></button>
+        </div>
+
+        <div class="view-toggle">
+          <button class="toggle-btn" [class.active]="viewMode === 'grid'" (click)="viewMode = 'grid'" title="Grid View">⊞</button>
+          <button class="toggle-btn" [class.active]="viewMode === 'table'" (click)="viewMode = 'table'" title="Table View">☰</button>
+        </div>
+      </div>
+
+      <!-- Alert -->
+      <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+      <!-- Loading -->
+      <div class="spinner-wrap" *ngIf="isLoading">
+        <div class="spinner"></div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!isLoading && filteredClubs.length === 0">
+        <div class="empty-icon">🏢</div>
+        <h3>No clubs found</h3>
+        <p *ngIf="searchTerm || statusFilter !== 'all'">Try adjusting your filters</p>
+        <p *ngIf="!searchTerm && statusFilter === 'all'">Get started by creating your first club</p>
+        <button class="btn-create" (click)="createNewClub()" *ngIf="clubs.length === 0" style="margin-top:12px">
+          ➕ Create First Club
+        </button>
+      </div>
+
+      <!-- ── GRID VIEW ─────────────────────────────────────────────────────── -->
+      <div class="clubs-grid" *ngIf="!isLoading && viewMode === 'grid' && filteredClubs.length > 0">
+        <div class="club-card" *ngFor="let club of filteredClubs">
+
+          <div class="card-top">
+            <div class="club-logo" [style.background]="club.theme?.primaryColor || '#f57c00'">
+              {{ club.clubCode?.substring(0, 2) }}
+            </div>
+            <div class="club-meta">
+              <div class="club-name">{{ club.clubNameEn }}</div>
+              <div class="club-name-ar" dir="rtl">{{ club.clubNameAr }}</div>
+              <code class="club-code">{{ club.clubCode }}</code>
+            </div>
+            <span class="status-badge" [ngClass]="getStatusBadgeClass(club.isActive)">
+              {{ getStatusText(club.isActive) }}
+            </span>
+          </div>
+
+          <div class="club-stats">
+            <div class="stat">
+              <span class="stat-val">{{ club.totalUsers || 0 }}</span>
+              <span class="stat-lbl">👥 Users</span>
+            </div>
+            <div class="stat">
+              <span class="stat-val">{{ club.totalRoles || 0 }}</span>
+              <span class="stat-lbl">🎭 Roles</span>
+            </div>
+            <div class="stat">
+              <span class="stat-val">{{ formatDate(club.createdOn) }}</span>
+              <span class="stat-lbl">📅 Created</span>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <button class="act-btn view" (click)="viewClub(club.clubId)">👁️ View</button>
+            <button class="act-btn edit" (click)="editClub(club.clubId)">✏️ Edit</button>
+            <button class="act-btn toggle" (click)="toggleClubStatus(club)">
+              {{ club.isActive ? '🔴 Deactivate' : '🟢 Activate' }}
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── TABLE VIEW ────────────────────────────────────────────────────── -->
+      <div class="table-card" *ngIf="!isLoading && viewMode === 'table' && filteredClubs.length > 0">
+        <table class="clubs-table">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Club (EN)</th>
+              <th>Club (AR)</th>
+              <th>Code</th>
+              <th class="tc">Users</th>
+              <th class="tc">Roles</th>
+              <th>Created</th>
+              <th class="tc">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let club of filteredClubs">
+              <td>
+                <span class="status-badge" [ngClass]="getStatusBadgeClass(club.isActive)">
+                  {{ getStatusText(club.isActive) }}
+                </span>
+              </td>
+              <td class="fw600">{{ club.clubNameEn }}</td>
+              <td class="ar" dir="rtl">{{ club.clubNameAr }}</td>
+              <td><code class="club-code">{{ club.clubCode }}</code></td>
+              <td class="tc">{{ club.totalUsers || 0 }}</td>
+              <td class="tc">{{ club.totalRoles || 0 }}</td>
+              <td>{{ formatDate(club.createdOn) }}</td>
+              <td class="tc">
+                <div class="tbl-actions">
+                  <button class="icon-btn" (click)="viewClub(club.clubId)" title="View">👁️</button>
+                  <button class="icon-btn" (click)="editClub(club.clubId)" title="Edit">✏️</button>
+                  <button class="icon-btn" (click)="toggleClubStatus(club)"
+                    [title]="club.isActive ? 'Deactivate' : 'Activate'">
+                    {{ club.isActive ? '🔴' : '🟢' }}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── Confirmation Dialog ── -->
+<div class="confirm-overlay" *ngIf="confirmDialog.show" (click)="cancelToggle()">
+  <div class="confirm-box" (click)="$event.stopPropagation()">
+
+    <div class="confirm-icon" [class.deactivate]="confirmDialog.isActive" [class.activate]="!confirmDialog.isActive">
+      {{ confirmDialog.isActive ? '🔴' : '🟢' }}
+    </div>
+
+    <h3 class="confirm-title">
+      {{ confirmDialog.isActive ? 'Deactivate Club' : 'Activate Club' }}
+    </h3>
+
+    <p class="confirm-msg">
+      <ng-container *ngIf="confirmDialog.isActive">
+        Are you sure you want to deactivate <strong>{{ confirmDialog.clubName }}</strong>?<br/>
+        <span class="confirm-warning">⚠️ All users of this club will be immediately blocked from logging in.</span>
+      </ng-container>
+      <ng-container *ngIf="!confirmDialog.isActive">
+        Activate <strong>{{ confirmDialog.clubName }}</strong>?<br/>
+        <span class="confirm-info">✅ All club users will regain access immediately.</span>
+      </ng-container>
+    </p>
+
+    <div class="confirm-actions">
+      <button class="btn-cancel" (click)="cancelToggle()" [disabled]="confirmDialog.loading">
+        Cancel
+      </button>
+      <button
+        class="btn-confirm"
+        [class.danger]="confirmDialog.isActive"
+        [class.success]="!confirmDialog.isActive"
+        (click)="confirmToggle()"
+        [disabled]="confirmDialog.loading">
+        <span *ngIf="confirmDialog.loading">...</span>
+        <span *ngIf="!confirmDialog.loading">
+          {{ confirmDialog.isActive ? 'Yes, Deactivate' : 'Yes, Activate' }}
+        </span>
+      </button>
+    </div>
+
+  </div>
+</div>

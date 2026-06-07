@@ -1,0 +1,532 @@
+// payment-receipt.component.scss - Print-friendly receipt styles
+
+// Colors
+$primary-color: #667eea;
+$success-color: #10b981;
+$warning-color: #f59e0b;
+$text-dark: #1f2937;
+$text-light: #6b7280;
+$border-color: #e5e7eb;
+$bg-light: #f9fafb;
+
+// Receipt Overlay
+.receipt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(3px);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+// Receipt Container
+.receipt-container {
+  background: white;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+}
+
+// Action Buttons
+.receipt-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px 12px 0 0;
+  justify-content: flex-end;
+
+  .btn-action {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+
+    .btn-icon {
+      font-size: 16px;
+    }
+
+    &.btn-print {
+      background: white;
+      color: $primary-color;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+    }
+
+    &.btn-close {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+    }
+  }
+}
+
+// Receipt Content
+.receipt-content {
+  padding: 40px 50px;
+  background: white;
+}
+
+// Header
+.receipt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 30px;
+
+  .logo-section {
+    .logo {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0 0 5px 0;
+      font-size: 24px;
+      font-weight: 700;
+      color: $text-dark;
+    }
+
+    .subtitle {
+      margin: 0;
+      font-size: 14px;
+      color: $text-light;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  }
+
+  .receipt-info {
+    text-align: right;
+
+    .receipt-number,
+    .receipt-date {
+      margin-bottom: 8px;
+
+      .label {
+        font-size: 12px;
+        color: $text-light;
+        text-transform: uppercase;
+        display: block;
+        margin-bottom: 2px;
+      }
+
+      .value {
+        font-size: 16px;
+        font-weight: 700;
+        color: $text-dark;
+      }
+    }
+  }
+}
+
+// Divider
+.divider {
+  height: 2px;
+  background: linear-gradient(to right, $border-color, transparent);
+  margin: 25px 0;
+}
+
+// Status Badge
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 25px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+
+  .status-icon {
+    font-size: 20px;
+  }
+
+  &.full-payment {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #065f46;
+    border: 2px solid #10b981;
+  }
+
+  &.partial-payment {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #78350f;
+    border: 2px solid $warning-color;
+  }
+}
+
+// Details Section
+.details-section {
+  background: $bg-light;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 25px;
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid $border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      font-size: 14px;
+      color: $text-light;
+      font-weight: 500;
+    }
+
+    .value {
+      font-size: 14px;
+      color: $text-dark;
+      font-weight: 600;
+    }
+  }
+}
+
+// Payment Section
+.payment-section {
+  margin-bottom: 25px;
+
+  .section-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: $text-dark;
+    margin: 0 0 15px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Payment Methods List
+.payment-methods-list {
+  background: $bg-light;
+  border-radius: 10px;
+  padding: 15px 20px;
+  margin-bottom: 20px;
+
+  .method-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px dashed $border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .method-name {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+
+      .method-icon {
+        font-size: 20px;
+      }
+
+      .method-label {
+        font-size: 15px;
+        font-weight: 600;
+        color: $text-dark;
+      }
+
+      .method-ref {
+        font-size: 12px;
+        color: $text-light;
+        font-style: italic;
+      }
+    }
+
+    .method-amount {
+      font-size: 16px;
+      font-weight: 700;
+      color: $primary-color;
+    }
+  }
+}
+
+// Totals Section
+.totals-section {
+  border-top: 2px solid $border-color;
+  padding-top: 15px;
+
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    font-size: 14px;
+
+    &.subtotal,
+    &.tax {
+      color: $text-light;
+
+      .value {
+        color: $text-dark;
+      }
+    }
+
+    &.grand-total {
+      margin-top: 10px;
+      padding-top: 15px;
+      border-top: 2px solid $text-dark;
+      font-size: 18px;
+      font-weight: 700;
+
+      .value {
+        color: $success-color;
+      }
+    }
+
+    &.remaining {
+      margin-top: 10px;
+      padding: 12px;
+      background: #fef3c7;
+      border-radius: 8px;
+      border: 2px solid $warning-color;
+
+      .label {
+        color: #78350f;
+        font-weight: 600;
+      }
+
+      .value.highlight {
+        color: #dc2626;
+        font-size: 18px;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+// Notes Section
+.notes-section {
+  margin-bottom: 25px;
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: $text-dark;
+    margin: 0 0 10px 0;
+    text-transform: uppercase;
+  }
+
+  .notes-text {
+    background: $bg-light;
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: $text-dark;
+    line-height: 1.6;
+    margin: 0;
+    font-style: italic;
+  }
+}
+
+// Footer
+.receipt-footer {
+  margin-bottom: 30px;
+
+  .footer-message {
+    background: linear-gradient(135deg, #e0e7ff 0%, #dbeafe 100%);
+    padding: 15px 20px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+
+    p {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e40af;
+    }
+  }
+
+  .footer-info {
+    text-align: center;
+
+    .disclaimer {
+      font-size: 12px;
+      color: $text-light;
+      margin: 5px 0;
+      font-weight: 600;
+    }
+
+    .contact {
+      font-size: 11px;
+      color: $text-light;
+      margin: 5px 0;
+    }
+  }
+}
+
+// Signature Section
+.signature-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  margin-top: 50px;
+
+  .signature-box {
+    text-align: center;
+
+    .signature-line {
+      height: 1px;
+      background: $text-dark;
+      margin-bottom: 8px;
+    }
+
+    .signature-label {
+      font-size: 12px;
+      color: $text-light;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// =============================================
+// PRINT STYLES
+// =============================================
+@media print {
+  // Hide non-printable elements
+  .no-print {
+    display: none !important;
+  }
+
+  // Reset overlay
+  .receipt-overlay {
+    position: static;
+    background: none;
+    backdrop-filter: none;
+    padding: 0;
+  }
+
+  // Adjust container for print
+  .receipt-container {
+    max-width: 100%;
+    max-height: none;
+    box-shadow: none;
+    border-radius: 0;
+    overflow: visible;
+  }
+
+  // Adjust content for print
+  .receipt-content {
+    padding: 20mm 15mm;
+  }
+
+  // Page breaks
+  .receipt-content {
+    page-break-after: auto;
+  }
+
+  .divider {
+    page-break-inside: avoid;
+  }
+
+  .details-section,
+  .payment-section,
+  .notes-section,
+  .signature-section {
+    page-break-inside: avoid;
+  }
+
+  // Print colors
+  .status-badge,
+  .payment-methods-list,
+  .totals-section .total-row.remaining,
+  .footer-message {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  // Remove shadows and gradients for print
+  * {
+    box-shadow: none !important;
+  }
+
+  // Ensure text is black for print
+  body {
+    color: black !important;
+  }
+
+  // Page size
+  @page {
+    size: A4;
+    margin: 15mm;
+  }
+}
+
+// Mobile Responsive
+@media (max-width: 768px) {
+  .receipt-container {
+    max-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+
+  .receipt-content {
+    padding: 30px 20px;
+  }
+
+  .receipt-header {
+    flex-direction: column;
+    gap: 20px;
+
+    .receipt-info {
+      text-align: left;
+    }
+  }
+
+  .signature-section {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+}

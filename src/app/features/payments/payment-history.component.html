@@ -1,0 +1,259 @@
+<div class="ph-page page-with-sidebar">
+
+  <div class="page-header-row">
+    <app-page-header
+      pageIcon="ti-credit-card"
+      pageTitle="Payment History"
+      pageSubtitle="All invoices · payments · refunds">
+    </app-page-header>
+  </div>
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+    <div class="page-content">
+  <!-- ── Single toolbar row ── -->
+  <div class="ph-filters-bar">
+
+    <!-- Event selector — fit content -->
+    <select class="ph-select" [(ngModel)]="eventId" (change)="load()">
+      <option [value]="0">All Events</option>
+      <option *ngFor="let ev of events" [value]="ev.eventId">{{ ev.eventName }}</option>
+    </select>
+
+    <!-- Student search — flex:1 takes remaining space -->
+    <div class="ph-search-wrap">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input type="text" class="ph-search" placeholder="Student..."
+             [(ngModel)]="studentName" (ngModelChange)="onStudentSearch()" />
+      <button class="ph-clear-btn" *ngIf="studentName" (click)="studentName=''; load()">&#x2715;</button>
+    </div>
+
+    <!-- Status tabs — fit content -->
+    <div class="ph-status-tabs">
+      <button [class.active]="status==='all'"     (click)="setStatus('all')">All</button>
+      <button [class.active]="status==='pending'" (click)="setStatus('pending')">&#9203; Pending</button>
+      <button [class.active]="status==='paid'"    (click)="setStatus('paid')">&#10003; Paid</button>
+      <button [class.active]="status==='overdue'" (click)="setStatus('overdue')">&#9888; Overdue</button>
+    </div>
+
+    <!-- Pager + page size + total records — grouped at far right -->
+    <div class="ph-right-group">
+
+      <!-- Pagination -->
+      <div class="ph-pager" *ngIf="!loading && totalPages > 1">
+        <button class="ph-pg-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">&#8249;</button>
+        <ng-container *ngFor="let p of pageNums">
+          <button class="ph-pg-btn" [class.active]="p === currentPage"
+                  *ngIf="p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)"
+                  (click)="goToPage(p)">{{ p }}</button>
+          <span class="ph-pg-dots"
+                *ngIf="(p === currentPage - 2 && currentPage > 3) || (p === currentPage + 2 && currentPage < totalPages - 2)">&hellip;</span>
+        </ng-container>
+        <button class="ph-pg-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">&#8250;</button>
+        <span class="ph-pg-info">{{ (currentPage - 1) * pageSize + 1 }}&ndash;{{ pageEnd }} / {{ filtered.length }}</span>
+      </div>
+
+      <!-- Page size -->
+      <select class="ph-select ph-select--sm" [(ngModel)]="pageSize" (ngModelChange)="goToPage(1)">
+        <option [value]="10">10</option>
+        <option [value]="20">20</option>
+        <option [value]="50">50</option>
+      </select>
+
+      <!-- Total records -->
+      <span class="ph-rec-count ph-rec-count--bar" *ngIf="!loading">
+        {{ filtered.length }} record{{ filtered.length !== 1 ? 's' : '' }}
+      </span>
+
+    </div>
+
+  </div>
+
+  <!-- ── Summary chips ── -->
+  <div class="ph-summary-row" *ngIf="!loading && filtered.length > 0">
+    <span class="ph-chip ph-chip--pending">Pending: {{ summary.pending | number:'1.2-2' }} SAR</span>
+    <span class="ph-chip ph-chip--paid">Paid: {{ summary.paid | number:'1.2-2' }} SAR</span>
+    <span class="ph-chip ph-chip--total">Total: {{ summary.total | number:'1.2-2' }} SAR</span>
+  </div>
+
+  <!-- ── Loading ── -->
+  <div class="ph-loading-state" *ngIf="loading">
+    <div class="ph-spinner"></div>
+    <span>Loading payment history...</span>
+  </div>
+
+  <!-- ── Table ── -->
+  <div class="ph-table-wrap" *ngIf="!loading">
+
+    <div class="ph-empty-state" *ngIf="filtered.length === 0">
+      <div class="ph-empty-icon">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+          <rect x="2" y="5" width="20" height="14" rx="3" stroke="#FF4757" stroke-width="1.5"/>
+          <path d="M2 10h20" stroke="#FF4757" stroke-width="1.5"/>
+          <path d="M6 15h4" stroke="#FF6B81" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="17" cy="15" r="1.5" fill="#FF6B81"/>
+        </svg>
+      </div>
+      <p *ngIf="status === 'pending'">No pending payments — all clear!</p>
+      <p *ngIf="status !== 'pending'">No payment records found</p>
+    </div>
+
+    <table class="ph-table" *ngIf="filtered.length > 0">
+      <thead>
+        <tr>
+          <th>Invoice #</th>
+          <th>Student</th>
+          <th>Event / Type</th>
+          <th>Date</th>
+          <th class="num">Total</th>
+          <th class="num">Paid</th>
+          <th class="num">Refunded</th>
+          <th class="num">Due</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of pagedRows" [class]="'row-' + row.status.toLowerCase()">
+
+          <td class="inv-num">{{ row.invoiceNumber }}</td>
+
+          <td class="student-cell">{{ row.studentName }}</td>
+
+          <td class="ev-cell">
+            <span *ngIf="row.eventName">{{ row.eventName }}</span>
+            <ng-container *ngIf="!row.eventName">
+              <span class="inv-type-badge">
+                {{ row.invoiceType === 'Adhoc' ? '&#128184; Adhoc'
+                 : row.invoiceType === 'Subscription' ? '&#128197; Sub'
+                 : row.invoiceType === 'Manual' ? '&#128221; Manual'
+                 : '&#128196; ' + row.invoiceType }}
+              </span>
+              <span *ngIf="row.notes" class="ev-notes" [title]="row.notes">{{ row.notes }}</span>
+            </ng-container>
+          </td>
+
+          <td class="date-cell">
+            {{ row.createdAt | date:'MMM d, y' }}
+            <div class="by-label" *ngIf="row.createdByName">by {{ row.createdByName }}</div>
+          </td>
+
+          <td class="num">{{ row.totalAmount | number:'1.2-2' }}</td>
+          <td class="num paid-val">{{ row.amountPaid | number:'1.2-2' }}</td>
+
+          <td class="num refunded-val" *ngIf="row.totalRefunded > 0">{{ row.totalRefunded | number:'1.2-2' }}</td>
+          <td class="num muted" *ngIf="!row.totalRefunded">—</td>
+
+          <td class="num" [class.due-val]="row.amountDue > 0">{{ row.amountDue | number:'1.2-2' }}</td>
+
+          <td>
+            <span class="ph-badge" [class]="'badge-' + row.status.toLowerCase()">{{ row.status }}</span>
+          </td>
+
+          <td class="actions-cell">
+            <div class="ph-action-group">
+              <button *ngIf="row.amountDue > 0"
+                      class="ph-icon-btn ph-icon-btn--pay"
+                      title="Collect payment"
+                      (click)="openQuickPay(row); $event.stopPropagation()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                  <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="2"/>
+                  <path d="M2 10h20" stroke="currentColor" stroke-width="2"/>
+                  <path d="M6 15h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+              <button *ngIf="row.amountPaid > 0"
+                      class="ph-icon-btn ph-icon-btn--refund"
+                      title="Issue refund"
+                      (click)="openRefund(row); $event.stopPropagation()">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+                  <path d="M3 9l4-4m0 0l4 4M7 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M21 12a9 9 0 11-9-9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              </button>
+            </div>
+          </td>
+
+        </tr>
+      </tbody>
+    </table>
+  </div><!-- /.ph-table-wrap -->
+
+    </div><!-- /.page-content -->
+  </div><!-- /.page-body-row -->
+</div><!-- /.ph-page -->
+
+<!-- ── Quick Pay Panel ── -->
+<app-payment-panel
+  *ngIf="showQuickPay && quickPayData"
+  [isOpen]="showQuickPay"
+  [eventId]="quickPayData.eventId"
+  [eventName]="quickPayData.eventName"
+  [preSelectPayment]="quickPayData"
+  [disableOverlayClose]="false"
+  (closePanel)="closeQuickPay()"
+  (paymentRecorded)="onPaymentRecorded()">
+</app-payment-panel>
+
+<!-- ── Refund Panel ── -->
+<div class="ph-overlay" *ngIf="showRefundPanel" (click)="closeRefund()"></div>
+<div class="rp-panel" [class.rp-open]="showRefundPanel">
+  <div class="rp-header">
+    <div class="rp-header-left">
+      <h2>&#8617; Issue Refund</h2>
+      <span class="rp-inv" *ngIf="refundData">{{ refundData.invoiceNumber }}</span>
+    </div>
+    <button class="rp-close" (click)="closeRefund()">&#x2715;</button>
+  </div>
+  <div class="rp-body" *ngIf="refundData">
+    <div class="rp-context">
+      <div class="rp-ctx-row"><span class="rp-ctx-label">Student</span><span>{{ refundData.studentName }}</span></div>
+      <div class="rp-ctx-row"><span class="rp-ctx-label">Event</span><span>{{ refundData.eventName || '—' }}</span></div>
+      <div class="rp-ctx-row"><span class="rp-ctx-label">Total Paid</span><span class="rp-accent">{{ refundData.amountPaid | number:'1.2-2' }} SAR</span></div>
+    </div>
+    <div class="rp-success" *ngIf="refundSuccess">
+      <div class="rp-success-icon">&#10003;</div>
+      <h3>Refund Issued</h3>
+      <p class="rp-success-num">{{ refundSuccess.refundNumber }}</p>
+      <button class="rp-btn-done" (click)="onRefundDone()">Close</button>
+    </div>
+    <div class="rp-form" *ngIf="!refundSuccess">
+      <div class="rp-field">
+        <label>Amount (SAR) <span class="rp-max">max {{ refundData.amountPaid | number:'1.2-2' }}</span></label>
+        <input type="number" class="rp-input" [(ngModel)]="refundAmount" step="0.01" min="0.01" [max]="refundData.amountPaid" />
+      </div>
+      <div class="rp-field">
+        <label>Method</label>
+        <select class="rp-input" [(ngModel)]="refundMethod">
+          <option *ngFor="let m of refundMethods" [value]="m.value">{{ m.label }}</option>
+        </select>
+      </div>
+      <div class="rp-field">
+        <label>Reference <span class="rp-opt">(optional)</span></label>
+        <input type="text" class="rp-input" [(ngModel)]="refundReference" placeholder="TXN ID..." />
+      </div>
+      <div class="rp-field">
+        <label>Reason <span class="rp-opt">(optional)</span></label>
+        <textarea class="rp-input rp-textarea" [(ngModel)]="refundReason" rows="3"></textarea>
+      </div>
+      <button class="rp-btn-submit"
+              [disabled]="isProcessingRefund || refundAmount <= 0 || refundAmount > refundData.amountPaid"
+              (click)="submitRefund()">
+        <span *ngIf="!isProcessingRefund">&#8617; Issue Refund — {{ refundAmount | number:'1.2-2' }} SAR</span>
+        <span *ngIf="isProcessingRefund">Processing...</span>
+      </button>
+    </div>
+    <div class="rp-history" *ngIf="refundHistory.length > 0">
+      <h4>Previous Refunds</h4>
+      <div class="rp-hist-item" *ngFor="let r of refundHistory">
+        <div class="rp-hist-left">
+          <span class="rp-hist-num">{{ r.refundNumber }}</span>
+          <span class="rp-hist-date">{{ r.createdAt | date:'MMM d, y' }}</span>
+        </div>
+        <span class="rp-hist-amount">−{{ r.amount | number:'1.2-2' }} SAR</span>
+      </div>
+    </div>
+  </div>
+</div>

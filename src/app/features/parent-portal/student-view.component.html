@@ -1,0 +1,178 @@
+<div class="sv-container">
+
+  <!-- ── STICKY HEADER ──────────────────────────────────────────────── -->
+  <div class="sv-header">
+    <div class="sv-header-inner">
+      <button class="btn-back" (click)="goBack()">← Back</button>
+      <div class="sv-header-title">
+        <span class="sv-title">Student Details</span>
+      </div>
+      <button class="btn-id-card-header" (click)="showIdCard = true">🪪 ID Card</button>
+    </div>
+  </div>
+
+  <!-- ── LOADING ─────────────────────────────────────────────────────── -->
+  <div *ngIf="isLoading" class="sv-loading">
+    <div class="spinner"></div>
+    <p>Loading student details...</p>
+  </div>
+
+  <!-- ── ERROR ───────────────────────────────────────────────────────── -->
+  <div *ngIf="error && !isLoading" class="sv-error">
+    <div class="sv-error-icon">⚠️</div>
+    <p>{{ error }}</p>
+    <button class="btn-retry" (click)="loadStudentDetails()">Try Again</button>
+  </div>
+
+  <!-- ── CONTENT ─────────────────────────────────────────────────────── -->
+  <div *ngIf="!isLoading && !error && student" class="sv-content">
+
+    <!-- ── PROFILE HERO ─────────────────────────────────────────────── -->
+    <div class="sv-hero">
+      <!-- Avatar -->
+      <div class="sv-avatar-ring">
+        <div class="sv-avatar">
+          <img *ngIf="studentPhotoUrl" [src]="studentPhotoUrl"
+               [alt]="student.studentName" class="sv-photo"
+               (error)="onPhotoError($event)">
+          <span *ngIf="!studentPhotoUrl" class="sv-emoji">
+            {{ getGenderEmoji(student.gender) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Name + meta -->
+      <div class="sv-hero-info">
+        <h2 class="sv-name">{{ student.studentName }}</h2>
+        <div class="sv-meta">
+          <span>{{ student.age }} yrs</span>
+          <span class="sv-dot">·</span>
+          <span>{{ student.gender }}</span>
+        </div>
+      </div>
+
+      <!-- Quick stats row -->
+      <div class="sv-stats">
+        <div class="sv-stat sv-stat-events">
+          <span class="sv-stat-icon">📅</span>
+          <div>
+            <div class="sv-stat-val">{{ student.activeEnrollments }}</div>
+            <div class="sv-stat-lbl">Events</div>
+          </div>
+        </div>
+
+        <div class="sv-stat sv-stat-sub" *ngIf="student.subscriptionPlanName">
+          <span class="sv-stat-icon">🎯</span>
+          <div>
+            <div class="sv-stat-val" style="font-size:0.78rem;line-height:1.3">
+              {{ student.subscriptionPlanName }}
+            </div>
+            <div class="sv-stat-lbl">Plan</div>
+          </div>
+        </div>
+
+        <div class="sv-stat sv-stat-pending" [class.has-pending]="student.pendingAmount > 0"
+             (click)="student.pendingAmount > 0 && viewPendingInvoices()">
+          <span class="sv-stat-icon">💳</span>
+          <div>
+            <div class="sv-stat-val">{{ formatCurrency(student.pendingAmount) }}</div>
+            <div class="sv-stat-lbl">
+              Pending
+              <span class="badge-count" *ngIf="student.pendingInvoiceCount > 0">
+                {{ student.pendingInvoiceCount }}
+              </span>
+            </div>
+          </div>
+          <span class="sv-stat-arrow" *ngIf="student.pendingAmount > 0">→</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PAY BANNER ────────────────────────────────────────────────── -->
+    <div class="pay-banner" *ngIf="student.pendingInvoiceCount > 0"
+         (click)="viewPendingInvoices()">
+      <span>💳 {{ student.pendingInvoiceCount }} pending invoice(s)</span>
+      <span class="banner-amount">{{ formatCurrency(student.pendingAmount) }} →</span>
+    </div>
+
+    <!-- ── DETAILS CARD ──────────────────────────────────────────────── -->
+    <div class="sv-section-header">
+      <h3>Personal Info</h3>
+    </div>
+    <div class="sv-details-card">
+      <div class="sv-detail-row">
+        <span class="sv-detail-label">📅 Date of Birth</span>
+        <span class="sv-detail-val">{{ formatDate(student.dateOfBirth) }}</span>
+      </div>
+      <div class="sv-detail-row">
+        <span class="sv-detail-label">{{ student.gender === 'Male' ? '🚹' : '🚺' }} Gender</span>
+        <span class="sv-detail-val">{{ student.gender }}</span>
+      </div>
+      <div class="sv-detail-row">
+        <span class="sv-detail-label">🎂 Age</span>
+        <span class="sv-detail-val">{{ student.age }} years old</span>
+      </div>
+    </div>
+
+    <!-- ── QR CODE ───────────────────────────────────────────────────── -->
+    <div class="sv-section-header">
+      <h3>📱 Attendance QR Code</h3>
+      <button class="sv-toggle-qr" (click)="toggleQRCode()">
+        {{ showQRCode ? 'Hide' : 'Show' }}
+      </button>
+    </div>
+
+    <div class="sv-qr-card" *ngIf="showQRCode">
+      <div class="sv-qr-inner" *ngIf="qrCodeUrl">
+        <img [src]="qrCodeUrl" alt="QR Code" class="sv-qr-img" />
+        <p class="sv-qr-hint">Scan to identify · ID: {{ studentId }}</p>
+      </div>
+      <div class="sv-qr-loading" *ngIf="!qrCodeUrl">
+        <div class="spinner"></div>
+      </div>
+    </div>
+
+    <!-- ── ENROLLMENTS ───────────────────────────────────────────────── -->
+    <div class="sv-section-header">
+      <h3>Active Events</h3>
+      <span class="section-count">{{ enrollments.length }}</span>
+    </div>
+
+    <div class="sv-enrollments" *ngIf="enrollments.length > 0">
+      <div class="sv-enrollment-item" *ngFor="let e of enrollments">
+        <div class="sv-enr-icon">{{ getEventTypeEmoji(e.eventType) }}</div>
+        <div class="sv-enr-info">
+          <div class="sv-enr-name">{{ e.eventName }}</div>
+          <div class="sv-enr-meta">
+            <span class="sv-enr-type">{{ e.eventType }}</span>
+            <span *ngIf="e.sport" class="sv-enr-sport">· {{ e.sport }}</span>
+          </div>
+          <div class="sv-enr-dates">
+            📅 {{ formatDate(e.startDate) }} — {{ formatDate(e.endDate) }}
+          </div>
+        </div>
+        <span class="sv-enr-badge" [class.active]="e.isActive" [class.inactive]="!e.isActive">
+          {{ e.isActive ? 'Active' : 'Ended' }}
+        </span>
+      </div>
+    </div>
+
+    <div class="sv-empty" *ngIf="enrollments.length === 0">
+      <div class="sv-empty-icon">📅</div>
+      <p>No active event enrollments</p>
+    </div>
+
+  </div>
+
+  <!-- ── ID CARD MODAL ─────────────────────────────────────────────── -->
+  <app-student-id-card
+    [isOpen]="showIdCard"
+    [studentId]="studentId"
+    [studentName]="student?.studentName || ''"
+    [gender]="student?.gender || ''"
+    [age]="student ? getAge(student.dateOfBirth) : null"
+    [photoApiPath]="'/api/students/' + studentId + '/photo'"
+    (closeCard)="showIdCard = false">
+  </app-student-id-card>
+
+</div>

@@ -1,0 +1,191 @@
+<header class="mb-header">
+  <div class="mb-header-left">
+    <button class="mb-back-btn" (click)="router.navigate(['/master-admin'])">&#8592; Dashboard</button>
+    <div>
+      <h1 class="mb-title">&#127968; Club Pricing</h1>
+      <p class="mb-sub">Per-club service overrides &middot; discounts &middot; adhoc charges</p>
+    </div>
+  </div>
+  <div class="mb-header-right">
+    <button class="mb-btn ghost" (click)="router.navigate(['/master-admin/billing/services'])">&#128203; Catalogue</button>
+    <button class="mb-btn ghost" (click)="router.navigate(['/master-admin/billing/invoices'])">&#129534; Invoices</button>
+  </div>
+</header>
+
+<div class="mb-body">
+  <div class="mb-error" *ngIf="error">&#9888; {{ error }}</div>
+
+  <!-- Club selector -->
+  <div class="mb-card" style="padding:14px 16px; margin-bottom:14px;">
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <label style="font-size:0.75rem; font-weight:700; color:#64748b; text-transform:uppercase;">Select Club</label>
+      <select class="mb-select" style="width:280px;" (change)="selectClub(+$any($event.target).value)">
+        <option value="">— Choose a club —</option>
+        <option *ngFor="let c of clubs" [value]="c.clubId">{{ c.clubNameEn }} ({{ c.clubCode }})</option>
+      </select>
+      <span *ngIf="selectedClubId" style="font-size:0.82rem; color:#64748b;">
+        Estimated monthly: <strong style="color:#f57c00;">{{ totalMonthly() | number:'1.2-2' }} SAR</strong>
+      </span>
+    </div>
+  </div>
+
+  <ng-container *ngIf="selectedClubId">
+    <!-- Tabs -->
+    <div class="mb-tabs">
+      <button [class.active]="tab==='services'" (click)="tab='services'">&#9881;&#65039; Services &amp; Pricing</button>
+      <button [class.active]="tab==='adhoc'"    (click)="tab='adhoc'">&#128203; Adhoc Charges</button>
+    </div>
+
+    <!-- SERVICES TAB -->
+    <ng-container *ngIf="tab==='services'">
+      <div class="mb-loading" *ngIf="loading"><div class="mb-spinner"></div><span>Loading services...</span></div>
+
+      <div class="mb-card" *ngIf="!loading">
+        <div class="mb-card-header">
+          <h3>Services for {{ selectedClubName() }}</h3>
+          <button class="mb-action-btn success" (click)="saveServices()" [disabled]="saving">
+            {{ saving ? 'Saving...' : '&#10003; Save all' }}
+          </button>
+        </div>
+        <div class="mb-table-wrap">
+          <table class="mb-table">
+            <thead>
+              <tr>
+                <th style="width:44px;"></th>
+                <th>Enabled</th>
+                <th>Service</th>
+                <th class="r">Default</th>
+                <th class="r">Custom price</th>
+                <th class="r">Discount %</th>
+                <th class="r">Final price</th>
+                <th>Billing</th>
+                <th>Free tier</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let s of services" [style.opacity]="s.isEnabled ? 1 : 0.5">
+                <td style="font-size:1.2rem; text-align:center;">{{ s.icon }}</td>
+                <td>
+                  <input type="checkbox" [(ngModel)]="s.isEnabled" style="width:16px; height:16px; cursor:pointer;" />
+                </td>
+                <td>
+                  <div style="font-weight:600; color:#1e293b;">{{ s.nameEn }}</div>
+                  <div style="font-size:0.7rem; color:#64748b;">{{ s.chargeType }}</div>
+                </td>
+                <td class="r" style="color:#64748b;">{{ s.defaultPrice | number:'1.2-2' }}</td>
+                <td class="r">
+                  <input type="number" [(ngModel)]="s.customPrice"
+                    class="mb-input" style="width:90px; padding:4px 6px; text-align:right;"
+                    placeholder="default" min="0" step="0.01" [disabled]="!s.isEnabled" />
+                </td>
+                <td class="r">
+                  <input type="number" [(ngModel)]="s.discountPct"
+                    class="mb-input" style="width:64px; padding:4px 6px; text-align:right;"
+                    min="0" max="100" step="0.5" [disabled]="!s.isEnabled" />
+                </td>
+                <td class="r" style="font-weight:700; color:#f57c00;">
+                  {{ computeFinal(s) | number:'1.2-2' }} SAR
+                </td>
+                <td>
+                  <select class="mb-select" style="width:90px; padding:4px 6px;" [(ngModel)]="s.billingCycle" [disabled]="!s.isEnabled">
+                    <option value="monthly">Monthly</option>
+                    <option value="yearly">Yearly</option>
+                  </select>
+                </td>
+                <td>
+                  <input type="number" [(ngModel)]="s.freeTierOverride"
+                    class="mb-input" style="width:64px; padding:4px 6px;"
+                    [placeholder]="s.freeTierUnits || '0'" min="0" [disabled]="!s.isEnabled" />
+                </td>
+                <td>
+                  <input type="text" [(ngModel)]="s.notes"
+                    class="mb-input" style="width:100px; padding:4px 6px;"
+                    placeholder="notes..." [disabled]="!s.isEnabled" />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="padding:12px 16px; text-align:right; border-top:1px solid #f1f5f9; font-size:0.85rem; font-weight:700; color:#1e293b;">
+          Estimated monthly total (enabled services): <span style="color:#f57c00;">{{ totalMonthly() | number:'1.2-2' }} SAR</span>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ADHOC TAB -->
+    <ng-container *ngIf="tab==='adhoc'">
+      <div class="mb-card">
+        <div class="mb-card-header">
+          <h3>Adhoc Charges for {{ selectedClubName() }}</h3>
+          <button class="mb-action-btn success" (click)="showAdhocForm=true">&#43; Add charge</button>
+        </div>
+        <div class="mb-table-wrap">
+          <table class="mb-table">
+            <thead>
+              <tr>
+                <th>Description</th><th class="r">Amount</th>
+                <th>Mode</th><th>Status</th><th>Created</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="adhocList.length===0">
+                <td colspan="6" style="text-align:center; color:#64748b; padding:24px;">No adhoc charges yet</td>
+              </tr>
+              <tr *ngFor="let a of adhocList">
+                <td>
+                  <div style="font-weight:600;">{{ a.description }}</div>
+                  <div style="font-size:0.72rem; color:#64748b;" *ngIf="a.notes">{{ a.notes }}</div>
+                </td>
+                <td class="r" style="font-weight:700; color:#f57c00;">{{ a.amount | number:'1.2-2' }} SAR</td>
+                <td><span class="mb-badge active">{{ a.billingMode === 'next_invoice' ? 'Next invoice' : 'Standalone' }}</span></td>
+                <td><span class="mb-badge" [class]="a.status">{{ a.status }}</span></td>
+                <td style="color:#64748b;">{{ a.createdAt }}</td>
+                <td>
+                  <button class="mb-action-btn danger" (click)="cancelAdhoc(a.adhocId)"
+                    *ngIf="a.status==='pending'">Cancel</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </ng-container>
+  </ng-container>
+</div>
+
+<!-- Adhoc panel -->
+<div class="mb-overlay" *ngIf="showAdhocForm" (click)="showAdhocForm=false">
+  <div class="mb-panel" (click)="$event.stopPropagation()">
+    <div class="mb-panel-header">
+      <h3>&#128203; Add Adhoc Charge</h3>
+      <button class="mb-panel-close" (click)="showAdhocForm=false">&#x2715;</button>
+    </div>
+    <div class="mb-panel-body">
+      <div class="mb-form-group">
+        <label class="mb-label">Description *</label>
+        <input class="mb-input" [(ngModel)]="adhocForm.description" placeholder="e.g. Custom branding setup fee" />
+      </div>
+      <div class="mb-form-group">
+        <label class="mb-label">Amount (SAR) *</label>
+        <input class="mb-input" type="number" [(ngModel)]="adhocForm.amount" min="0" step="0.01" />
+      </div>
+      <div class="mb-form-group">
+        <label class="mb-label">Billing mode</label>
+        <select class="mb-select" [(ngModel)]="adhocForm.billingMode">
+          <option value="next_invoice">Roll into next invoice</option>
+          <option value="standalone">Generate standalone invoice</option>
+        </select>
+      </div>
+      <div class="mb-form-group">
+        <label class="mb-label">Notes (internal)</label>
+        <textarea class="mb-textarea" [(ngModel)]="adhocForm.notes" placeholder="Reason for this charge..."></textarea>
+      </div>
+      <hr class="mb-divider" />
+      <button class="mb-save-btn" (click)="createAdhoc()" [disabled]="saving || !adhocForm.description || !adhocForm.amount">
+        {{ saving ? 'Saving...' : 'Add Charge' }}
+      </button>
+      <button class="mb-cancel-btn" (click)="showAdhocForm=false">Cancel</button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,497 @@
+.my-subscriptions-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// Header
+.page-header {
+  margin-bottom: 2rem;
+
+  h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  .subtitle {
+    color: #6b7280;
+    font-size: 1rem;
+  }
+}
+
+// Loading
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4rem 2rem;
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #667eea;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  p {
+    margin-top: 1rem;
+    color: #6b7280;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// Subscriptions List
+.subscriptions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+// Subscription Card
+.subscription-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+  transition: all 0.3s ease;
+
+  &:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  &[data-status="expired"] {
+    opacity: 0.7;
+  }
+}
+
+// Card Header
+.card-header {
+  padding: 1.5rem 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  &.badge-gold {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  }
+
+  &.badge-silver {
+    background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%);
+  }
+
+  &.badge-bronze {
+    background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .badge-icon {
+      font-size: 2.5rem;
+      filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+    }
+
+    .plan-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .billing-info {
+      margin: 0.25rem 0 0 0;
+      opacity: 0.9;
+      font-size: 0.95rem;
+    }
+  }
+
+  .header-right {
+    .status-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      backdrop-filter: blur(10px);
+
+      &.status-active {
+        background: rgba(16, 185, 129, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+
+      &.status-expired {
+        background: rgba(239, 68, 68, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+
+      &.status-pending_payment {
+        background: rgba(251, 191, 36, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+      }
+    }
+  }
+}
+
+// Card Content
+.card-content {
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+// Period Section
+.period-section {
+  .period-info {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1rem;
+
+    .date-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+
+      .date-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+        font-weight: 500;
+      }
+
+      .date-value {
+        font-size: 1rem;
+        color: #1f2937;
+        font-weight: 600;
+      }
+    }
+  }
+
+  .progress-bar-container {
+    .progress-bar {
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        transition: width 0.3s ease;
+      }
+    }
+
+    .progress-text {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin: 0;
+
+      &.expiring {
+        color: #dc2626;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+// Events Section
+.events-section {
+  h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+
+    .event-count {
+      color: #6b7280;
+      font-weight: 400;
+    }
+  }
+
+  .events-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .event-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+    border-radius: 8px;
+
+    .pill-icon {
+      color: #10b981;
+      font-weight: 700;
+    }
+
+    .pill-text {
+      flex: 1;
+      color: #5b21b6;
+      font-weight: 500;
+      font-size: 0.95rem;
+    }
+
+    .pill-usage {
+      font-size: 0.75rem;
+      color: #6b7280;
+      background: rgba(255, 255, 255, 0.5);
+      padding: 0.25rem 0.5rem;
+      border-radius: 12px;
+    }
+  }
+}
+
+// Savings Section
+.savings-section {
+  .savings-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    border-radius: 12px;
+
+    .savings-icon {
+      font-size: 2.5rem;
+    }
+
+    .savings-info {
+      display: flex;
+      flex-direction: column;
+
+      .savings-label {
+        font-size: 0.875rem;
+        color: #065f46;
+        font-weight: 500;
+      }
+
+      .savings-amount {
+        font-size: 1.75rem;
+        color: #065f46;
+        font-weight: 700;
+      }
+    }
+  }
+}
+
+// Payment Section
+.payment-section {
+  padding: 1.5rem;
+  background: #f9fafb;
+  border-radius: 8px;
+
+  .payment-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+
+    &:not(:last-child) {
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .payment-label {
+      color: #6b7280;
+      font-weight: 500;
+    }
+
+    .payment-value {
+      font-weight: 700;
+      color: #1f2937;
+      font-size: 1.1rem;
+
+      &.paid {
+        color: #10b981;
+      }
+    }
+  }
+}
+
+// Renewal Section
+.renewal-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #f3f4f6;
+  border-radius: 8px;
+
+  .renewal-status {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+
+    .renewal-icon {
+      font-size: 1.5rem;
+    }
+
+    .renewal-info {
+      display: flex;
+      flex-direction: column;
+
+      .renewal-label {
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+
+      .renewal-value {
+        font-weight: 700;
+        color: #1f2937;
+      }
+    }
+
+    &.active {
+      .renewal-value {
+        color: #10b981;
+      }
+    }
+  }
+
+  .next-billing {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+
+    .billing-label {
+      font-size: 0.875rem;
+      color: #6b7280;
+    }
+
+    .billing-date {
+      font-weight: 600;
+      color: #1f2937;
+    }
+  }
+}
+
+// Card Actions
+.card-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1.5rem 2rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+
+  .btn {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-secondary {
+    background: #e5e7eb;
+    color: #374151;
+
+    &:hover {
+      background: #d1d5db;
+    }
+  }
+
+  .btn-danger {
+    background: #fee2e2;
+    color: #991b1b;
+
+    &:hover {
+      background: #fecaca;
+    }
+  }
+}
+
+// Empty State
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+
+  .empty-icon {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: #6b7280;
+    margin-bottom: 2rem;
+  }
+
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.75rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(102, 126, 234, 0.35);
+    }
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .period-info {
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+
+  .events-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .card-actions {
+    flex-direction: column;
+
+    .btn {
+      width: 100%;
+    }
+  }
+
+  .renewal-section {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+
+    .next-billing {
+      align-items: flex-start;
+    }
+  }
+}

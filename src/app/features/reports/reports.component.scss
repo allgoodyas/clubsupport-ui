@@ -1,0 +1,230 @@
+.rpt-container {
+  min-height: 100vh;
+  background: var(--bg-app, #0A0F1E);
+  color: var(--text-primary, #E2E8F0);
+  font-family: inherit;
+}
+
+// ── Header ────────────────────────────────────────────────────────
+.rpt-header {
+  display: flex; align-items: center;
+  padding: 14px 24px; gap: 12px;
+  background: var(--gradient-primary, linear-gradient(135deg, #00D4FF, #A855F7));
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: sticky; top: 0; z-index: 50;
+
+  h1 { margin: 0; font-size: 1.1rem; font-weight: 700; color: #ffffff; }
+  .rpt-sub { font-size: 0.75rem; color: rgba(255, 255, 255, 0.75); }
+}
+
+.rpt-header-left { display: flex; align-items: center; gap: 14px; }
+
+.rpt-tabs { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-left: auto; }
+
+.rpt-tab {
+  padding: 7px 16px;
+  background: transparent;
+  border: 1px solid var(--bg-border, #1E2D45);
+  border-radius: 8px; font-size: 0.83rem; font-weight: 600;
+  color: var(--text-secondary, #94A3B8);
+  cursor: pointer; font-family: inherit; transition: all 0.15s;
+
+  &.active { background: linear-gradient(135deg, #00D4FF, #A855F7); color: #fff; border-color: transparent; }
+  &:not(.active):hover { background: rgba(255,255,255,0.05); color: var(--text-primary, #E2E8F0); }
+}
+
+.rpt-tab-financial {
+  background: linear-gradient(135deg, rgba(29,158,117,0.15), rgba(15,110,86,0.15)) !important;
+  border-color: rgba(29,158,117,0.4) !important;
+  color: #1D9E75 !important;
+  &:hover {
+    background: linear-gradient(135deg, rgba(29,158,117,0.3), rgba(15,110,86,0.3)) !important;
+    color: #5DCAA5 !important;
+  }
+}
+
+// ── Filters row (tabs + date filters on one line) ────────────────────
+.rpt-filters {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 16px;
+  margin: 12px 16px 6px;                         // inset so the rounded corners show
+  background: var(--bg-card, #1A2235);
+  border: 1px solid var(--bg-border, #1E2D45);   // full border (was bottom-only)
+  border-radius: 12px;                           // matches the students toolbar curve
+  position: sticky; top: 0; z-index: 40;
+}
+
+// Vertical divider between tabs and date filters
+.rpt-filters-divider {
+  width: 1px; height: 28px;
+  background: var(--bg-border, #1E2D45);
+  flex-shrink: 0; margin: 0 2px;
+}
+
+.filter-group {
+  display: flex; align-items: center; gap: 8px;
+  label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary, #94A3B8); white-space: nowrap; }
+  input, select {
+    background: var(--bg-panel, #111827);
+    border: 1.5px solid var(--bg-border, #1E2D45);
+    border-radius: 7px; padding: 6px 10px;
+    color: var(--text-primary, #E2E8F0);
+    font-size: 0.82rem; font-family: inherit;
+    &:focus { outline: none; border-color: #00D4FF; }
+    option { background: var(--bg-panel, #111827); }
+  }
+}
+
+.btn-clear-f {
+  padding: 6px 12px; background: transparent;
+  border: 1px solid rgba(255,71,87,0.3); border-radius: 7px;
+  color: #FF4757; font-size: 0.78rem; font-weight: 600;
+  cursor: pointer; font-family: inherit;
+  &:hover { background: rgba(255,71,87,0.1); }
+}
+
+// ── Body ──────────────────────────────────────────────────────────
+.rpt-body { flex: 1; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+
+.rpt-loading { display: flex; justify-content: center; padding: 60px; }
+
+.no-data {
+  text-align: center; padding: 32px;
+  color: var(--text-secondary, #94A3B8); font-size: 0.875rem;
+  background: var(--bg-card, #1A2235);
+  border: 1px solid var(--bg-border, #1E2D45); border-radius: 12px;
+}
+
+// ── KPI cards ─────────────────────────────────────────────────────
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.kpi-card {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px;
+  background: var(--bg-card, #1A2235);
+  border: 1px solid var(--bg-border, #1E2D45);
+  border-radius: 12px;
+
+  .kpi-icon { font-size: 2rem; flex-shrink: 0; }
+  .kpi-info { display: flex; flex-direction: column; gap: 3px; }
+  .kpi-label { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary, #94A3B8); }
+  .kpi-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary, #E2E8F0); small { font-size: 0.75rem; color: var(--text-secondary, #94A3B8); } }
+  .kpi-sub   { font-size: 0.72rem; color: var(--text-secondary, #94A3B8); }
+
+  &.income  { border-color: rgba(0,212,255,0.3);  .kpi-value { color: #00D4FF; } }
+  &.expense { border-color: rgba(168,85,247,0.3); .kpi-value { color: #A855F7; } }
+  &.net-profit { border-color: rgba(16,185,129,0.3); .kpi-value { color: #10B981; } }
+  &.net-loss   { border-color: rgba(255,71,87,0.3);  .kpi-value { color: #FF4757; } }
+}
+
+// ── Month comparison ──────────────────────────────────────────────
+.month-comparison {
+  background: var(--bg-card, #1A2235);
+  border: 1px solid var(--bg-border, #1E2D45);
+  border-radius: 12px;
+  padding: 20px;
+
+  h3 { margin: 0 0 16px; font-size: 0.9rem; font-weight: 700; color: var(--text-primary, #E2E8F0); }
+}
+
+.mc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.mc-card {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 16px;
+  background: var(--bg-panel, #111827);
+  border: 1px solid var(--bg-border, #1E2D45);
+  border-radius: 10px;
+
+  .mc-label { font-size: 0.78rem; color: var(--text-secondary, #94A3B8); }
+  .mc-value { font-size: 1.1rem; font-weight: 700; color: var(--text-primary, #E2E8F0); }
+  .mc-sub   { font-size: 0.72rem; color: var(--text-secondary, #94A3B8); }
+
+  &.mc-profit { border-color: rgba(16,185,129,0.3);  .mc-value { color: #10B981; } }
+  &.mc-loss   { border-color: rgba(255,71,87,0.3);   .mc-value { color: #FF4757; } }
+}
+
+.mc-trend {
+  font-size: 0.75rem; font-weight: 700;
+  &.trend-up   { color: #10B981; }
+  &.trend-down { color: #FF4757; }
+  &.trend-flat { color: var(--text-secondary, #94A3B8); }
+}
+
+// ── Quick links ───────────────────────────────────────────────────
+.quick-links { display: flex; gap: 12px; flex-wrap: wrap; }
+
+.ql-btn {
+  padding: 10px 20px; border: none; border-radius: 8px;
+  font-size: 0.875rem; font-weight: 700; cursor: pointer; font-family: inherit;
+  transition: opacity 0.15s, transform 0.15s;
+  &:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  &.income-btn  { background: linear-gradient(135deg, #00D4FF, #0EA5E9); color: #fff; }
+  &.expense-btn { background: linear-gradient(135deg, #A855F7, #7C3AED); color: #fff; }
+  &.neutral-btn { background: var(--bg-card, #1A2235); color: var(--text-primary, #E2E8F0); border: 1px solid var(--bg-border, #1E2D45); }
+}
+
+// ── Chart cards ───────────────────────────────────────────────────
+.chart-card {
+  background: var(--bg-card, #1A2235);
+  border: 1px solid var(--bg-border, #1E2D45);
+  border-radius: 12px;
+  padding: 20px;
+
+  h3 { margin: 0 0 16px; font-size: 0.9rem; font-weight: 700; color: var(--text-primary, #E2E8F0); }
+}
+
+.chart-wrap { position: relative; max-height: 280px; }
+.donut-wrap { max-height: 220px; display: flex; justify-content: center; }
+
+.charts-2col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+// ── Legend list ───────────────────────────────────────────────────
+.legend-list { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+.ll-row {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 0.8rem;
+}
+
+.ll-dot    { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.ll-label  { flex: 1; color: var(--text-primary, #E2E8F0); }
+.ll-amount { font-weight: 700; color: var(--text-primary, #E2E8F0); }
+.ll-count  { color: var(--text-secondary, #94A3B8); font-size: 0.72rem; }
+
+// ── Bar list (team breakdown) ─────────────────────────────────────
+.bar-list { display: flex; flex-direction: column; gap: 10px; }
+
+.bl-row {
+  display: flex; align-items: center; gap: 12px; font-size: 0.82rem;
+}
+
+.bl-label  { min-width: 120px; color: var(--text-primary, #E2E8F0); font-weight: 600; flex-shrink: 0; }
+.bl-track  { flex: 1; height: 10px; background: var(--bg-panel, #111827); border-radius: 5px; overflow: hidden; }
+.bl-fill   { height: 100%; border-radius: 5px; transition: width 0.4s ease; }
+.bl-amount { min-width: 100px; text-align: right; font-weight: 700; color: var(--text-secondary, #94A3B8); }
+
+.income-fill  { background: linear-gradient(90deg, #00D4FF, #0EA5E9); }
+.expense-fill { background: linear-gradient(90deg, #A855F7, #7C3AED); }
+
+// ── Spinner ───────────────────────────────────────────────────────
+.spinner {
+  width: 32px; height: 32px;
+  border: 2px solid var(--bg-border, #1E2D45);
+  border-top-color: #00D4FF; border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

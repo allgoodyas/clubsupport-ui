@@ -1,0 +1,359 @@
+<header class="mb-header">
+  <div class="mb-header-left">
+    <button class="mb-back-btn" (click)="router.navigate(['/master-admin'])">&#8592; Dashboard</button>
+    <div>
+      <h1 class="mb-title">&#129534; Master Invoices</h1>
+      <p class="mb-sub">Club billing &middot; generate &middot; record payment</p>
+    </div>
+  </div>
+  <div class="mb-header-right">
+    <button class="mb-btn ghost" (click)="router.navigate(['/master-admin/billing/services'])">&#128203; Catalogue</button>
+    <button class="mb-btn ghost" (click)="router.navigate(['/master-admin/billing/clubs'])">&#127968; Club Pricing</button>
+    <button class="mb-btn primary" (click)="showGenForm=true">&#43; Generate Invoice</button>
+  </div>
+</header>
+
+<div class="mb-body">
+  <div class="mb-error" *ngIf="error">&#9888; {{ error }}</div>
+
+  <!-- Tabs -->
+  <div class="mb-tabs">
+    <button [class.active]="tab==='dashboard'" (click)="tab='dashboard'; loadDashboard()">&#128202; Billing Dashboard</button>
+    <button [class.active]="tab==='invoices'"  (click)="tab='invoices';  loadInvoices()">&#129534; All Invoices</button>
+  </div>
+
+  <!-- ════ DASHBOARD TAB ════ -->
+  <ng-container *ngIf="tab==='dashboard'">
+
+    <!-- KPI cards -->
+    <div class="mb-kpi-grid">
+      <div class="mb-kpi orange">
+        <div class="mb-kpi-val">{{ totalMonthly() | number:'1.2-2' }} SAR</div>
+        <div class="mb-kpi-lbl">Est. monthly recurring</div>
+      </div>
+      <div class="mb-kpi green">
+        <div class="mb-kpi-val">{{ totalPaid() | number:'1.2-2' }} SAR</div>
+        <div class="mb-kpi-lbl">Total collected</div>
+      </div>
+      <div class="mb-kpi red">
+        <div class="mb-kpi-val">{{ totalOutstanding() | number:'1.2-2' }} SAR</div>
+        <div class="mb-kpi-lbl">Outstanding</div>
+      </div>
+      <div class="mb-kpi blue">
+        <div class="mb-kpi-val">{{ dashboard.length }}</div>
+        <div class="mb-kpi-lbl">Active clubs</div>
+      </div>
+    </div>
+
+    <!-- Per-club summary table -->
+    <div class="mb-card">
+      <div class="mb-card-header">
+        <h3>Per-club billing summary</h3>
+      </div>
+      <div class="mb-table-wrap">
+        <table class="mb-table">
+          <thead>
+            <tr>
+              <th>Club</th>
+              <th class="r">Active services</th>
+              <th class="r">Est. monthly</th>
+              <th class="r">Total invoiced</th>
+              <th class="r">Paid</th>
+              <th class="r">Outstanding</th>
+              <th>Last invoice</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of dashboard">
+              <td>
+                <div style="font-weight:600; color:#1e293b;">{{ r.clubNameEn }}</div>
+                <div style="font-size:0.7rem; color:#64748b;">{{ r.clubCode }}</div>
+              </td>
+              <td class="r">{{ r.activeServices }}</td>
+              <td class="r" style="color:#f57c00; font-weight:600;">{{ r.estMonthlyValue | number:'1.2-2' }} SAR</td>
+              <td class="r">{{ r.totalInvoiced | number:'1.2-2' }} SAR</td>
+              <td class="r" style="color:#16a34a; font-weight:600;">{{ r.totalPaid | number:'1.2-2' }} SAR</td>
+              <td class="r" [style.color]="r.totalOutstanding>0 ? '#dc2626' : '#16a34a'" style="font-weight:600;">
+                {{ r.totalOutstanding | number:'1.2-2' }} SAR
+              </td>
+              <td>
+                <div style="font-size:0.8rem;">{{ r.lastInvoiceDate || '—' }}</div>
+                <span class="mb-badge" [class]="r.lastInvoiceStatus" *ngIf="r.lastInvoiceStatus">{{ r.lastInvoiceStatus }}</span>
+              </td>
+              <td>
+                <div style="display:flex; gap:4px;">
+                  <button class="mb-action-btn edit" (click)="genForm.clubId=r.clubId; showGenForm=true">Invoice</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ════ INVOICES TAB ════ -->
+  <ng-container *ngIf="tab==='invoices'">
+
+    <!-- Filters -->
+    <div class="mb-card" style="padding:12px 16px; margin-bottom:14px;">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+        <div>
+          <label class="mb-label">Club</label>
+          <select class="mb-select" style="width:220px;" [(ngModel)]="filterClubId" (change)="loadInvoices()">
+            <option value="">All clubs</option>
+            <option *ngFor="let c of clubs" [value]="c.clubId">{{ c.clubNameEn }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="mb-label">Status</label>
+          <select class="mb-select" style="width:140px;" [(ngModel)]="filterStatus" (change)="loadInvoices()">
+            <option value="">All statuses</option>
+            <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="mb-loading" *ngIf="loading"><div class="mb-spinner"></div><span>Loading invoices...</span></div>
+
+    <div class="mb-card" *ngIf="!loading">
+      <div class="mb-card-header">
+        <h3>Invoices ({{ invoices.length }})</h3>
+      </div>
+      <div class="mb-table-wrap">
+        <table class="mb-table">
+          <thead>
+            <tr>
+              <th>Invoice #</th><th>Club</th><th>Period</th>
+              <th class="r">Total</th><th class="r">Paid</th><th class="r">Due</th>
+              <th>Due date</th><th>Status</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="invoices.length===0">
+              <td colspan="9" style="text-align:center; color:#64748b; padding:24px;">No invoices found</td>
+            </tr>
+            <tr *ngFor="let inv of invoices">
+              <td style="font-family:monospace; font-weight:600; color:#f57c00;">{{ inv.invoiceNumber }}</td>
+              <td>
+                <div style="font-weight:600;">{{ inv.clubNameEn }}</div>
+                <div style="font-size:0.7rem; color:#64748b;">{{ inv.clubCode }}</div>
+              </td>
+              <td style="font-size:0.78rem; color:#64748b;">{{ inv.periodFrom }}<br/>{{ inv.periodTo }}</td>
+              <td class="r" style="font-weight:700;">{{ inv.totalAmount | number:'1.2-2' }} SAR</td>
+              <td class="r" style="color:#16a34a; font-weight:600;">{{ inv.amountPaid | number:'1.2-2' }} SAR</td>
+              <td class="r" [style.color]="inv.amountDue>0?'#dc2626':'#16a34a'" style="font-weight:600;">
+                {{ inv.amountDue | number:'1.2-2' }} SAR
+              </td>
+              <td style="font-size:0.78rem; color:#64748b;">{{ inv.dueDate }}</td>
+              <td>
+                <select class="mb-select" style="width:110px; padding:3px 6px; font-size:0.75rem;"
+                  [value]="inv.status" (change)="updateStatus(inv, $any($event.target).value)">
+                  <option *ngFor="let s of statuses" [value]="s">{{ s }}</option>
+                </select>
+              </td>
+              <td>
+                <div style="display:flex; gap:4px;">
+                  <button class="mb-action-btn view"    (click)="viewInvoice(inv.masterInvoiceId)">View</button>
+                  <button class="mb-action-btn success" (click)="openPayment(inv)"
+                    *ngIf="inv.amountDue>0">Pay</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+</div>
+
+<!-- Invoice detail panel -->
+<div class="mb-overlay" *ngIf="selected && !showPayForm" (click)="selected=null">
+  <div class="mb-panel" (click)="$event.stopPropagation()" style="width:560px;">
+    <div class="mb-panel-header">
+      <h3>{{ selected.invoiceNumber }}</h3>
+      <button class="mb-panel-close" (click)="selected=null">&#x2715;</button>
+    </div>
+    <div class="mb-panel-body">
+      <div style="display:flex; justify-content:space-between; margin-bottom:12px;">
+        <div>
+          <div style="font-weight:700; font-size:0.95rem; color:#1e293b;">{{ selected.clubNameEn }}</div>
+          <div style="font-size:0.78rem; color:#64748b;">{{ selected.clubCode }}</div>
+        </div>
+        <span class="mb-badge" [class]="selected.status">{{ selected.status }}</span>
+      </div>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.8rem; margin-bottom:14px;">
+        <div><span style="color:#64748b;">Period: </span>{{ selected.periodFrom }} – {{ selected.periodTo }}</div>
+        <div><span style="color:#64748b;">Invoice date: </span>{{ selected.invoiceDate }}</div>
+        <div><span style="color:#64748b;">Due date: </span>{{ selected.dueDate }}</div>
+        <div *ngIf="selected.studentCountSnapshot"><span style="color:#64748b;">Students: </span>{{ selected.studentCountSnapshot }}</div>
+      </div>
+
+      <hr class="mb-divider" />
+
+      <!-- Line items -->
+      <table style="width:100%; border-collapse:collapse; font-size:0.82rem; margin-bottom:14px;">
+        <thead>
+          <tr style="background:#f8fafc;">
+            <th style="padding:7px 8px; text-align:left; font-size:0.68rem; font-weight:700; text-transform:uppercase; color:#64748b; border-bottom:2px solid #e2e8f0;">Description</th>
+            <th style="padding:7px 8px; text-align:right; font-size:0.68rem; font-weight:700; text-transform:uppercase; color:#64748b; border-bottom:2px solid #e2e8f0;">Qty</th>
+            <th style="padding:7px 8px; text-align:right; font-size:0.68rem; font-weight:700; text-transform:uppercase; color:#64748b; border-bottom:2px solid #e2e8f0;">Unit</th>
+            <th style="padding:7px 8px; text-align:right; font-size:0.68rem; font-weight:700; text-transform:uppercase; color:#64748b; border-bottom:2px solid #e2e8f0;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let l of selected.lines" style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:7px 8px; color:#1e293b;">
+              <span *ngIf="l.isAdhoc" class="mb-badge" style="background:#fef9c3; color:#854d0e; margin-right:4px;">Adhoc</span>
+              {{ l.description }}
+              <span *ngIf="l.discountPct>0" style="font-size:0.7rem; color:#16a34a;"> ({{ l.discountPct }}% off)</span>
+            </td>
+            <td style="padding:7px 8px; text-align:right; color:#64748b;">{{ l.quantity }}</td>
+            <td style="padding:7px 8px; text-align:right; color:#64748b;">{{ l.unitPrice | number:'1.2-2' }}</td>
+            <td style="padding:7px 8px; text-align:right; font-weight:600; color:#1e293b;">{{ l.lineTotal | number:'1.2-2' }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Totals -->
+      <div style="border-top:2px solid #e2e8f0; padding-top:10px; font-size:0.85rem;">
+        <div style="display:flex; justify-content:space-between; padding:3px 0; color:#64748b;">
+          <span>Subtotal</span><span>{{ selected.subtotal | number:'1.2-2' }} SAR</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:3px 0; color:#16a34a;" *ngIf="selected.discountTotal>0">
+          <span>Discount</span><span>-{{ selected.discountTotal | number:'1.2-2' }} SAR</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:3px 0; color:#64748b;">
+          <span>VAT ({{ selected.taxPct }}%)</span><span>{{ selected.taxAmount | number:'1.2-2' }} SAR</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:6px 0; font-weight:700; font-size:0.95rem; border-top:1px solid #e2e8f0; margin-top:4px; color:#1e293b;">
+          <span>Total</span><span>{{ selected.totalAmount | number:'1.2-2' }} SAR</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:3px 0; color:#16a34a;">
+          <span>Paid</span><span>{{ selected.amountPaid | number:'1.2-2' }} SAR</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding:3px 0; font-weight:700; color:#dc2626;" *ngIf="selected.amountDue>0">
+          <span>Balance due</span><span>{{ selected.amountDue | number:'1.2-2' }} SAR</span>
+        </div>
+      </div>
+
+      <hr class="mb-divider" />
+      <button class="mb-save-btn" (click)="openPayment(selected)" *ngIf="selected.amountDue>0">
+        &#128179; Record Payment
+      </button>
+      <button class="mb-cancel-btn" (click)="selected=null">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Generate invoice panel -->
+<div class="mb-overlay" *ngIf="showGenForm" (click)="showGenForm=false">
+  <div class="mb-panel" (click)="$event.stopPropagation()">
+    <div class="mb-panel-header">
+      <h3>&#43; Generate Invoice</h3>
+      <button class="mb-panel-close" (click)="showGenForm=false">&#x2715;</button>
+    </div>
+    <div class="mb-panel-body">
+      <div class="mb-form-group">
+        <label class="mb-label">Club *</label>
+        <select class="mb-select" [(ngModel)]="genForm.clubId">
+          <option value="">— Select club —</option>
+          <option *ngFor="let c of clubs" [value]="c.clubId">{{ c.clubNameEn }}</option>
+        </select>
+      </div>
+      <div class="mb-form-row">
+        <div class="mb-form-group">
+          <label class="mb-label">Period from *</label>
+          <input class="mb-input" type="date" [(ngModel)]="genForm.periodFrom" />
+        </div>
+        <div class="mb-form-group">
+          <label class="mb-label">Period to *</label>
+          <input class="mb-input" type="date" [(ngModel)]="genForm.periodTo" />
+        </div>
+      </div>
+      <div class="mb-form-row">
+        <div class="mb-form-group">
+          <label class="mb-label">Invoice type</label>
+          <select class="mb-select" [(ngModel)]="genForm.invoiceType">
+            <option value="periodic">Periodic (monthly/yearly)</option>
+            <option value="adhoc">Adhoc / one-off</option>
+          </select>
+        </div>
+        <div class="mb-form-group">
+          <label class="mb-label">VAT %</label>
+          <input class="mb-input" type="number" [(ngModel)]="genForm.taxPct" min="0" max="100" />
+        </div>
+      </div>
+      <div class="mb-form-group">
+        <label class="mb-label">Due date</label>
+        <input class="mb-input" type="date" [(ngModel)]="genForm.dueDate" />
+      </div>
+      <div class="mb-toggle-row">
+        <label>Include pending adhoc charges</label>
+        <input type="checkbox" [(ngModel)]="genForm.includeAdhoc" />
+      </div>
+      <div class="mb-form-group" style="margin-top:10px;">
+        <label class="mb-label">Notes</label>
+        <textarea class="mb-textarea" [(ngModel)]="genForm.notes" placeholder="Optional notes on this invoice..."></textarea>
+      </div>
+      <hr class="mb-divider" />
+      <button class="mb-save-btn" (click)="generateInvoice()"
+        [disabled]="saving || !genForm.clubId || !genForm.periodFrom || !genForm.periodTo">
+        {{ saving ? 'Generating...' : '&#129534; Generate Invoice' }}
+      </button>
+      <button class="mb-cancel-btn" (click)="showGenForm=false">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Record payment panel -->
+<div class="mb-overlay" *ngIf="showPayForm" (click)="showPayForm=false">
+  <div class="mb-panel" (click)="$event.stopPropagation()">
+    <div class="mb-panel-header">
+      <h3>&#128179; Record Payment</h3>
+      <button class="mb-panel-close" (click)="showPayForm=false">&#x2715;</button>
+    </div>
+    <div class="mb-panel-body" *ngIf="selected">
+      <div style="background:#fff8f2; border:1px solid #fed7aa; border-radius:8px; padding:10px 12px; margin-bottom:14px; font-size:0.85rem;">
+        <strong>{{ selected.invoiceNumber }}</strong> — {{ selected.clubNameEn }}<br/>
+        Balance due: <strong style="color:#f57c00;">{{ selected.amountDue | number:'1.2-2' }} SAR</strong>
+      </div>
+      <div class="mb-form-group">
+        <label class="mb-label">Amount (SAR) *</label>
+        <input class="mb-input" type="number" [(ngModel)]="payForm.amount" min="0.01" step="0.01" />
+      </div>
+      <div class="mb-form-group">
+        <label class="mb-label">Payment date *</label>
+        <input class="mb-input" type="date" [(ngModel)]="payForm.paymentDate" />
+      </div>
+      <div class="mb-form-row">
+        <div class="mb-form-group">
+          <label class="mb-label">Payment method</label>
+          <select class="mb-select" [(ngModel)]="payForm.paymentMethod">
+            <option value="bank_transfer">Bank transfer</option>
+            <option value="cash">Cash</option>
+            <option value="cheque">Cheque</option>
+            <option value="online">Online</option>
+          </select>
+        </div>
+        <div class="mb-form-group">
+          <label class="mb-label">Reference #</label>
+          <input class="mb-input" [(ngModel)]="payForm.referenceNumber" placeholder="TXN-12345" />
+        </div>
+      </div>
+      <div class="mb-form-group">
+        <label class="mb-label">Notes</label>
+        <textarea class="mb-textarea" [(ngModel)]="payForm.notes" placeholder="Optional payment notes..."></textarea>
+      </div>
+      <hr class="mb-divider" />
+      <button class="mb-save-btn" (click)="recordPayment()"
+        [disabled]="saving || !payForm.amount || !payForm.paymentDate">
+        {{ saving ? 'Recording...' : '&#10003; Confirm Payment' }}
+      </button>
+      <button class="mb-cancel-btn" (click)="showPayForm=false">Cancel</button>
+    </div>
+  </div>
+</div>

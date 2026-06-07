@@ -1,0 +1,225 @@
+<div class="subscription-plan-form-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="cancel()">←</button>
+      <div class="header-text">
+        <h1>{{ isEditMode ? '✏️ Edit Subscription Plan' : '➕ Create Subscription Plan' }}</h1>
+        <p class="subtitle">{{ isEditMode ? 'Update plan details and events' : 'Set up a new subscription package' }}</p>
+      </div>
+    </div>
+    <div class="header-right">
+      <app-language-switcher [iconOnly]="false"></app-language-switcher>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading plan details...</p>
+  </div>
+
+  <!-- Form -->
+  <form *ngIf="!isLoading" (ngSubmit)="savePlan()">
+    <!-- Error Message -->
+    <div class="error-alert" *ngIf="errorMessage">
+      <span class="error-icon">⚠️</span>
+      <span class="error-text">{{ errorMessage }}</span>
+    </div>
+
+    <!-- Plan Information -->
+    <div class="form-section">
+      <h2 class="section-title">📝 Plan Information</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="planNameEn">Plan Name (English) *</label>
+          <input 
+            type="text" 
+            id="planNameEn" 
+            [(ngModel)]="planNameEn" 
+            name="planNameEn"
+            placeholder="e.g., Gold Package"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="planNameAr">Plan Name (Arabic)</label>
+          <input 
+            type="text" 
+            id="planNameAr" 
+            [(ngModel)]="planNameAr" 
+            name="planNameAr"
+            placeholder="e.g., الباقة الذهبية">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label for="descriptionEn">Description (English)</label>
+          <textarea 
+            id="descriptionEn" 
+            [(ngModel)]="descriptionEn" 
+            name="descriptionEn"
+            rows="3"
+            placeholder="Describe what's included in this plan"></textarea>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group full-width">
+          <label for="descriptionAr">Description (Arabic)</label>
+          <textarea 
+            id="descriptionAr" 
+            [(ngModel)]="descriptionAr" 
+            name="descriptionAr"
+            rows="3"
+            placeholder="وصف ما هو مدرج في هذه الخطة"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pricing -->
+    <div class="form-section">
+      <h2 class="section-title">💰 Pricing</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="priceMonthly">Monthly Price (SAR) *</label>
+          <input 
+            type="number" 
+            id="priceMonthly" 
+            [(ngModel)]="priceMonthly" 
+            name="priceMonthly"
+            step="0.01"
+            min="0"
+            placeholder="1500.00"
+            required>
+        </div>
+
+        <div class="form-group">
+          <label for="priceYearly">Yearly Price (SAR)</label>
+          <input 
+            type="number" 
+            id="priceYearly" 
+            [(ngModel)]="priceYearly" 
+            name="priceYearly"
+            step="0.01"
+            min="0"
+            placeholder="15000.00">
+          <small class="hint">Optional - leave empty if not offering yearly billing</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Event Selection -->
+    <div class="form-section">
+      <h2 class="section-title">🎯 Event Selection</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="maxEventSelections">Max Event Selections (N)</label>
+          <input 
+            type="number" 
+            id="maxEventSelections" 
+            [(ngModel)]="maxEventSelections" 
+            name="maxEventSelections"
+            min="1"
+            placeholder="Leave empty for all events">
+          <small class="hint">Leave empty to include ALL events. Set to 3 for "Choose 3 from M"</small>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="selection-preview">
+        <span class="preview-icon">{{ maxEventSelections ? '🎯' : '✨' }}</span>
+        <span class="preview-text">{{ getSelectionTypePreview() }}</span>
+      </div>
+
+      <!-- Available Events -->
+      <div class="events-selection">
+        <h3>Select Eligible Events (M = {{ getSelectedEventsCount() }}) - Optional</h3>
+        <p class="events-hint">Choose which events can be accessed with this subscription (optional - you can add events later)</p>
+        
+        <div class="events-grid">
+          <div 
+            class="event-checkbox-card" 
+            *ngFor="let event of availableEvents"
+            [class.selected]="event.selected"
+            (click)="toggleEventSelection(event)">
+            <div class="checkbox-wrapper">
+              <input 
+                type="checkbox" 
+                [checked]="event.selected"
+                (click)="$event.stopPropagation()">
+            </div>
+            <div class="event-info">
+              <div class="event-name">{{ event.eventNameEn }}</div>
+              <div class="event-price">{{ event.basePrice | number:'1.2-2' }} SAR</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- No events message -->
+        <div class="no-events" *ngIf="availableEvents.length === 0">
+          <p>ℹ️ No events available yet. You can create this plan now and add events later.</p>
+        </div>
+      </div>
+
+      <!-- Value Calculation -->
+      <div class="value-summary" *ngIf="getSelectedEventsCount() > 0 && priceMonthly">
+        <div class="value-row">
+          <span class="value-label">Total Event Value:</span>
+          <span class="value-amount">{{ getTotalEventValue() | number:'1.2-2' }} SAR</span>
+        </div>
+        <div class="value-row">
+          <span class="value-label">Subscription Price:</span>
+          <span class="value-amount">{{ priceMonthly | number:'1.2-2' }} SAR</span>
+        </div>
+        <div class="value-row highlight">
+          <span class="value-label">Student Savings:</span>
+          <span class="value-amount savings">{{ getSavingsPercentage() | number:'1.0-0' }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Display Settings -->
+    <div class="form-section">
+      <h2 class="section-title">🎨 Display Settings</h2>
+      
+      <div class="form-row">
+        <div class="form-group">
+          <label for="badgeColor">Badge Color</label>
+          <select id="badgeColor" [(ngModel)]="badgeColor" name="badgeColor">
+            <option value="gold">🥇 Gold</option>
+            <option value="silver">🥈 Silver</option>
+            <option value="bronze">🥉 Bronze</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="displayOrder">Display Order</label>
+          <input 
+            type="number" 
+            id="displayOrder" 
+            [(ngModel)]="displayOrder" 
+            name="displayOrder"
+            min="0"
+            placeholder="0">
+          <small class="hint">Lower numbers appear first</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="form-actions">
+      <button type="button" class="btn btn-secondary" (click)="cancel()" [disabled]="isSaving">
+        Cancel
+      </button>
+      <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+        <span *ngIf="!isSaving">{{ isEditMode ? 'Update Plan' : 'Create Plan' }}</span>
+        <span *ngIf="isSaving">Saving...</span>
+      </button>
+    </div>
+  </form>
+</div>

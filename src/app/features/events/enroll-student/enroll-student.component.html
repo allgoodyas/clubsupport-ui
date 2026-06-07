@@ -1,0 +1,722 @@
+<div class="ep-page">
+
+  <!-- ── Header ── -->
+  <header class="ep-header">
+    <div class="ep-header-left">
+      <button class="ep-back" (click)="goBack()">&#8592; Back to Events</button>
+      <div>
+        <h1 class="ep-title">
+          <span *ngIf="isSubscriptionEvent">&#128260; Subscription Enrollment</span>
+          <span *ngIf="!isSubscriptionEvent">Enroll Students</span>
+        </h1>
+        <p class="ep-sub" *ngIf="event">{{ event.eventNameEn }} &middot; {{ event.eventType }}</p>
+      </div>
+    </div>
+    <div class="ep-header-stats" *ngIf="!pageLoading">
+      <ng-container *ngIf="isSubscriptionEvent">
+        <div class="ep-stat">
+          <span class="ep-stat-val">{{ priceMonthly | number:'1.2-2' }} SAR</span>
+          <span class="ep-stat-lbl">/ month</span>
+        </div>
+        <div class="ep-stat" *ngIf="priceYearly > 0">
+          <span class="ep-stat-val">{{ priceYearly | number:'1.2-2' }} SAR</span>
+          <span class="ep-stat-lbl">/ year</span>
+        </div>
+      </ng-container>
+      <div class="ep-stat">
+        <span class="ep-stat-val">{{ enrolledCount }}</span>
+        <span class="ep-stat-lbl">{{ isSubscriptionEvent ? 'Subscribed' : 'Enrolled' }}</span>
+      </div>
+      <div class="ep-stat">
+        <span class="ep-stat-val">{{ allCards.length }}</span>
+        <span class="ep-stat-lbl">Total</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Sibling Quota Banner ── -->
+  <div class="ep-sibling-banner" *ngIf="siblingQuotaEnabled && !pageLoading">
+    <span class="ep-sibling-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="7" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 19c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="17" cy="8" r="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M21 19c0-2.485-1.79-4.5-4-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+    <span><strong>Sibling Quota Enabled</strong> — Families enrolling multiple siblings are eligible for sibling quota pricing during enrollment and payment.</span>
+  </div>
+
+  <!-- ── Toolbar ── -->
+  <div class="ep-toolbar">
+    <input class="ep-search" type="text" placeholder="Search student name..."
+           [(ngModel)]="searchTerm" (ngModelChange)="applySearch()" />
+    <select class="ep-filter-select" [(ngModel)]="filterPayStatus" (ngModelChange)="applySearch()">
+      <option value="">All payments</option>
+      <option value="Paid">Paid</option>
+      <option value="Unpaid">Unpaid</option>
+      <option value="Partial">Partial</option>
+      <option value="Pending">Pending</option>
+    </select>
+    <span class="ep-count" *ngIf="!pageLoading">{{ filteredCards.length }} students</span>
+    <select class="ep-page-size" [(ngModel)]="pageSize" (ngModelChange)="goToPage(1)">
+      <option [value]="10">10 / page</option>
+      <option [value]="20">20 / page</option>
+      <option [value]="50">50 / page</option>
+    </select>
+    <div class="ep-toolbar-pager" *ngIf="!pageLoading && totalPages > 1">
+      <button class="ep-pg-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">&#8249;</button>
+      <ng-container *ngFor="let p of pageNumbers">
+        <button class="ep-pg-btn" [class.active]="p === currentPage"
+                *ngIf="p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)"
+                (click)="goToPage(p)">{{ p }}</button>
+        <span class="ep-pg-ellipsis"
+              *ngIf="(p === currentPage - 2 && currentPage > 3) || (p === currentPage + 2 && currentPage < totalPages - 2)">&hellip;</span>
+      </ng-container>
+      <button class="ep-pg-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">&#8250;</button>
+      <span class="ep-pg-info">{{ (currentPage - 1) * pageSize + 1 }}&ndash;{{ pageEnd }} of {{ filteredCards.length }}</span>
+    </div>
+  </div>
+
+  <!-- ── Loading ── -->
+  <div class="ep-loading" *ngIf="pageLoading">
+    <div class="ep-spinner"></div> Loading students...
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TABLE                                                                   -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div class="ep-table-wrap" *ngIf="!pageLoading">
+    <table class="ep-table">
+      <thead>
+        <tr>
+          <th class="col-name">Student</th>
+          <th class="col-age">Age</th>
+          <th class="col-gender">Gender</th>
+
+          <!-- Regular event columns -->
+          <ng-container *ngIf="!isSubscriptionEvent">
+            <th class="col-enrol-date">Enrolled on</th>
+            <th class="col-enrol-status">Status</th>
+            <th class="col-pay-status">Payment</th>
+            <th class="col-fee">Total fees</th>
+            <th class="col-paid">Paid</th>
+            <th class="col-due">Due</th>
+          </ng-container>
+
+          <!-- Subscription event columns -->
+          <ng-container *ngIf="isSubscriptionEvent">
+            <th class="col-enrol-date">Since</th>
+            <th class="col-enrol-status">Status</th>
+            <th class="col-pay-status">Invoice</th>
+            <th class="col-fee">Price</th>
+            <th class="col-paid">Paid</th>
+            <th>Cycle</th>
+            <th>Next due</th>
+            <th>Override</th>
+          </ng-container>
+
+          <th class="col-action"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <ng-container *ngFor="let card of pagedCards">
+
+          <!-- ── Main row ── -->
+          <tr class="ep-row"
+              [class.is-enrolled]="card.enrolled"
+              [class.is-cancelled]="card.enrolled && (card.enrollment?.status === 'Cancelled' || card.subStatus?.status === 'cancelled')"
+              [class.is-overdue]="card.subStatus?.isOverdue"
+              [class.is-open]="card.expanded"
+              (click)="toggleCard(card)">
+
+            <!-- Name -->
+            <td class="col-name">
+              <div class="ep-name-cell">
+                <div class="ep-av" [class.ep-av-enrolled]="card.enrolled">{{ initials(card.fullName) }}</div>
+                <div>
+                  <div class="ep-full-name">{{ card.fullName }}</div>
+                  <div class="ep-not-enrolled" *ngIf="!card.enrolled">
+                    {{ isSubscriptionEvent ? '+ Subscribe' : 'Not enrolled' }}
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td>{{ card.age }}</td>
+            <td>{{ card.gender }}</td>
+
+            <!-- ══ REGULAR EVENT CELLS ══ -->
+            <ng-container *ngIf="!isSubscriptionEvent">
+              <td class="muted">{{ card.enrolled && card.enrollment ? formatDate(card.enrollment.enrollmentDate) : '—' }}</td>
+              <td>
+                <span *ngIf="card.enrolled && card.enrollment" class="ep-badge" [class]="'es-' + enrollStatusClass(card.enrollment.status)">
+                  {{ card.enrollment.status }}
+                </span>
+                <span *ngIf="!card.enrolled" class="ep-new-lbl">+ Enroll</span>
+              </td>
+              <td>
+                <span *ngIf="card.enrolled && card.enrollment" class="ep-badge" [class]="'ps-' + payStatusClass(card.enrollment.paymentStatus)">
+                  {{ card.enrollment.paymentStatus }}
+                </span>
+                <span *ngIf="!card.enrolled" class="muted">—</span>
+              </td>
+              <td class="num">
+                <span *ngIf="card.enrollment?.totalFees">{{ card.enrollment!.totalFees | number:'1.2-2' }}</span>
+                <span *ngIf="!card.enrollment?.totalFees" class="muted">—</span>
+              </td>
+              <td class="num paid-col">
+                <span *ngIf="card.enrollment?.amountPaid">{{ card.enrollment!.amountPaid | number:'1.2-2' }}</span>
+                <span *ngIf="!card.enrollment?.amountPaid" class="muted">—</span>
+              </td>
+              <td class="num due-col">
+                <span *ngIf="card.enrollment?.amountDue && card.enrollment!.amountDue > 0">{{ card.enrollment!.amountDue | number:'1.2-2' }}</span>
+                <span *ngIf="!card.enrollment?.amountDue || card.enrollment!.amountDue <= 0" class="muted">—</span>
+              </td>
+            </ng-container>
+
+            <!-- ══ SUBSCRIPTION EVENT CELLS ══ -->
+            <ng-container *ngIf="isSubscriptionEvent">
+              <td class="muted" style="font-size:0.78rem;">
+                {{ card.subStatus ? formatDate(card.subStatus.startDate) : '—' }}
+              </td>
+              <td>
+                <span *ngIf="card.subStatus" class="ep-badge" [class]="subStatusClass(card.subStatus)">
+                  {{ subStatusLabel(card.subStatus) }}
+                </span>
+                <span *ngIf="!card.subStatus" class="ep-new-lbl">+ Subscribe</span>
+              </td>
+              <td>
+                <span *ngIf="card.subStatus?.latestInvoiceStatus" class="ep-badge" [class]="'ps-' + payStatusClass(card.subStatus!.latestInvoiceStatus!)">
+                  {{ card.subStatus!.latestInvoiceStatus }}
+                </span>
+                <span *ngIf="!card.subStatus?.latestInvoiceStatus" class="muted">—</span>
+              </td>
+              <td class="num" style="color: var(--accent-primary, #00D4FF); font-weight:600;">
+                <span *ngIf="card.subStatus">{{ card.subStatus.effectivePrice | number:'1.2-2' }} SAR</span>
+                <span *ngIf="!card.subStatus" class="muted">—</span>
+              </td>
+              <td class="num paid-col">
+                <span *ngIf="card.subStatus?.latestAmountPaid">{{ card.subStatus!.latestAmountPaid | number:'1.2-2' }}</span>
+                <span *ngIf="!card.subStatus?.latestAmountPaid" class="muted">—</span>
+              </td>
+              <td style="font-size:0.75rem;">
+                <span *ngIf="card.subStatus">
+                  {{ card.subStatus.billingCycle === 'yearly' ? '&#128197; Yearly' : '&#128197; Monthly' }}
+                </span>
+                <span *ngIf="!card.subStatus" class="muted">—</span>
+              </td>
+              <td style="font-size:0.75rem;" [style.color]="card.subStatus?.isOverdue ? '#FF4757' : card.subStatus?.inGracePeriod ? '#FF8C42' : '#94A3B8'">
+                {{ card.subStatus ? formatDate(card.subStatus.nextBillingDate) : '—' }}
+              </td>
+              <td>
+                <span *ngIf="card.subStatus?.hasActiveOverride" class="ep-badge" style="background:rgba(168,85,247,0.12);color:#A855F7;font-size:0.65rem;">
+                  &#128176; {{ card.subStatus!.overridePrice | number:'1.2-2' }}
+                </span>
+                <span *ngIf="!card.subStatus?.hasActiveOverride" class="muted" style="font-size:0.7rem;">Standard</span>
+              </td>
+            </ng-container>
+
+            <!-- Action column -->
+            <td class="col-action" (click)="$event.stopPropagation()">
+              <!-- Regular event: deactivate -->
+              <button class="ep-deact-btn" *ngIf="!isSubscriptionEvent && card.enrolled && card.enrollment?.status !== 'Cancelled'"
+                      (click)="openDeactivate(card, $event)">Deactivate</button>
+              <!-- Subscription event: action buttons -->
+              <ng-container *ngIf="isSubscriptionEvent && card.subStatus && card.subStatus.status !== 'cancelled'">
+                <button class="ep-action-icon" title="Renew" (click)="openSubAction(card, 'renew', $event)">&#128260;</button>
+                <button class="ep-action-icon" title="Change billing date" (click)="openSubAction(card, 'billing-date', $event)">&#128197;</button>
+                <button class="ep-action-icon" title="Switch cycle" (click)="openSubAction(card, 'switch-cycle', $event)">&#8646;</button>
+                <button class="ep-action-icon" title="Price override" (click)="openSubAction(card, 'override', $event)">&#128176;</button>
+                <button class="ep-action-icon danger" title="Cancel subscription" (click)="openSubAction(card, 'cancel', $event)">&#x2715;</button>
+              </ng-container>
+              <div class="ep-chevron" [class.open]="card.expanded">&#8250;</div>
+            </td>
+          </tr>
+
+          <!-- ── Expand row ── -->
+          <tr class="ep-expand-row" *ngIf="card.expanded">
+            <td [attr.colspan]="isSubscriptionEvent ? 12 : 10" class="ep-expand-cell">
+
+              <!-- ══ DEACTIVATE PANEL ══ -->
+              <div class="ep-panel ep-deact-panel" *ngIf="card.deactivating">
+                <div class="ep-panel-title danger">Deactivate enrollment — {{ card.fullName }}</div>
+                <div class="ep-form-row">
+                  <div class="ep-form-group" style="flex:1">
+                    <label>Reason</label>
+                    <textarea class="ep-input ep-textarea" rows="2" [(ngModel)]="card.deactivateReason" placeholder="Reason for deactivation..."></textarea>
+                  </div>
+                </div>
+                <div class="ep-panel-actions">
+                  <button class="ep-btn-cancel" (click)="card.deactivating=false; card.expanded=false">Cancel</button>
+                  <button class="ep-btn-danger" (click)="confirmDeactivate(card)">Confirm deactivation</button>
+                </div>
+              </div>
+
+              <!-- ══ REGULAR ENROLL PANEL ══ -->
+              <div class="ep-panel" *ngIf="!card.deactivating && !isSubscriptionEvent">
+
+                <!-- ── BRANCH A: Already enrolled ── -->
+                <ng-container *ngIf="card.enrolled && card.enrollment">
+                  <div class="ep-enrolled-info">
+                    <span class="ep-badge" [class]="'es-' + enrollStatusClass(card.enrollment.status)">{{ card.enrollment.status }}</span>
+                    <span class="ep-badge" [class]="'ps-' + payStatusClass(card.enrollment.paymentStatus)">{{ card.enrollment.paymentStatus }}</span>
+                    <span *ngIf="card.enrollment.enrollmentNotes" class="ep-enroll-note">{{ card.enrollment.enrollmentNotes }}</span>
+                  </div>
+                  <div class="ep-two-pane" *ngIf="event?.isPaid && card.enrollment.amountDue > 0">
+                    <div class="ep-pane">
+                      <div class="ep-pane-title ep-pane-title--pay">Collect Payment</div>
+                      <div class="ep-fee-card">
+                        <div class="ep-fee-row"><span>Total fee</span><span>{{ card.enrollment.totalFees | number:'1.2-2' }} SAR</span></div>
+                        <div class="ep-fee-row"><span>Paid</span><span class="paid-txt">{{ card.enrollment.amountPaid | number:'1.2-2' }} SAR</span></div>
+                        <div class="ep-fee-row total"><strong>Balance due</strong><strong class="due-txt">{{ card.enrollment.amountDue | number:'1.2-2' }} SAR</strong></div>
+                      </div>
+                      <div class="ep-pay-row">
+                        <div class="ep-pay-field ep-form-group">
+                          <label class="ep-field-lbl">Method</label>
+                          <select class="ep-input" [(ngModel)]="card.paymentMethod">
+                            <option *ngFor="let m of paymentMethods" [value]="m.value">{{ m.label }}</option>
+                          </select>
+                        </div>
+                        <div class="ep-pay-field ep-form-group">
+                          <label class="ep-field-lbl">Reference <span class="opt">(optional)</span></label>
+                          <input class="ep-input" [(ngModel)]="card.paymentReference" placeholder="TXN ID..." />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="ep-paid-msg" *ngIf="!event?.isPaid || card.enrollment.amountDue <= 0">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    {{ !event?.isPaid ? 'Free event' : 'Fully paid' }}
+                  </div>
+                </ng-container>
+
+                <!-- ── BRANCH B: Not yet enrolled ── -->
+                <ng-container *ngIf="!card.enrolled">
+
+                  <!-- Eligibility loading -->
+                  <div class="ep-elig-loading" *ngIf="card.isCheckingElig">
+                    <div class="ep-spinner sm"></div> Checking eligibility...
+                  </div>
+
+                  <div class="ep-elig-error" *ngIf="card.eligibilityResult?.errors?.length">
+                    <strong>Cannot enroll:</strong>
+                    <ul><li *ngFor="let e of card.eligibilityResult!.errors">{{ e }}</li></ul>
+                  </div>
+
+                  <div class="ep-elig-warn" *ngIf="card.eligibilityResult?.warnings?.length && !card.eligibilityResult?.errors?.length">
+                    <strong>Warnings:</strong>
+                    <ul><li *ngFor="let w of card.eligibilityResult!.warnings">{{ w }}</li></ul>
+                    <label class="ep-ack"><input type="checkbox" [(ngModel)]="card.acknowledgeWarnings" /> I acknowledge and want to proceed</label>
+                  </div>
+
+                  <div class="ep-elig-banner" *ngIf="card.eligibilityResult && !card.eligibilityResult.errors?.length && !card.eligibilityResult.warnings?.length">
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5"/><path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    Eligible &nbsp;&middot;&nbsp; age check passed &nbsp;&middot;&nbsp; {{ card.eligibilityResult.currentEnrollment }}/{{ card.eligibilityResult.maxParticipants }} capacity
+                  </div>
+
+                  <!-- Sibling Quota panel -->
+                  <div class="ep-sibling-quota-panel" *ngIf="siblingQuotaEnabled && card.eligibilityResult && !card.eligibilityResult.errors?.length">
+                    <div class="ep-sq-header">
+                      <span class="ep-sq-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none"><circle cx="9" cy="7" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 19c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="17" cy="8" r="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M21 19c0-2.485-1.79-4.5-4-4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+                      <span class="ep-sq-title">Sibling Quota</span>
+                      <span class="ep-sq-badge" *ngIf="card.eligibilityResult.siblingQuotaAvailable">{{ card.eligibilityResult.enrolledSiblings?.length }} sibling(s) enrolled</span>
+                      <span class="ep-sq-badge ep-sq-badge--none" *ngIf="!card.eligibilityResult.siblingQuotaAvailable">No siblings enrolled yet</span>
+                    </div>
+                    <div class="ep-sq-siblings" *ngIf="card.eligibilityResult.enrolledSiblings?.length">
+                      <div class="ep-sq-sibling" *ngFor="let sib of card.eligibilityResult.enrolledSiblings">
+                        <span class="ep-sq-sib-name">{{ sib.studentNameEn }}</span>
+                        <span class="ep-sq-sib-age">{{ sib.studentAge }} yrs</span>
+                        <span class="ep-badge ps-{{ payStatusClass(sib.paymentStatus) }}">{{ sib.paymentStatus }}</span>
+                        <span class="ep-sq-sib-applied" *ngIf="sib.siblingQuotaApplied">✔ Quota applied</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Two-pane: Enroll + Payment -->
+                  <div class="ep-two-pane" *ngIf="card.eligibilityResult && !card.eligibilityResult.errors?.length">
+
+                    <!-- Left: Enroll -->
+                    <div class="ep-pane">
+                      <div class="ep-pane-title ep-pane-title--enroll">Enrollment</div>
+                      <div class="ep-form-group">
+                        <label class="ep-field-lbl">Admin notes <span class="opt">(optional)</span></label>
+                        <textarea class="ep-input ep-textarea" rows="3" [(ngModel)]="card.enrollmentNotes" placeholder="Add notes..."></textarea>
+                      </div>
+                      <div class="ep-enroll-actions">
+                        <button class="ep-btn-enroll" [disabled]="!canEnroll(card) || card.isEnrolling" (click)="enrollStudent(card)">
+                          {{ card.isEnrolling ? 'Processing...' : 'Enroll Student' }}
+                        </button>
+                        <button class="ep-btn-cancel" (click)="card.expanded=false">Cancel</button>
+                      </div>
+                    </div>
+
+                    <div class="ep-pane-divider"></div>
+
+                    <!-- Right: Payment (only for paid events) -->
+                    <div class="ep-pane" *ngIf="event?.isPaid">
+                      <div class="ep-pane-title ep-pane-title--pay">Payment</div>
+
+                      <!-- ── Apply Discount checkbox ── -->
+                      <label class="ep-offer-toggle" (click)="$event.stopPropagation()">
+                        <input type="checkbox"
+                               [(ngModel)]="card.showOffers"
+                               (ngModelChange)="card.showOffers && initOfferRows(card)" />
+                        <span>Apply Discount / Offer</span>
+                      </label>
+
+                      <!-- ── Offer list ── -->
+                      <div class="ep-offer-list" *ngIf="card.showOffers">
+                        <div class="ep-offer-row" *ngFor="let row of card.offerRows">
+                          <label class="ep-offer-check">
+                            <input type="checkbox" [(ngModel)]="row.selected" />
+                            <span class="ep-offer-name">{{ row.offerType.offerNameEn }}</span>
+                            <span class="ep-offer-waiver-badge" *ngIf="row.offerType.isWaiver">Full waiver</span>
+                          </label>
+                          <ng-container *ngIf="row.selected">
+                            <!-- Amount input (hidden for waiver — auto = full fee) -->
+                            <div class="ep-offer-amount" *ngIf="!row.offerType.isWaiver">
+                              <input class="ep-input ep-offer-amt-input" type="number" min="0" step="0.01"
+                                     [(ngModel)]="row.amount"
+                                     [placeholder]="row.offerType.isPercentage ? '% discount' : 'SAR amount'" />
+                              <span class="ep-offer-unit">{{ row.offerType.isPercentage ? '%' : 'SAR' }}</span>
+                            </div>
+                            <!-- Comment box -->
+                            <div class="ep-offer-comment">
+                              <textarea class="ep-input ep-offer-comment-input" rows="2"
+                                        [(ngModel)]="row.comment"
+                                        [placeholder]="row.offerType.requiresComment ? 'Reason (required)' : 'Comment (optional)'"
+                                        [class.required-comment]="row.offerType.requiresComment && !row.comment.trim()"></textarea>
+                              <span class="ep-offer-req" *ngIf="row.offerType.requiresComment && !row.comment.trim()">
+                                &#9888; Comment required
+                              </span>
+                            </div>
+                          </ng-container>
+                        </div>
+                      </div>
+
+                      <!-- ── Wallet section ── -->
+                      <div class="ep-wallet-section" *ngIf="event?.isPaid && card.walletLoaded">
+                        <div class="ep-wallet-header">
+                          <span class="ep-wallet-icon">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="15" r="1.5" fill="currentColor"/></svg>
+                          </span>
+                          <span class="ep-wallet-label">Wallet Balance</span>
+                          <span class="ep-wallet-bal" [class.ep-wallet-bal--zero]="card.walletBalance <= 0">
+                            {{ card.walletBalance | number:'1.2-2' }} SAR
+                          </span>
+                        </div>
+                        <ng-container *ngIf="card.walletBalance > 0">
+                          <label class="ep-wallet-toggle">
+                            <input type="checkbox"
+                                   [(ngModel)]="card.useWallet"
+                                   (ngModelChange)="card.walletAmount = maxWalletAmount(card)" />
+                            <span>Use wallet balance</span>
+                          </label>
+                          <div class="ep-wallet-input-row" *ngIf="card.useWallet">
+                            <label class="ep-field-lbl">Wallet amount (SAR)</label>
+                            <input class="ep-input ep-wallet-input" type="number" min="0"
+                                   [max]="maxWalletAmount(card)" step="0.01"
+                                   [(ngModel)]="card.walletAmount"
+                                   (ngModelChange)="card.walletAmount = Math.min(card.walletAmount, maxWalletAmount(card))" />
+                            <span class="ep-wallet-max" (click)="card.walletAmount = maxWalletAmount(card)">
+                              Use max ({{ maxWalletAmount(card) | number:'1.2-2' }})
+                            </span>
+                          </div>
+                        </ng-container>
+                        <div class="ep-wallet-zero-hint" *ngIf="card.walletBalance <= 0">
+                          No wallet balance — <a class="ep-wallet-topup-link" href="javascript:void(0)">Top up</a>
+                        </div>
+                      </div>
+
+                      <!-- ── Fee summary ── -->
+                      <div class="ep-fee-card">
+                      <div class="ep-fee-row">
+                      <span>Event fee</span>
+                      <span>{{ eventFee | number:'1.2-2' }} SAR</span>
+                      </div>
+                      <!-- Offer discounts -->
+                      <ng-container *ngIf="card.showOffers && totalOfferDiscount(card) > 0">
+                      <ng-container *ngFor="let row of card.offerRows">
+                      <div class="ep-fee-row" *ngIf="row.selected">
+                      <span class="ep-fee-offer-name">{{ row.offerType.offerNameEn }}</span>
+                      <span class="ep-fee-discount">- {{ row.offerType.isWaiver ? eventFee : (row.offerType.isPercentage ? (eventFee * row.amount / 100) : row.amount) | number:'1.2-2' }} SAR</span>
+                      </div>
+                      </ng-container>
+                      <div class="ep-fee-row ep-fee-row--total-discount">
+                      <span>Total discount</span>
+                      <span class="ep-fee-discount">- {{ totalOfferDiscount(card) | number:'1.2-2' }} SAR</span>
+                      </div>
+                      </ng-container>
+                      <!-- Wallet deduction -->
+                      <div class="ep-fee-row ep-fee-row--wallet" *ngIf="card.useWallet && card.walletAmount > 0">
+                      <span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style="vertical-align:middle;margin-right:3px"><rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/><circle cx="17" cy="15" r="1.5" fill="currentColor"/></svg>
+                          Wallet
+                      </span>
+                      <span class="ep-fee-wallet">- {{ card.walletAmount | number:'1.2-2' }} SAR</span>
+                      </div>
+                      <!-- Totals -->
+                      <div class="ep-fee-row total">
+                          <strong>{{ card.useWallet && remainingCash(card) > 0 ? 'Cash to collect' : 'Total charged' }}</strong>
+                          <strong [class.discounted]="totalOfferDiscount(card) > 0 || card.useWallet">
+                            {{ remainingCash(card) | number:'1.2-2' }} SAR
+                          </strong>
+                        </div>
+                        <div class="ep-fee-row ep-fee-covered" *ngIf="walletCoversAll(card)">
+                          ✅ Fully covered by wallet — no cash needed
+                        </div>
+                      </div>
+                      <div class="ep-pay-row">
+                        <div class="ep-pay-field ep-form-group">
+                          <label class="ep-field-lbl">Method</label>
+                          <select class="ep-input" [(ngModel)]="card.paymentMethod">
+                            <option *ngFor="let m of paymentMethods" [value]="m.value">{{ m.label }}</option>
+                          </select>
+                        </div>
+                        <div class="ep-pay-field ep-form-group">
+                          <label class="ep-field-lbl">Reference <span class="opt">(optional)</span></label>
+                          <input class="ep-input" [(ngModel)]="card.paymentReference" placeholder="TXN ID..." />
+                        </div>
+                      </div>
+                      <button class="ep-btn-pay" [disabled]="!canEnroll(card) || card.isEnrolling" (click)="card.payNow=true; enrollStudent(card)">
+                        {{ card.isEnrolling ? 'Processing...' : 'Enroll & Collect Payment' }}
+                      </button>
+                    </div>
+
+                  </div>
+
+                </ng-container><!-- /not enrolled -->
+
+              </div><!-- /ep-panel -->
+
+              <!-- ══ SUBSCRIPTION ENROLL PANEL ══ -->
+              <div class="ep-panel ep-sub-panel" *ngIf="isSubscriptionEvent && card.subAction === 'enroll'">
+                <div class="ep-sub-panel-title">Subscribe {{ card.fullName }}</div>
+
+                <!-- Billing cycle chooser -->
+                <div class="ep-cycle-chooser">
+                  <div class="ep-cycle-card" [class.selected]="card.subBillingCycle === 'monthly'" (click)="card.subBillingCycle='monthly'">
+                    <div class="ep-cycle-icon">&#128197;</div>
+                    <div class="ep-cycle-name">Monthly</div>
+                    <div class="ep-cycle-price">{{ priceMonthly | number:'1.2-2' }} SAR</div>
+                    <div class="ep-cycle-sub">per month</div>
+                  </div>
+                  <div class="ep-cycle-card" [class.selected]="card.subBillingCycle === 'yearly'"
+                       [class.disabled]="priceYearly === 0" (click)="priceYearly > 0 && (card.subBillingCycle='yearly')">
+                    <div class="ep-cycle-icon">&#128197;&#128197;</div>
+                    <div class="ep-cycle-name">Yearly</div>
+                    <div class="ep-cycle-price">{{ priceYearly | number:'1.2-2' }} SAR</div>
+                    <div class="ep-cycle-sub">upfront · save {{ yearlySaving | number:'1.2-2' }} SAR</div>
+                    <div class="ep-cycle-disabled" *ngIf="priceYearly === 0">Not available</div>
+                  </div>
+                </div>
+
+                <!-- Override + pay -->
+                <div class="ep-sub-fields">
+                  <div class="ep-form-group">
+                    <label class="ep-field-lbl">Price override <span class="opt">(optional)</span></label>
+                    <input class="ep-input" type="number" [(ngModel)]="card.subOverridePrice" placeholder="Leave blank for standard price" min="0" step="0.01" />
+                  </div>
+                  <div class="ep-form-group" *ngIf="card.subOverridePrice">
+                    <label class="ep-field-lbl">Override reason</label>
+                    <input class="ep-input" [(ngModel)]="card.subOverrideReason" placeholder="Reason for the special price..." />
+                  </div>
+                  <div class="ep-form-group" *ngIf="card.subOverridePrice">
+                    <label class="ep-field-lbl">Override expires on <span class="opt">(optional)</span></label>
+                    <input class="ep-input" type="date" [(ngModel)]="card.subOverrideExpiry" [min]="todayIso()" />
+                  </div>
+                  <label class="ep-pay-toggle">
+                    <input type="checkbox" [(ngModel)]="card.subPayNow" />
+                    Collect first payment now
+                  </label>
+                  <div *ngIf="card.subPayNow" class="ep-pay-row">
+                    <div class="ep-pay-field ep-form-group">
+                      <label class="ep-field-lbl">Method</label>
+                      <select class="ep-input" [(ngModel)]="card.subPayMethod">
+                        <option *ngFor="let m of paymentMethods" [value]="m.value">{{ m.label }}</option>
+                      </select>
+                    </div>
+                    <div class="ep-pay-field ep-form-group">
+                      <label class="ep-field-lbl">Reference</label>
+                      <input class="ep-input" [(ngModel)]="card.subPayRef" placeholder="TXN ID..." />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ep-panel-actions">
+                  <button class="ep-btn-cancel" (click)="card.subAction='none'; card.expanded=false">Cancel</button>
+                  <button class="ep-btn-enroll" [disabled]="card.isSubscribing" (click)="subscribeStudent(card)">
+                    {{ card.isSubscribing ? 'Processing...' : (card.subPayNow ? 'Subscribe & Collect Payment' : 'Subscribe') }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- ══ SUBSCRIPTION VIEW PANEL (enrolled, no action open) ══ -->
+              <div class="ep-panel ep-view-panel" *ngIf="isSubscriptionEvent && card.subStatus && card.subAction === 'none'">
+                <div class="ep-view-grid">
+                  <div class="ep-view-item"><span class="ep-view-lbl">Status</span>
+                    <span class="ep-badge" [class]="subStatusClass(card.subStatus)">{{ subStatusLabel(card.subStatus) }}</span>
+                  </div>
+                  <div class="ep-view-item"><span class="ep-view-lbl">Since</span><span>{{ formatDate(card.subStatus.startDate) }}</span></div>
+                  <div class="ep-view-item"><span class="ep-view-lbl">Billing</span><span>{{ card.subStatus.billingCycle | titlecase }}</span></div>
+                  <div class="ep-view-item"><span class="ep-view-lbl">Next due</span><span>{{ formatDate(card.subStatus.nextBillingDate) }}</span></div>
+                  <div class="ep-view-item"><span class="ep-view-lbl">Price</span><span class="paid-txt">{{ card.subStatus.effectivePrice | number:'1.2-2' }} SAR</span></div>
+                  <div class="ep-view-item" *ngIf="card.subStatus.hasActiveOverride">
+                    <span class="ep-view-lbl">Override</span>
+                    <span style="color:#A855F7;">{{ card.subStatus.overridePrice | number:'1.2-2' }} SAR &mdash; {{ card.subStatus.overrideReason }}</span>
+                  </div>
+                  <div class="ep-view-item" *ngIf="card.subStatus.latestInvoiceStatus">
+                    <span class="ep-view-lbl">Invoice</span>
+                    <span class="ep-badge" [class]="'ps-' + payStatusClass(card.subStatus.latestInvoiceStatus)">{{ card.subStatus.latestInvoiceStatus }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ══ RENEW PANEL ══ -->
+              <div class="ep-panel ep-sub-panel" *ngIf="card.subAction === 'renew' && card.subStatus">
+                <div class="ep-sub-panel-title">&#128260; Renew subscription — {{ card.fullName }}</div>
+                <div class="ep-sub-fields">
+                  <p style="font-size:0.82rem; color:var(--text-secondary,#94A3B8); margin-bottom:10px;">
+                    A new invoice of <strong style="color:var(--accent-primary,#00D4FF)">{{ card.subStatus.effectivePrice | number:'1.2-2' }} SAR</strong>
+                    will be created. Next billing date will be set to
+                    <strong>{{ card.subStatus.billingCycle === 'yearly' ? '1 year' : '1 month' }}</strong> from now.
+                  </p>
+                  <label class="ep-pay-toggle">
+                    <input type="checkbox" [(ngModel)]="card.renewPayNow" />
+                    Collect payment now
+                  </label>
+                  <div *ngIf="card.renewPayNow" class="ep-pay-row">
+                    <div class="ep-pay-field ep-form-group">
+                      <label class="ep-field-lbl">Method</label>
+                      <select class="ep-input" [(ngModel)]="card.renewPayMethod">
+                        <option *ngFor="let m of paymentMethods" [value]="m.value">{{ m.label }}</option>
+                      </select>
+                    </div>
+                    <div class="ep-pay-field ep-form-group">
+                      <label class="ep-field-lbl">Reference</label>
+                      <input class="ep-input" [(ngModel)]="card.renewPayRef" placeholder="TXN ID..." />
+                    </div>
+                  </div>
+                </div>
+                <div class="ep-panel-actions">
+                  <button class="ep-btn-cancel" (click)="card.subAction='none'">Cancel</button>
+                  <button class="ep-btn-enroll" [disabled]="card.isRenewing" (click)="renewSubscription(card)">
+                    {{ card.isRenewing ? 'Processing...' : 'Confirm Renewal' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- ══ BILLING DATE PANEL ══ -->
+              <div class="ep-panel ep-sub-panel" *ngIf="card.subAction === 'billing-date' && card.subStatus">
+                <div class="ep-sub-panel-title">&#128197; Change Billing Date — {{ card.fullName }}</div>
+                <div class="ep-sub-fields">
+                  <div class="ep-form-row">
+                    <div class="ep-form-group">
+                      <label class="ep-field-lbl">New billing date</label>
+                      <input class="ep-input" type="date" [(ngModel)]="card.newBillingDate" [min]="todayIso()" />
+                    </div>
+                    <div class="ep-form-group">
+                      <label class="ep-field-lbl">Reason <span class="opt">(optional)</span></label>
+                      <input class="ep-input" [(ngModel)]="card.billingDateReason" placeholder="Reason for date change..." />
+                    </div>
+                  </div>
+                  <label class="ep-pay-toggle">
+                    <input type="checkbox" [(ngModel)]="card.applyProRation" />
+                    Apply pro-rated charge for the date shift
+                  </label>
+                  <p *ngIf="card.applyProRation" style="font-size:0.75rem; color:var(--text-secondary,#94A3B8); margin-top:6px;">
+                    A pro-rated invoice will be created for the days between the current and new billing date.
+                  </p>
+                </div>
+                <div class="ep-panel-actions">
+                  <button class="ep-btn-cancel" (click)="card.subAction='none'">Cancel</button>
+                  <button class="ep-btn-enroll" [disabled]="!card.newBillingDate || card.isSavingDate" (click)="saveBillingDate(card)">
+                    {{ card.isSavingDate ? 'Saving...' : 'Update Billing Date' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- ══ SWITCH CYCLE PANEL ══ -->
+              <div class="ep-panel ep-sub-panel" *ngIf="card.subAction === 'switch-cycle' && card.subStatus">
+                <div class="ep-sub-panel-title">&#8646; Switch Billing Cycle — {{ card.fullName }}</div>
+                <div class="ep-sub-fields">
+                  <p style="font-size:0.82rem; color:var(--text-secondary,#94A3B8); margin-bottom:10px;">
+                    Currently on <strong>{{ card.subStatus.billingCycle }}</strong> billing at
+                    <strong>{{ card.subStatus.effectivePrice | number:'1.2-2' }} SAR</strong>.
+                    Switch to:
+                  </p>
+                  <div class="ep-cycle-chooser">
+                    <div class="ep-cycle-card" [class.selected]="card.newCycle === 'monthly'" (click)="card.newCycle='monthly'">
+                      <div class="ep-cycle-name">Monthly</div>
+                      <div class="ep-cycle-price">{{ priceMonthly | number:'1.2-2' }} SAR / month</div>
+                    </div>
+                    <div class="ep-cycle-card" [class.selected]="card.newCycle === 'yearly'"
+                         [class.disabled]="priceYearly === 0" (click)="priceYearly > 0 && (card.newCycle='yearly')">
+                      <div class="ep-cycle-name">Yearly</div>
+                      <div class="ep-cycle-price">{{ priceYearly | number:'1.2-2' }} SAR / year</div>
+                      <div class="ep-cycle-disabled" *ngIf="priceYearly === 0">Not available</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="ep-panel-actions">
+                  <button class="ep-btn-cancel" (click)="card.subAction='none'">Cancel</button>
+                  <button class="ep-btn-enroll" [disabled]="card.newCycle === card.subStatus.billingCycle || card.isSwitchingCycle" (click)="switchCycle(card)">
+                    {{ card.isSwitchingCycle ? 'Switching...' : 'Confirm Switch' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- ══ PRICE OVERRIDE PANEL ══ -->
+              <div class="ep-panel ep-sub-panel" *ngIf="card.subAction === 'override' && card.subStatus">
+                <div class="ep-sub-panel-title">&#128176; Price Override — {{ card.fullName }}</div>
+                <div class="ep-sub-fields">
+                  <div class="ep-form-row">
+                    <div class="ep-form-group">
+                      <label class="ep-field-lbl">Override price (SAR)</label>
+                      <input class="ep-input" type="number" [(ngModel)]="card.overridePriceInput" min="0" step="0.01" placeholder="e.g. 799" />
+                      <small style="color:var(--text-secondary,#94A3B8); font-size:0.72rem;">Standard: {{ card.subStatus.billingCycle === 'yearly' ? priceYearly : priceMonthly | number:'1.2-2' }} SAR</small>
+                    </div>
+                    <div class="ep-form-group">
+                      <label class="ep-field-lbl">Reason</label>
+                      <input class="ep-input" [(ngModel)]="card.overrideReasonInput" placeholder="Loyalty discount, hardship..." />
+                    </div>
+                    <div class="ep-form-group">
+                      <label class="ep-field-lbl">Expires on <span class="opt">(optional)</span></label>
+                      <input class="ep-input" type="date" [(ngModel)]="card.overrideExpiryInput" [min]="todayIso()" />
+                    </div>
+                  </div>
+                  <p *ngIf="card.subStatus.hasActiveOverride" style="font-size:0.75rem; color:#A855F7; margin-bottom:8px;">
+                    Current override: {{ card.subStatus.overridePrice | number:'1.2-2' }} SAR &mdash; {{ card.subStatus.overrideReason }}
+                  </p>
+                </div>
+                <div class="ep-panel-actions">
+                  <button class="ep-btn-cancel" (click)="card.subAction='none'">Cancel</button>
+                  <button class="ep-btn-danger" *ngIf="card.subStatus.hasActiveOverride" (click)="removeOverride(card)">Remove override</button>
+                  <button class="ep-btn-enroll" [disabled]="!card.overridePriceInput || card.isSavingOverride" (click)="saveOverride(card)">
+                    {{ card.isSavingOverride ? 'Saving...' : 'Save Override' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- ══ CANCEL PANEL ══ -->
+              <div class="ep-panel ep-deact-panel" *ngIf="card.subAction === 'cancel' && card.subStatus">
+                <div class="ep-panel-title danger">Cancel subscription — {{ card.fullName }}</div>
+                <div class="ep-form-row">
+                  <div class="ep-form-group" style="flex:1">
+                    <label>Reason <span class="opt">(optional)</span></label>
+                    <textarea class="ep-input ep-textarea" rows="2" [(ngModel)]="card.cancelReason" placeholder="Reason for cancellation..."></textarea>
+                  </div>
+                </div>
+                <div class="ep-panel-actions">
+                  <button class="ep-btn-cancel" (click)="card.subAction='none'">Keep subscription</button>
+                  <button class="ep-btn-danger" [disabled]="card.isCancelling" (click)="cancelSubscription(card)">
+                    {{ card.isCancelling ? 'Cancelling...' : 'Confirm cancellation' }}
+                  </button>
+                </div>
+              </div>
+
+            </td>
+          </tr>
+        </ng-container>
+
+        <tr *ngIf="filteredCards.length === 0">
+          <td [attr.colspan]="isSubscriptionEvent ? 12 : 10" class="ep-empty">No students found</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>

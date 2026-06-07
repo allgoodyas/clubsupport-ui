@@ -1,0 +1,188 @@
+// ─── Language Switcher ───────────────────────────────────────────────────────
+// Works on both gradient headers (dashboard) and dark-panel headers (all other
+// pages) because it uses only white/transparent — never a fixed background color.
+
+.language-switcher {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+// ── Trigger button ────────────────────────────────────────────────────────────
+.language-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 14px;
+  background: transparent;
+  border: none;                          // no border — clean look
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.875rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.18s, background 0.18s, transform 0.15s;
+  outline: none;
+  white-space: nowrap;
+  text-transform: uppercase;
+
+  &:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  // Active (dropdown open) state
+  &.is-open {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.15);
+  }
+}
+
+// SVG globe icon — inherits currentColor so it's always white on any header
+.language-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  opacity: 0.85;
+  transition: opacity 0.18s;
+
+  .language-btn:hover &,
+  .language-btn.is-open & {
+    opacity: 1;
+  }
+}
+
+// Tiny chevron — rotates when open
+.dropdown-arrow {
+  font-size: 0.55rem;
+  opacity: 0.7;
+  transition: transform 0.2s ease;
+  margin-left: 1px;
+
+  &.open {
+    transform: rotate(180deg);
+    opacity: 1;
+  }
+}
+
+// ── Dropdown panel ────────────────────────────────────────────────────────────
+.language-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 170px;
+
+  // Dark card — matches the app's panel colour
+  background: var(--bg-panel, #111827);
+  border: 1px solid var(--bg-border, #1E2D45);
+  border-radius: 12px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  z-index: 1000;
+  animation: dropIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// ── Option rows ───────────────────────────────────────────────────────────────
+.language-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #94A3B8);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.14s, color 0.14s;
+  text-align: left;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary, #E2E8F0);
+  }
+
+  // Active / selected language
+  &.active {
+    background: linear-gradient(
+      135deg,
+      rgba(var(--accent-primary-rgb, 0, 212, 255), 0.12),
+      rgba(168, 85, 247, 0.08)
+    );
+    color: var(--accent-primary, #00D4FF);
+
+    .language-native  { color: var(--accent-primary, #00D4FF); }
+    .language-english { color: var(--accent-primary, #00D4FF); opacity: 0.7; }
+  }
+
+  // Separator between rows
+  & + .language-option {
+    border-top: 1px solid var(--bg-border, #1E2D45);
+  }
+}
+
+// Flag / emoji column
+.lang-flag {
+  font-size: 1.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+// Text column
+.lang-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+.language-native {
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--text-primary, #E2E8F0);
+  line-height: 1.2;
+}
+
+.language-english {
+  font-size: 0.72rem;
+  color: var(--text-secondary, #94A3B8);
+  line-height: 1.2;
+}
+
+// Active checkmark
+.check-icon {
+  font-size: 0.8rem;
+  color: var(--accent-primary, #00D4FF);
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+// ── RTL support ───────────────────────────────────────────────────────────────
+[dir="rtl"] {
+  .language-dropdown { right: auto; left: 0; }
+  .language-option   { text-align: right; flex-direction: row-reverse; }
+  .check-icon        { margin-left: 0; margin-right: auto; }
+}

@@ -1,0 +1,116 @@
+<!-- Overlay -->
+<div class="id-overlay" *ngIf="isOpen" (click)="close()"></div>
+
+<!-- Modal -->
+<div class="id-modal"
+     [class.id-modal-open]="isOpen"
+     [class.id-modal-print-mode]="printerMode"
+     *ngIf="isOpen">
+
+  <!-- Modal header -->
+  <div class="id-modal-header">
+    <h3>🪪 Student ID Card</h3>
+    <button class="id-close" (click)="close()">✕</button>
+  </div>
+
+  <!-- Card preview -->
+  <div class="id-modal-body">
+
+    <div class="id-card" [class.id-card--print]="printerMode" #idCardEl>
+
+      <div class="id-accent-top"></div>
+
+      <div class="id-club-name">{{ (clubName || 'Club Management') | uppercase }}</div>
+      <div class="id-card-label">STUDENT ID CARD</div>
+
+      <div class="id-photo-ring">
+        <div class="id-photo-wrap">
+          <img *ngIf="photoDataUrl" [src]="photoDataUrl" class="id-photo" alt="Student photo" />
+          <div *ngIf="!photoDataUrl && !loadingPhoto" class="id-photo-placeholder">{{ genderEmoji }}</div>
+          <div *ngIf="loadingPhoto" class="id-photo-spinner"><div class="mini-spinner"></div></div>
+        </div>
+      </div>
+
+      <div class="id-name">{{ studentName }}</div>
+
+      <div class="id-meta" *ngIf="age || gender">
+        <span *ngIf="age">{{ age }} yrs</span>
+        <span class="id-dot" *ngIf="age && gender">•</span>
+        <span *ngIf="gender">{{ gender }}</span>
+      </div>
+
+      <div class="id-divider"></div>
+
+      <div class="id-qr-wrap">
+        <div *ngIf="loadingQr" class="id-qr-loading"><div class="mini-spinner"></div></div>
+        <img *ngIf="qrDataUrl && !loadingQr" [src]="qrDataUrl" class="id-qr" alt="QR Code" />
+      </div>
+      <div class="id-scan-label">SCAN FOR ATTENDANCE</div>
+
+      <div class="id-student-id">ID: {{ studentId }}</div>
+
+      <div class="id-accent-bottom"></div>
+    </div>
+
+  </div>
+
+  <!-- Actions footer -->
+  <div class="id-modal-footer">
+
+    <!-- Close -->
+    <button class="id-icon-btn id-icon-btn--close" (click)="close()" title="Close">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <div class="id-footer-sep"></div>
+
+    <!-- 🌙 / ☀️ Theme toggle -->
+    <button class="id-icon-btn id-icon-btn--theme"
+      [class.id-icon-btn--theme-active]="printerMode"
+      (click)="togglePrinterMode()"
+      [title]="printerMode ? 'Switch to dark card' : 'Switch to printer-friendly card'">
+      <svg *ngIf="!printerMode" width="17" height="17" viewBox="0 0 24 24" fill="none">
+        <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"
+              stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <svg *ngIf="printerMode" width="17" height="17" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/>
+        <path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"
+              stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+    <div class="id-footer-sep"></div>
+
+    <!-- Print -->
+    <button class="id-icon-btn" [disabled]="loadingQr" (click)="printCard()" title="Print ID card">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+        <path d="M6 9V2h12v7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <rect x="6" y="14" width="12" height="8" rx="1" stroke="currentColor" stroke-width="1.8"/>
+        <circle cx="18.5" cy="11.5" r="1" fill="currentColor"/>
+      </svg>
+    </button>
+
+    <!-- Download -->
+    <button class="id-icon-btn id-icon-btn--download"
+      [disabled]="downloading || loadingQr"
+      (click)="download()"
+      [title]="downloading ? 'Generating…' : 'Download as PNG'">
+      <svg *ngIf="!downloading" width="17" height="17" viewBox="0 0 24 24" fill="none">
+        <path d="M12 3v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        <path d="M8 11l4 4 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M4 17v1a2 2 0 002 2h12a2 2 0 002-2v-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+      </svg>
+      <svg *ngIf="downloading" width="17" height="17" viewBox="0 0 24 24" fill="none"
+           style="animation:spin .8s linear infinite">
+        <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"
+                stroke-dasharray="30" stroke-dashoffset="10" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+  </div>
+
+</div>

@@ -1,0 +1,102 @@
+<div class="user-list-container page-with-sidebar">
+  <div class="page-header-row">
+    <app-page-header
+      pageIcon="ti-users"
+      pageTitle="{{ 'USERS.TITLE' | translate }}">
+    </app-page-header>
+  </div>
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+    <div class="page-content">
+  <!-- Search Bar + Add Button -->
+  <div class="search-section">
+    <div class="search-box">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text" 
+        class="search-input" 
+        [placeholder]="'USERS.SEARCH_PLACEHOLDER' | translate"
+        (input)="onSearch($event)"
+        [(ngModel)]="searchTerm">
+      <span class="result-count" *ngIf="searchTerm">
+        {{ filteredUsers.length }} {{ 'USERS.OF' | translate }} {{ users.length }} {{ 'USERS.USERS' | translate }}
+      </span>
+    </div>
+    <button class="btn btn-primary btn-add-user" (click)="createNewUser()">
+      ➕ {{ 'USERS.ADD_NEW_USER' | translate }}
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'COMMON.LOADING' | translate }}</p>
+  </div>
+
+  <!-- Users Table -->
+  <div class="users-table-container" *ngIf="!isLoading">
+    <table class="users-table" *ngIf="filteredUsers.length > 0">
+      <thead>
+        <tr>
+          <th>{{ 'USERS.NAME' | translate }}</th>
+          <th>{{ 'USERS.MOBILE_NUMBER' | translate }}</th>
+          <th>{{ 'USERS.EMAIL' | translate }}</th>
+          <th>{{ 'USERS.ROLE' | translate }}</th>
+          <th>{{ 'USERS.STATUS' | translate }}</th>
+          <th>{{ 'USERS.CREATED_ON' | translate }}</th>
+          <th>{{ 'COMMON.ACTIONS' | translate }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let user of filteredUsers" [class.inactive-row]="!user.isActive">
+          <td>
+            <div class="user-name">
+              <span class="name-text">{{ user.fullName }}</span>
+            </div>
+          </td>
+          <td>
+            <span class="mobile">{{ user.mobileNumber }}</span>
+          </td>
+          <td>
+            <span class="email">{{ user.email || '—' }}</span>
+          </td>
+          <td>
+            <span class="role-badge">
+              {{ user.roleDisplayName || user.roleName }}
+            </span>
+          </td>
+          <td>
+            <span class="status-badge" [class]="getStatusBadgeClass(user.isActive)">
+              {{ getStatusText(user.isActive) }}
+            </span>
+          </td>
+          <td>
+            <span class="date">{{ user.createdOn | date:'yyyy-MM-dd HH:mm' }}</span>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button 
+                class="btn-action btn-edit" 
+                (click)="editUser(user.userId)"
+                title="Edit User">
+                ✏️
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="filteredUsers.length === 0 && !isLoading">
+      <div class="empty-icon">👥</div>
+      <h3>{{ searchTerm ? 'No users found' : 'No users yet' }}</h3>
+      <p>{{ searchTerm ? 'Try a different search term' : 'Click "Add New User" to create your first user' }}</p>
+      <button class="btn btn-primary" (click)="createNewUser()" *ngIf="!searchTerm">
+        ➕ Add New User
+      </button>
+    </div>
+  </div><!-- /.users-table-container -->
+    </div><!-- /.page-content -->
+  </div><!-- /.page-body-row -->
+</div><!-- /.user-list-container -->

@@ -1,0 +1,453 @@
+<div class="create-club-container">
+
+  <!-- Slim Header Bar -->
+  <div class="page-header">
+    <div class="container">
+      <div class="header-inner">
+        <button class="btn-back" (click)="cancel()">
+          <ng-container *ngIf="!isEditMode">{{ 'CREATE_CLUB.BACK_TO_DASHBOARD' | translate }}</ng-container>
+          <ng-container *ngIf="isEditMode && authService.isMasterAdmin">← Back to Clubs</ng-container>
+          <ng-container *ngIf="isEditMode && !authService.isMasterAdmin">← Back to Dashboard</ng-container>
+        </button>
+        <div class="header-title-block">
+          <h1>{{ isEditMode ? 'Edit Club' : ('CREATE_CLUB.TITLE' | translate) }}</h1>
+          <p>{{ isEditMode ? 'Update club details and theme' : ('CREATE_CLUB.SUBTITLE' | translate) }}</p>
+        </div>
+        <div class="header-top">
+          <app-language-switcher></app-language-switcher>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Body -->
+  <div class="page-body">
+    <div class="container">
+      <div class="form-container">
+
+        <!-- Alerts -->
+        <div class="alert alert-error"   *ngIf="errorMessage">{{ errorMessage }}</div>
+        <div class="alert alert-success" *ngIf="successMessage">{{ successMessage }}</div>
+
+        <!-- Club Admin section (edit mode, master admin only) -->
+        <div class="club-admin-section" *ngIf="isEditMode && authService.isMasterAdmin">
+          <div class="section-header">
+            <div class="section-icon blue">👤</div>
+            <h2 class="section-title">Club Admin User</h2>
+          </div>
+
+          <!-- Loading -->
+          <div class="ca-loading" *ngIf="adminLoading">
+            <div class="nc-mini-spinner"></div>
+            <span>Loading admin user...</span>
+          </div>
+
+          <!-- Existing admin found -->
+          <div class="ca-user-row" *ngIf="!adminLoading && clubAdmin">
+            <div class="ca-avatar">
+              {{ (clubAdmin.fullName || '?')[0].toUpperCase() }}
+            </div>
+            <div class="ca-info">
+              <strong>{{ clubAdmin.fullName }}</strong>
+              <span>{{ clubAdmin.mobileNumber }}</span>
+              <span *ngIf="clubAdmin.email" class="ca-email">{{ clubAdmin.email }}</span>
+              <span class="ca-role">{{ clubAdmin.roleName }}</span>
+            </div>
+            <button class="btn-ca-edit" (click)="editClubAdmin()" type="button" title="Edit this club admin user">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Edit Admin
+            </button>
+          </div>
+
+          <!-- No admin yet -->
+          <div class="ca-empty" *ngIf="!adminLoading && !clubAdmin">
+            <span class="ca-empty-icon">⚠️</span>
+            <div>
+              <strong>No admin user yet</strong>
+              <p>This club has no login user. Add one so they can access the dashboard.</p>
+            </div>
+            <button class="btn-ca-add" (click)="addClubAdmin()" type="button">
+              + Add Club Admin
+            </button>
+          </div>
+        </div>
+
+        <!-- Edit-mode loading spinner -->
+        <div class="spinner-wrap" *ngIf="isLoading">
+          <div class="spinner"></div>
+        </div>
+
+        <form (ngSubmit)="onSubmit()" class="club-form" *ngIf="!isLoading">
+
+          <!-- ① Club Information ──────────────────────────────────────────── -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon orange">🏢</div>
+              <h2 class="section-title">{{ 'CREATE_CLUB.CLUB_INFORMATION' | translate }}</h2>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="clubNameEn">{{ 'CREATE_CLUB.CLUB_NAME_EN' | translate }} *</label>
+                <input type="text" id="clubNameEn" [(ngModel)]="clubNameEn" name="clubNameEn"
+                  [placeholder]="'CREATE_CLUB.CLUB_NAME_EN_PLACEHOLDER' | translate"
+                  (blur)="generateClubCode()" [disabled]="isSaving" required />
+              </div>
+              <div class="form-group">
+                <label for="clubNameAr">{{ 'CREATE_CLUB.CLUB_NAME_AR' | translate }} *</label>
+                <input type="text" id="clubNameAr" [(ngModel)]="clubNameAr" name="clubNameAr"
+                  [placeholder]="'CREATE_CLUB.CLUB_NAME_AR_PLACEHOLDER' | translate"
+                  dir="rtl" [disabled]="isSaving" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="clubCode">{{ 'CREATE_CLUB.CLUB_CODE' | translate }} *</label>
+                <input type="text" id="clubCode" [(ngModel)]="clubCode" name="clubCode"
+                  [placeholder]="'CREATE_CLUB.CLUB_CODE_PLACEHOLDER' | translate"
+                  [disabled]="isSaving || isEditMode"
+                  [readonly]="isEditMode"
+                  [class.readonly-field]="isEditMode"
+                  pattern="[A-Z0-9_]+" style="text-transform:uppercase"
+                  [required]="!isEditMode" />
+                <small class="form-hint">
+                  {{ isEditMode ? 'Club code cannot be changed' : ('CREATE_CLUB.CLUB_CODE_HINT' | translate) }}
+                </small>
+              </div>
+              <div class="form-group">
+                <label for="baseCurrency">{{ 'CREATE_CLUB.CURRENCY' | translate }}</label>
+                <select id="baseCurrency" [(ngModel)]="baseCurrency" name="baseCurrency" [disabled]="isSaving">
+                  <option value="SAR">{{ 'CREATE_CLUB.SAR' | translate }}</option>
+                  <option value="USD">{{ 'CREATE_CLUB.USD' | translate }}</option>
+                  <option value="EUR">{{ 'CREATE_CLUB.EUR' | translate }}</option>
+                  <option value="AED">{{ 'CREATE_CLUB.AED' | translate }}</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="locationCoordinates">{{ 'CREATE_CLUB.LOCATION_COORDINATES' | translate }}</label>
+                <input type="text" id="locationCoordinates" [(ngModel)]="locationCoordinates"
+                  name="locationCoordinates"
+                  [placeholder]="'CREATE_CLUB.COORDINATES_PLACEHOLDER' | translate"
+                  [disabled]="isSaving" />
+                <small class="form-hint">{{ 'CREATE_CLUB.COORDINATES_HINT' | translate }}</small>
+              </div>
+              <div class="form-group">
+                <label for="autoDeactivateDays">{{ 'CREATE_CLUB.AUTO_DEACTIVATE_DAYS' | translate }}</label>
+                <input type="number" id="autoDeactivateDays" [(ngModel)]="autoDeactivateDays"
+                  name="autoDeactivateDays" min="1" max="365" [disabled]="isSaving" />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="locationUrl">{{ 'CREATE_CLUB.GOOGLE_MAPS_URL' | translate }}</label>
+              <input type="url" id="locationUrl" [(ngModel)]="locationUrl" name="locationUrl"
+                [placeholder]="'CREATE_CLUB.MAPS_URL_PLACEHOLDER' | translate" [disabled]="isSaving" />
+            </div>
+
+            <!-- Edit-mode only: Active status toggle -->
+            <div class="form-group" *ngIf="isEditMode">
+              <label class="checkbox-label">
+                <input type="checkbox" [(ngModel)]="isActive" name="isActive" [disabled]="isSaving" />
+                <span>Club is Active</span>
+              </label>
+              <small class="form-hint">Inactive clubs cannot be accessed by users</small>
+            </div>
+          </div>
+
+          <!-- ② Admin User (Create mode only) ───────────────────────────────── -->
+          <div class="form-section" *ngIf="!isEditMode">
+            <div class="section-header">
+              <div class="section-icon blue">👤</div>
+              <h2 class="section-title">{{ 'CREATE_CLUB.CLUB_ADMINISTRATOR' | translate }}</h2>
+            </div>
+
+            <div class="form-group">
+              <label for="adminFullName">{{ 'CREATE_CLUB.FULL_NAME' | translate }} *</label>
+              <input type="text" id="adminFullName" [(ngModel)]="adminFullName" name="adminFullName"
+                [placeholder]="'CREATE_CLUB.ADMIN_NAME_PLACEHOLDER' | translate" required />
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="adminMobileNumber">{{ 'CREATE_CLUB.MOBILE_NUMBER' | translate }} *</label>
+                <input type="tel" id="adminMobileNumber" [(ngModel)]="adminMobileNumber"
+                  name="adminMobileNumber"
+                  [placeholder]="'CREATE_CLUB.MOBILE_PLACEHOLDER' | translate"
+                  (input)="formatMobileNumber()" required />
+                <small class="form-hint">{{ 'CREATE_CLUB.MOBILE_HINT' | translate }}</small>
+              </div>
+              <div class="form-group">
+                <label for="adminEmail">{{ 'CREATE_CLUB.EMAIL' | translate }}</label>
+                <input type="email" id="adminEmail" [(ngModel)]="adminEmail" name="adminEmail"
+                  [placeholder]="'CREATE_CLUB.EMAIL_PLACEHOLDER' | translate" />
+              </div>
+            </div>
+          </div>
+
+          <!-- ③ Theme Customization ──────────────────────────────────────────── -->
+          <div class="form-section">
+            <div class="section-header">
+              <div class="section-icon purple">🎨</div>
+              <h2 class="section-title">{{ 'CREATE_CLUB.THEME_CUSTOMIZATION' | translate }}</h2>
+              </div>
+
+            <!-- Full Theme (always visible in both create & edit) -->
+            <div class="advanced-theme">
+
+              <!-- Theme Mode -->
+              <div class="theme-mode-row">
+                <span class="adv-label">Theme Mode</span>
+                <div class="mode-btns">
+                  <button type="button" [class.active]="themeMode==='dark'"  (click)="setThemeMode('dark')"  [disabled]="isSaving">🌙 Dark</button>
+                  <button type="button" [class.active]="themeMode==='light'" (click)="setThemeMode('light')" [disabled]="isSaving">☀️ Light</button>
+                  <button type="button" [class.active]="themeMode==='auto'"  (click)="setThemeMode('auto')"  [disabled]="isSaving">⚙️ Auto</button>
+                </div>
+              </div>
+
+              <!-- Background Colors -->
+              <div class="adv-section">
+                <div class="adv-section-label">BACKGROUND COLORS</div>
+                <div class="color-card-grid">
+                  <div class="color-card" *ngFor="let c of [
+                    {label:'App Background', model:'bgApp',    hint:'Main app background'},
+                    {label:'Panel',          model:'bgPanel',  hint:'Navigation/sidebar'},
+                    {label:'Card Surface',   model:'bgCard',   hint:'Cards & modals'},
+                    {label:'Border',         model:'bgBorder', hint:'Borders & dividers'}
+                  ]">
+                    <div class="cc-swatch" [style.background]="getColor(c.model)"></div>
+                    <div class="cc-info">
+                      <label>{{ c.label }}</label>
+                      <input type="color" [ngModel]="getColor(c.model)" (ngModelChange)="setColor(c.model, $event)" [name]="c.model" [disabled]="isSaving" />
+                      <span class="cc-hex">{{ getColor(c.model) }}</span>
+                      <small>{{ c.hint }}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Accent Colors -->
+              <div class="adv-section">
+                <div class="adv-section-label">ACCENT COLORS</div>
+                <div class="color-card-grid">
+                  <div class="color-card" *ngFor="let c of [
+                    {label:'Primary',  model:'accentPrimary', hint:'Links, active states'},
+                    {label:'Success',  model:'accentSuccess', hint:'Approved, active'},
+                    {label:'Warning',  model:'accentWarning', hint:'Pending, low stock'},
+                    {label:'Danger',   model:'accentDanger',  hint:'Errors, rejected'},
+                    {label:'Info',     model:'accentInfo',    hint:'Special states'}
+                  ]">
+                    <div class="cc-swatch" [style.background]="getColor(c.model)"></div>
+                    <div class="cc-info">
+                      <label>{{ c.label }}</label>
+                      <input type="color" [ngModel]="getColor(c.model)" (ngModelChange)="setColor(c.model, $event)" [name]="c.model" [disabled]="isSaving" />
+                      <span class="cc-hex">{{ getColor(c.model) }}</span>
+                      <small>{{ c.hint }}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Text Colors -->
+              <div class="adv-section">
+                <div class="adv-section-label">TEXT COLORS</div>
+                <div class="color-card-grid three-col">
+                  <div class="color-card" *ngFor="let c of [
+                    {label:'Primary Text',   model:'textPrimary',   hint:'Headings, main text'},
+                    {label:'Secondary Text', model:'textSecondary', hint:'Labels, subtext'},
+                    {label:'Disabled',       model:'textDisabled',  hint:'Placeholders, hints'}
+                  ]">
+                    <div class="cc-swatch" [style.background]="getColor(c.model)"></div>
+                    <div class="cc-info">
+                      <label>{{ c.label }}</label>
+                      <input type="color" [ngModel]="getColor(c.model)" (ngModelChange)="setColor(c.model, $event)" [name]="c.model" [disabled]="isSaving" />
+                      <span class="cc-hex">{{ getColor(c.model) }}</span>
+                      <small>{{ c.hint }}</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Presets -->
+              <div class="adv-section">
+                <div class="adv-section-label">QUICK PRESETS</div>
+                <div class="preset-row">
+                  <button type="button" class="preset-btn" (click)="applyPreset('pharmacare')" [disabled]="isSaving">
+                    <span class="preset-dot" style="background:linear-gradient(135deg,#00D4FF,#A855F7)"></span> PharmaCare
+                  </button>
+                  <button type="button" class="preset-btn" (click)="applyPreset('forest')" [disabled]="isSaving">
+                    <span class="preset-dot" style="background:linear-gradient(135deg,#4CAF50,#009688)"></span> Forest
+                  </button>
+                  <button type="button" class="preset-btn" (click)="applyPreset('ocean')" [disabled]="isSaving">
+                    <span class="preset-dot" style="background:linear-gradient(135deg,#06B6D4,#8B5CF6)"></span> Ocean
+                  </button>
+                  <button type="button" class="preset-btn" (click)="applyPreset('sunset')" [disabled]="isSaving">
+                    <span class="preset-dot" style="background:linear-gradient(135deg,#FF6B35,#AB47BC)"></span> Sunset
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Logo Upload -->
+            <div class="logo-upload-section">
+              <label>{{ 'CREATE_CLUB.CLUB_LOGO' | translate }}</label>
+
+              <!-- Edit mode: show current logo -->
+              <div class="current-logo" *ngIf="isEditMode && club?.theme?.hasLogo && !logoPreview">
+                <img *ngIf="clubLogoUrl" [src]="clubLogoUrl" alt="Club Logo" class="logo-img" />
+                <p>{{ club?.theme?.logoFileName || 'Uploaded logo' }}</p>
+              </div>
+
+              <div class="logo-upload-area" *ngIf="!logoPreview">
+                <input type="file" id="logoFile" accept="image/*,.svg,image/svg+xml"
+                  (change)="onLogoSelected($event)" [disabled]="isSaving" #fileInput />
+                <div class="upload-placeholder" (click)="fileInput.click()">
+                  <div class="upload-icon">📷</div>
+                  <p>{{ isEditMode ? 'Click to upload new logo' : ('CREATE_CLUB.CLICK_TO_UPLOAD' | translate) }}</p>
+                  <small>{{ 'CREATE_CLUB.MAX_FILE_SIZE' | translate }}</small>
+                </div>
+              </div>
+
+              <div class="logo-preview" *ngIf="logoPreview">
+                <img [src]="logoPreview" alt="Logo preview" />
+                <button type="button" class="btn-remove-logo" (click)="removeLogo()" [disabled]="isSaving">✕</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Form Actions ──────────────────────────────────────────────────── -->
+          <div class="form-actions">
+            <button type="button" class="btn btn-outline" (click)="cancel()" [disabled]="isLoading || isSaving">
+              {{ 'COMMON.CANCEL' | translate }}
+            </button>
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading || isSaving">
+              <span *ngIf="!isLoading && !isSaving">
+                {{ isEditMode ? 'Save Changes' : ('CREATE_CLUB.CREATE_CLUB' | translate) }}
+              </span>
+              <span *ngIf="isLoading || isSaving">
+                {{ isEditMode ? 'Saving...' : ('CREATE_CLUB.CREATING' | translate) }}
+              </span>
+            </button>
+          </div>
+
+        </form>
+
+        <!-- ── NOTIFICATION CHANNELS — master admin edit view, outside form ── -->
+        <div class="notif-channels-section" *ngIf="isEditMode && authService.isMasterAdmin">
+          <div class="section-header">
+            <div class="section-icon green">🔔</div>
+            <h2 class="section-title">Notification Channels</h2>
+          </div>
+          <p class="nc-hint">Channels this club has enabled for sending notifications.</p>
+
+          <div class="nc-loading" *ngIf="ncLoading">
+            <div class="nc-spinner"></div>
+            <span>Loading channel settings...</span>
+          </div>
+
+          <p class="nc-error" *ngIf="!ncLoading && ncError">⚠️ {{ ncError }}</p>
+
+          <div class="nc-grid" *ngIf="!ncLoading && !ncError && clubChannels.length > 0">
+            <div class="nc-tile" *ngFor="let ch of clubChannels"
+                 [class.nc-on]="ch.isActive" [class.nc-off]="!ch.isActive"
+                 [class.nc-tile-wide]="ch.channelCode === 'whatsapp'">
+              <span class="nc-tile-icon">{{ getNcIcon(ch.channelCode) }}</span>
+              <span class="nc-tile-name">{{ ch.channelName }}</span>
+              <span class="nc-tile-desc">{{ getNcDesc(ch.channelCode) }}</span>
+
+              <!-- WhatsApp provider — master admin selects here -->
+              <div class="nc-wa-provider" *ngIf="ch.channelCode === 'whatsapp'">
+                <span class="nc-wa-label">Send via:</span>
+
+                <!-- Provider options -->
+                <div class="nc-wa-options">
+
+                  <button class="nc-wa-opt"
+                          [class.nc-wa-opt-on]="ch.whatsAppProvider === 'twilio'"
+                          [disabled]="ch.providerSaving"
+                          (click)="setNcWhatsAppProvider(ch, 'twilio')">
+                    <span class="nc-wa-opt-dot"
+                          [class.dot-active]="ch.whatsAppProvider === 'twilio'"></span>
+                    <span>📡 Twilio</span>
+                  </button>
+
+                  <button class="nc-wa-opt"
+                          [class.nc-wa-opt-on]="ch.whatsAppProvider === 'direct'"
+                          [disabled]="ch.providerSaving"
+                          (click)="setNcWhatsAppProvider(ch, 'direct')">
+                    <span class="nc-wa-opt-dot"
+                          [class.dot-active]="ch.whatsAppProvider === 'direct'"></span>
+                    <span>💬 Direct API</span>
+                  </button>
+
+                </div>
+
+                <div class="nc-wa-saving" *ngIf="ch.providerSaving">
+                  <div class="nc-mini-spinner"></div>
+                  <span>Saving...</span>
+                </div>
+
+                <p class="nc-wa-warn"
+                   *ngIf="ch.isActive && !ch.whatsAppProvider && !ch.providerSaving">
+                  ⚠️ Select a provider
+                </p>
+              </div>
+
+              <!-- Master admin can toggle channels ON/OFF -->
+              <div class="nc-toggle-wrap">
+                <div class="nc-mini-spinner" *ngIf="ch.saving"></div>
+                <button class="nc-toggle"
+                        *ngIf="!ch.saving"
+                        [class.nc-tog-on]="ch.isActive"
+                        [class.nc-tog-off]="!ch.isActive"
+                        (click)="toggleNcChannel(ch)">
+                  {{ ch.isActive ? 'ON' : 'OFF' }}
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+          <p class="nc-note" *ngIf="!ncLoading && !ncError && clubChannels.length === 0">
+            Club admin has not configured notification channels yet.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Success Modal (create mode only) -->
+<div class="modal-overlay" *ngIf="showSuccessModal" (click)="closeSuccessModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header success">
+      <div class="success-icon">✓</div>
+      <h2>{{ 'CREATE_CLUB.SUCCESS_TITLE' | translate }}</h2>
+    </div>
+    <div class="modal-body">
+      <p class="club-created-name">{{ createdClubName }}</p>
+      <div class="credentials-box">
+        <h3>{{ 'CREATE_CLUB.ADMIN_CREDENTIALS' | translate }}</h3>
+        <div class="credential-row">
+          <strong>{{ 'CREATE_CLUB.MOBILE_NUMBER' | translate }}:</strong>
+          <span>{{ adminMobileNumber }}</span>
+        </div>
+        <div class="credential-row password">
+          <strong>{{ 'CREATE_CLUB.TEMPORARY_PASSWORD' | translate }}:</strong>
+          <span class="temp-password">{{ temporaryPassword }}</span>
+        </div>
+        <div class="warning-box">{{ 'CREATE_CLUB.IMPORTANT_WARNING' | translate }}</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" (click)="createAnotherClub()">{{ 'CREATE_CLUB.CREATE_ANOTHER' | translate }}</button>
+      <button class="btn btn-primary" (click)="closeSuccessModal()">{{ 'COMMON.DONE' | translate }}</button>
+    </div>
+  </div>
+</div>

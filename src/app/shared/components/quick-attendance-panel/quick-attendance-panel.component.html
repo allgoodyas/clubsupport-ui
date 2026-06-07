@@ -1,0 +1,256 @@
+<!-- Overlay -->
+<div class="qa-overlay" *ngIf="isOpen" (click)="close()"></div>
+
+<!-- Panel -->
+<div class="qa-panel" [class.qa-open]="isOpen">
+
+  <!-- ═══════════════════════════════════════════════════
+       STEP 1 — SELECT STUDENT
+  ══════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="step === 'students'">
+
+    <div class="qa-header">
+      <div class="qa-header-left">
+        <span class="qa-step-badge">1/3</span>
+        <div>
+          <h2>✅ Mark Attendance</h2>
+          <p class="qa-sub">Select a student to begin</p>
+        </div>
+      </div>
+      <button class="qa-close" (click)="close()">✕</button>
+    </div>
+
+    <!-- Search -->
+    <div class="qa-search-bar">
+      <span class="qa-search-icon">🔍</span>
+      <input type="text" class="qa-search-input" placeholder="Search students..."
+             [(ngModel)]="studentSearch" (ngModelChange)="applyStudentFilter()" />
+      <button class="qa-clear" *ngIf="studentSearch" (click)="studentSearch=''; applyStudentFilter()">✕</button>
+    </div>
+
+    <!-- Loading -->
+    <div class="qa-center" *ngIf="loadingStudents">
+      <div class="qa-spinner"></div>
+      <p>Loading students...</p>
+    </div>
+
+    <!-- Student list -->
+    <div class="qa-list" *ngIf="!loadingStudents">
+      <div class="qa-empty" *ngIf="filteredStudents.length === 0">
+        <div class="qa-empty-icon">👥</div>
+        <p>No students found</p>
+      </div>
+
+      <div class="qa-student-row" *ngFor="let s of filteredStudents" (click)="selectStudent(s)">
+        <!-- Avatar -->
+        <div class="qa-avatar">
+          <img *ngIf="s.hasPhoto && getPhotoUrl(s.studentId)"
+               [src]="getPhotoUrl(s.studentId)" [alt]="s.fullName" class="qa-photo" />
+          <span *ngIf="!s.hasPhoto || !getPhotoUrl(s.studentId)" class="qa-avatar-emoji">
+            {{ s.gender === 'Male' ? '👦' : '👧' }}
+          </span>
+        </div>
+
+        <div class="qa-student-info">
+          <div class="qa-student-name">{{ s.fullName }}</div>
+          <div class="qa-student-meta">{{ s.age }} yrs · {{ s.gender }}</div>
+        </div>
+
+        <span class="qa-chevron">›</span>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ═══════════════════════════════════════════════════
+       STEP 2 — SELECT EVENT
+  ══════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="step === 'events'">
+
+    <div class="qa-header">
+      <button class="qa-back" (click)="goBackToStudents()">←</button>
+      <div class="qa-header-mid">
+        <span class="qa-step-badge">2/3</span>
+        <div>
+          <h2>📅 Select Event</h2>
+          <p class="qa-sub">{{ selectedStudent?.fullName }}</p>
+        </div>
+      </div>
+      <button class="qa-close" (click)="close()">✕</button>
+    </div>
+
+    <!-- Loading -->
+    <div class="qa-center" *ngIf="loadingEvents">
+      <div class="qa-spinner"></div>
+      <p>Loading events...</p>
+    </div>
+
+    <div class="qa-list" *ngIf="!loadingEvents">
+
+      <!-- Enrolled events -->
+      <div *ngIf="enrolledEvents.length > 0">
+        <div class="qa-section-label">
+          <span class="qa-section-dot primary"></span>
+          Student's enrolled events
+        </div>
+
+        <div class="qa-event-card qa-event-primary" *ngFor="let ev of enrolledEvents"
+             (click)="selectEvent(ev)">
+          <div class="qa-event-icon">{{ eventTypeEmoji(ev.eventType) }}</div>
+          <div class="qa-event-info">
+            <div class="qa-event-name">{{ ev.eventName }}</div>
+            <div class="qa-event-meta">
+              {{ ev.eventType }} · {{ formatDate(ev.startDate) }}
+            </div>
+          </div>
+          <div class="qa-event-right">
+            <span class="qa-enrolled-badge">Enrolled</span>
+            <button class="qa-attend-btn" (click)="$event.stopPropagation(); selectEvent(ev)">
+              ✅ Mark →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Other events -->
+      <div *ngIf="otherEvents.length > 0">
+        <div class="qa-section-label" [style.margin-top]="enrolledEvents.length > 0 ? '16px' : '0'">
+          <span class="qa-section-dot other"></span>
+          Other active events
+        </div>
+
+        <div class="qa-event-card" *ngFor="let ev of otherEvents" (click)="selectEvent(ev)">
+          <div class="qa-event-icon">{{ eventTypeEmoji(ev.eventType) }}</div>
+          <div class="qa-event-info">
+            <div class="qa-event-name">{{ ev.eventName }}</div>
+            <div class="qa-event-meta">
+              {{ ev.eventType }} · {{ formatDate(ev.startDate) }}
+            </div>
+          </div>
+          <div class="qa-event-right">
+            <button class="qa-attend-btn secondary" (click)="$event.stopPropagation(); selectEvent(ev)">
+              Mark →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty -->
+      <div class="qa-empty"
+           *ngIf="enrolledEvents.length === 0 && otherEvents.length === 0">
+        <div class="qa-empty-icon">📅</div>
+        <p>No active events found</p>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <!-- ═══════════════════════════════════════════════════
+       STEP 3 — MARK ATTENDANCE
+  ══════════════════════════════════════════════════════ -->
+  <ng-container *ngIf="step === 'attendance'">
+
+    <div class="qa-header">
+      <button class="qa-back" (click)="goBackToEvents()">←</button>
+      <div class="qa-header-mid">
+        <span class="qa-step-badge">3/3</span>
+        <div>
+          <h2>✅ Attendance</h2>
+          <p class="qa-sub">{{ selectedEvent?.eventName }}</p>
+        </div>
+      </div>
+      <button class="qa-close" (click)="close()">✕</button>
+    </div>
+
+    <!-- Controls bar -->
+    <div class="qa-controls">
+      <!-- Date picker -->
+      <div class="qa-date-wrap">
+        <span>📅</span>
+        <input type="date" class="qa-date-input"
+               [(ngModel)]="attendanceDate" [max]="maxDate"
+               (change)="onDateChange()" />
+      </div>
+
+      <!-- Quick mark -->
+      <button class="qa-quick-btn present" (click)="markAllPresent()">✅ All Present</button>
+      <button class="qa-quick-btn absent"  (click)="markAllAbsent()">❌ All Absent</button>
+
+      <!-- Search students -->
+      <div class="qa-search-mini">
+        <span>🔍</span>
+        <input type="text" [(ngModel)]="studentFilter" placeholder="Filter..." class="qa-filter-input" />
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="qa-stats-row" *ngIf="attendanceData">
+      <span class="qa-stat">{{ attendanceData.students.length }} Total</span>
+      <span class="qa-stat-divider">|</span>
+      <span class="qa-stat present-stat">{{ getTotalPresent() }} Present</span>
+      <span class="qa-stat-divider">|</span>
+      <span class="qa-stat absent-stat">{{ getTotalAbsent() }} Absent</span>
+      <span class="qa-stat-divider">|</span>
+      <span class="qa-stat pct-stat" [class.good]="getAttendancePct() >= 80">{{ getAttendancePct() }}%</span>
+    </div>
+
+    <!-- Loading -->
+    <div class="qa-center" *ngIf="loadingAttendance">
+      <div class="qa-spinner"></div>
+      <p>Loading attendance...</p>
+    </div>
+
+    <!-- Student grid -->
+    <div class="qa-att-list" *ngIf="!loadingAttendance && attendanceData">
+      <div class="qa-empty" *ngIf="attendanceData.students.length === 0">
+        <div class="qa-empty-icon">👥</div>
+        <p>No students enrolled in this event</p>
+      </div>
+
+      <div class="qa-att-card" *ngFor="let s of getFilteredStudents()"
+           [class.qa-marked]="s.isMarked">
+
+        <!-- Already-marked tick -->
+        <div class="qa-marked-badge" *ngIf="s.isMarked">✓</div>
+
+        <!-- Avatar + name -->
+        <div class="qa-att-top">
+          <div class="qa-att-avatar">{{ getInitials(s.studentName) }}</div>
+          <div class="qa-att-name" [title]="s.studentName">{{ s.studentName }}</div>
+        </div>
+
+        <!-- Per-student saving spinner -->
+        <div class="qa-card-saving" *ngIf="isSaving(s.enrollmentId)">
+          <div class="qa-card-spinner"></div>
+        </div>
+
+        <!-- Status emoji buttons -->
+        <div class="qa-status-row" *ngIf="!isSaving(s.enrollmentId)">
+          <button class="qa-emoji-btn present"
+                  [class.active]="getStatus(s.enrollmentId) === 'Present'"
+                  (click)="markStudent(s.enrollmentId, s.studentId, 'Present')" title="Present">✅</button>
+          <button class="qa-emoji-btn absent"
+                  [class.active]="getStatus(s.enrollmentId) === 'Absent'"
+                  (click)="markStudent(s.enrollmentId, s.studentId, 'Absent')" title="Absent">❌</button>
+          <button class="qa-emoji-btn late"
+                  [class.active]="getStatus(s.enrollmentId) === 'Late'"
+                  (click)="markStudent(s.enrollmentId, s.studentId, 'Late')" title="Late">⏰</button>
+          <button class="qa-emoji-btn excused"
+                  [class.active]="getStatus(s.enrollmentId) === 'Excused'"
+                  (click)="markStudent(s.enrollmentId, s.studentId, 'Excused')" title="Excused">🎯</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats footer (replaces save button — auto-save on each tap) -->
+    <div class="qa-footer" *ngIf="!loadingAttendance && attendanceData && attendanceData.students.length > 0">
+      <div class="qa-footer-info">
+        <span>{{ getTotalPresent() }}/{{ attendanceData.students.length }} Present</span>
+        <span class="qa-pct" [class.good]="getAttendancePct() >= 80">{{ getAttendancePct() }}%</span>
+      </div>
+      <span class="qa-autosave-label">⚡ Auto-saving</span>
+    </div>
+
+  </ng-container>
+
+</div>

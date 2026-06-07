@@ -1,0 +1,142 @@
+<header class="mb-header">
+  <div class="mb-header-left">
+    <button class="mb-back-btn" (click)="router.navigate(['/master-admin'])">&#8592; Dashboard</button>
+    <div>
+      <h1 class="mb-title">&#128203; Service Catalogue</h1>
+      <p class="mb-sub">Define all platform charges · global defaults</p>
+    </div>
+  </div>
+  <div class="mb-header-right">
+    <button class="mb-btn ghost" (click)="router.navigate(['/master-admin/billing/clubs'])">&#127968; Club Pricing</button>
+    <button class="mb-btn ghost" (click)="router.navigate(['/master-admin/billing/invoices'])">&#129534; Invoices</button>
+    <button class="mb-btn primary" (click)="openCreate()">&#43; Add Service</button>
+  </div>
+</header>
+
+<div class="mb-body">
+  <div class="mb-loading" *ngIf="loading"><div class="mb-spinner"></div><span>Loading...</span></div>
+  <div class="mb-error" *ngIf="error">&#9888; {{ error }}</div>
+
+  <div class="mb-card" *ngIf="!loading">
+    <div class="mb-card-header">
+      <h3>All Services ({{ services.length }})</h3>
+    </div>
+    <div class="mb-table-wrap">
+      <table class="mb-table">
+        <thead>
+          <tr>
+            <th>Icon</th><th>Service</th><th>Category</th><th>Charge type</th>
+            <th class="r">Default price</th><th>Free tier</th><th>Status</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of services">
+            <td style="font-size:1.2rem">{{ s.icon }}</td>
+            <td>
+              <div style="font-weight:600; color:#1e293b;">{{ s.nameEn }}</div>
+              <div style="font-size:0.72rem; color:#64748b;">{{ s.serviceCode }}</div>
+            </td>
+            <td><span class="mb-badge active">{{ s.category }}</span></td>
+            <td>{{ chargeLabel(s.chargeType) }}</td>
+            <td class="r" style="font-weight:600;">{{ s.defaultPrice | number:'1.2-2' }} SAR
+              <div style="font-size:0.7rem; color:#64748b;" *ngIf="s.unitLabel">{{ s.unitLabel }}</div>
+            </td>
+            <td>{{ s.freeTierUnits > 0 ? s.freeTierUnits + ' units' : '—' }}</td>
+            <td><span class="mb-badge" [class.active]="s.isActive" [class.inactive]="!s.isActive">{{ s.isActive ? 'Active' : 'Inactive' }}</span></td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <button class="mb-action-btn edit"   (click)="openEdit(s)">Edit</button>
+                <button class="mb-action-btn danger" (click)="deactivate(s)" *ngIf="s.isActive">Disable</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Slide panel -->
+<div class="mb-overlay" *ngIf="showForm" (click)="showForm=false">
+  <div class="mb-panel" (click)="$event.stopPropagation()">
+    <div class="mb-panel-header">
+      <h3>{{ isEdit ? 'Edit Service' : 'New Service' }}</h3>
+      <button class="mb-panel-close" (click)="showForm=false">&#x2715;</button>
+    </div>
+    <div class="mb-panel-body">
+      <div class="mb-form-row">
+        <div class="mb-form-group">
+          <label class="mb-label">Service code *</label>
+          <input class="mb-input" [(ngModel)]="form.serviceCode" placeholder="e.g. WHATSAPP" [disabled]="isEdit" />
+        </div>
+        <div class="mb-form-group">
+          <label class="mb-label">Icon (emoji)</label>
+          <input class="mb-input" [(ngModel)]="form.icon" placeholder="e.g. 💬" />
+        </div>
+      </div>
+
+      <div class="mb-form-group">
+        <label class="mb-label">Name (English) *</label>
+        <input class="mb-input" [(ngModel)]="form.nameEn" placeholder="WhatsApp Notifications" />
+      </div>
+
+      <div class="mb-form-group">
+        <label class="mb-label">Name (Arabic)</label>
+        <input class="mb-input" [(ngModel)]="form.nameAr" placeholder="إشعارات واتساب" dir="rtl" />
+      </div>
+
+      <div class="mb-form-group">
+        <label class="mb-label">Description</label>
+        <textarea class="mb-textarea" [(ngModel)]="form.description" placeholder="Brief description of this service..."></textarea>
+      </div>
+
+      <div class="mb-form-row">
+        <div class="mb-form-group">
+          <label class="mb-label">Charge type *</label>
+          <select class="mb-select" [(ngModel)]="form.chargeType">
+            <option *ngFor="let t of chargeTypes" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+        <div class="mb-form-group">
+          <label class="mb-label">Category</label>
+          <select class="mb-select" [(ngModel)]="form.category">
+            <option *ngFor="let c of categories" [value]="c">{{ c }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-form-row">
+        <div class="mb-form-group">
+          <label class="mb-label">Default price (SAR) *</label>
+          <input class="mb-input" type="number" [(ngModel)]="form.defaultPrice" min="0" step="0.01" />
+        </div>
+        <div class="mb-form-group">
+          <label class="mb-label">Unit label</label>
+          <input class="mb-input" [(ngModel)]="form.unitLabel" placeholder="per student" />
+        </div>
+      </div>
+
+      <div class="mb-form-row">
+        <div class="mb-form-group">
+          <label class="mb-label">Free tier units</label>
+          <input class="mb-input" type="number" [(ngModel)]="form.freeTierUnits" min="0" placeholder="0" />
+        </div>
+        <div class="mb-form-group">
+          <label class="mb-label">Display order</label>
+          <input class="mb-input" type="number" [(ngModel)]="form.displayOrder" min="0" />
+        </div>
+      </div>
+
+      <div class="mb-toggle-row">
+        <label>Active</label>
+        <input type="checkbox" [(ngModel)]="form.isActive" />
+      </div>
+
+      <hr class="mb-divider" />
+      <button class="mb-save-btn" (click)="save()" [disabled]="saving">
+        {{ saving ? 'Saving...' : (isEdit ? 'Update Service' : 'Create Service') }}
+      </button>
+      <button class="mb-cancel-btn" (click)="showForm=false">Cancel</button>
+    </div>
+  </div>
+</div>

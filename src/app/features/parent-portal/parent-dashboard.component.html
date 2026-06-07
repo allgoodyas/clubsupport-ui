@@ -1,0 +1,164 @@
+<div class="parent-dashboard">
+
+  <!-- ── SLIM STICKY HEADER ─────────────────────────────────────────── -->
+  <div class="dashboard-header">
+    <div class="header-inner">
+
+      <!-- Left: Club logo + name -->
+      <div class="header-brand">
+        <!-- Club logo (real image if available, fallback to initials circle) -->
+        <div class="club-logo-wrap">
+          <img *ngIf="clubLogoUrl" [src]="clubLogoUrl" alt="Club Logo" class="club-logo-img">
+          <div *ngIf="!clubLogoUrl" class="club-logo-fallback">⚽</div>
+        </div>
+        <div class="brand-text">
+          <div class="brand-club-name">{{ currentUser?.clubNameEn || 'Club' }}</div>
+          <div class="brand-subtitle">Parent Portal</div>
+        </div>
+      </div>
+
+      <!-- Centre: Logged-in user info -->
+      <div class="header-user">
+        <div class="user-avatar">{{ getInitials(currentUser?.fullName) }}</div>
+        <div class="user-meta">
+          <div class="user-name">{{ currentUser?.fullName }}</div>
+          <div class="user-mobile">{{ currentUser?.mobileNumber }}</div>
+        </div>
+      </div>
+
+      <!-- Right: Profile + Logout -->
+      <div class="header-actions">
+        <button class="btn-profile" (click)="goToProfile()">👤 Profile</button>
+        <button class="btn-logout" (click)="logout()">⛔ Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Loading dashboard...</p>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !isLoading" class="error-container">
+    <div class="error-icon">⚠️</div>
+    <p>{{ error }}</p>
+    <button class="btn-retry" (click)="loadDashboard()">Try Again</button>
+  </div>
+
+  <!-- ── DASHBOARD CONTENT ───────────────────────────────────────────── -->
+  <div *ngIf="!isLoading && !error && summary" class="dashboard-content">
+
+    <!-- Summary Stats Row -->
+    <div class="summary-row">
+      <div class="stat-chip chip-children">
+        <span class="chip-icon">👨‍👩‍👧‍👦</span>
+        <div>
+          <div class="chip-val">{{ summary.totalChildren }}</div>
+          <div class="chip-lbl">Children</div>
+        </div>
+      </div>
+
+      <div class="stat-chip chip-events">
+        <span class="chip-icon">📅</span>
+        <div>
+          <div class="chip-val">{{ summary.totalActiveEnrollments }}</div>
+          <div class="chip-lbl">Active Events</div>
+        </div>
+      </div>
+
+      <div class="stat-chip chip-subs">
+        <span class="chip-icon">🎯</span>
+        <div>
+          <div class="chip-val">{{ summary.activeSubscriptions }}</div>
+          <div class="chip-lbl">Subscriptions</div>
+        </div>
+      </div>
+
+      <div class="stat-chip chip-pending" [class.has-amount]="summary.totalPendingAmount > 0"
+           (click)="viewPendingInvoices()">
+        <span class="chip-icon">💳</span>
+        <div>
+          <div class="chip-val">{{ formatCurrency(summary.totalPendingAmount) }}</div>
+          <div class="chip-lbl">
+            Pending
+            <span class="badge-count" *ngIf="summary.totalPendingInvoices > 0">
+              {{ summary.totalPendingInvoices }}
+            </span>
+          </div>
+        </div>
+        <span class="chip-arrow" *ngIf="summary.totalPendingAmount > 0">→</span>
+      </div>
+    </div>
+
+    <!-- Pay All Banner (only when there are pending payments) -->
+    <div class="pay-banner" *ngIf="summary.totalPendingInvoices > 0"
+         (click)="viewPendingInvoices()">
+      <span>💳 You have {{ summary.totalPendingInvoices }} pending invoice(s)</span>
+      <span class="banner-amount">{{ formatCurrency(summary.totalPendingAmount) }} →</span>
+    </div>
+
+    <!-- ── CHILDREN ──────────────────────────────────────────────────── -->
+    <div class="section-header">
+      <h2>My Children</h2>
+      <span class="section-count">{{ children.length }}</span>
+    </div>
+
+    <div class="children-grid" *ngIf="children.length > 0">
+      <div *ngFor="let child of children" class="child-card">
+
+        <!-- Child top row -->
+        <div class="child-top">
+          <div class="child-avatar">
+            <img *ngIf="getChildPhotoUrl(child.studentId)"
+                 [src]="getChildPhotoUrl(child.studentId)"
+                 [alt]="child.studentName" class="child-photo"
+                 (error)="onPhotoError($event)">
+            <span *ngIf="!getChildPhotoUrl(child.studentId)" class="child-emoji">
+              {{ getGenderEmoji(child.gender) }}
+            </span>
+          </div>
+          <div class="child-info">
+            <div class="child-name">{{ child.studentName }}</div>
+            <div class="child-sub">{{ child.age }} yrs · {{ child.gender }}</div>
+          </div>
+          <button class="btn-view-details" (click)="viewChild(child.studentId)">
+            View →
+          </button>
+        </div>
+
+        <!-- Pending payment strip -->
+        <div class="pending-strip" *ngIf="child.pendingAmount > 0">
+          <span>💳 {{ child.pendingInvoiceCount }} invoice(s) pending</span>
+          <button class="btn-pay-now" (click)="payNow(child.studentId)">
+            {{ formatCurrency(child.pendingAmount) }} — Pay Now
+          </button>
+        </div>
+
+        <!-- Action pills -->
+        <div class="child-actions">
+          <button class="act-pill" (click)="viewEvents(child.studentId)">
+            📅 {{ child.activeEnrollments }} Event{{ child.activeEnrollments !== 1 ? 's' : '' }}
+          </button>
+          <button class="act-pill" (click)="viewAttendance(child.studentId)">
+            ✓ Attendance
+          </button>
+          <button class="act-pill pill-sub" *ngIf="child.subscriptionPlanName"
+                  (click)="viewSubscriptions(child.studentId)">
+            🎯 {{ child.subscriptionPlanName }}
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div *ngIf="children.length === 0" class="empty-state">
+      <div class="empty-icon">👨‍👩‍👧‍👦</div>
+      <h3>No Children Found</h3>
+      <p>You don't have any children registered yet.</p>
+    </div>
+
+  </div>
+</div>

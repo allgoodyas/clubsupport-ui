@@ -1,0 +1,435 @@
+.payment-checkout {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 1rem;
+  min-height: 100vh;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+
+  @media (max-width: 768px) {
+    padding: 0.75rem;
+  }
+}
+
+// ===================================================
+// HEADER
+// ===================================================
+
+.checkout-header {
+  text-align: center;
+  margin-bottom: 1rem;
+  color: white;
+
+  h1 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+  }
+
+  .subtitle {
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
+}
+
+// ===================================================
+// LOADING & ERROR
+// ===================================================
+
+.loading-container, .error-container {
+  background: white;
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 0.75rem;
+}
+
+.spinner-small {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top: 2px solid white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-right: 0.4rem;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// ===================================================
+// CHECKOUT CONTENT
+// ===================================================
+
+.checkout-content {
+  background: white;
+  border-radius: 10px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 768px) {
+    padding: 0.85rem;
+  }
+}
+
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+.section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.85rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+// ===================================================
+// ORDER SUMMARY
+// ===================================================
+
+.order-summary {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.invoice-list {
+  margin-bottom: 0.85rem;
+}
+
+.invoice-item {
+  background: white;
+  border-radius: 6px;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border: 1px solid #e0e0e0;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .invoice-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.4rem;
+
+    .invoice-item-number {
+      font-weight: 700;
+      color: #333;
+      font-size: 0.8rem;
+    }
+
+    .invoice-item-amount {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--primary-color);
+    }
+  }
+
+  .invoice-item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+
+    .detail-line {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: #666;
+      font-size: 0.78rem;
+
+      .icon {
+        font-size: 0.8rem;
+        line-height: 1;
+      }
+    }
+  }
+}
+
+.summary-totals {
+  padding-top: 0.65rem;
+  border-top: 1px solid #e0e0e0;
+
+  .total-line {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+    color: #666;
+    font-size: 0.82rem;
+
+    &.final {
+      padding-top: 0.6rem;
+      margin-top: 0.3rem;
+      border-top: 1px solid #e0e0e0;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #333;
+
+      .amount {
+        color: var(--primary-color);
+      }
+    }
+  }
+}
+
+// ===================================================
+// PAYMENT DETAILS
+// ===================================================
+
+.payment-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.82rem;
+}
+
+// ===================================================
+// PAYMENT METHODS
+// ===================================================
+
+.payment-methods {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.4rem;
+}
+
+.payment-method {
+  border: 1.5px solid #e0e0e0;
+  border-radius: 7px;
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: var(--primary-color);
+    background: rgba(102, 126, 234, 0.04);
+  }
+
+  &.active {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.08);
+    box-shadow: 0 1px 6px rgba(102, 126, 234, 0.15);
+  }
+
+  input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    cursor: pointer;
+    margin: 0;
+  }
+
+  .method-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+  }
+
+  .method-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.82rem;
+  }
+}
+
+// ===================================================
+// FORM ELEMENTS
+// ===================================================
+
+.form-textarea {
+  width: 100%;
+  padding: 0.5rem 0.65rem;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s;
+  box-sizing: border-box;
+
+  &:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+  }
+}
+
+// ===================================================
+// PAYMENT INFO
+// ===================================================
+
+.payment-info {
+  background: #e3f2fd;
+  border-left: 3px solid #2196f3;
+  padding: 0.6rem 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+
+  .info-icon {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+
+  .info-text {
+    flex: 1;
+
+    p {
+      margin: 0 0 0.2rem 0;
+      color: #1976d2;
+      font-size: 0.75rem;
+      line-height: 1.4;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      strong {
+        color: #0d47a1;
+      }
+    }
+  }
+}
+
+// ===================================================
+// CHECKOUT ACTIONS
+// ===================================================
+
+.checkout-actions {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: auto;
+
+  @media (max-width: 768px) {
+    flex-direction: column-reverse;
+  }
+
+  button {
+    flex: 1;
+  }
+}
+
+// ===================================================
+// BUTTONS
+// ===================================================
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: white;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 7px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.35);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  &.btn-large {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .processing {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.btn-secondary {
+  background: white;
+  color: #667eea;
+  border: 1.5px solid #667eea;
+  padding: 0.6rem 1.25rem;
+  border-radius: 7px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    background: var(--primary-color);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.btn-retry {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 7px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+  }
+}

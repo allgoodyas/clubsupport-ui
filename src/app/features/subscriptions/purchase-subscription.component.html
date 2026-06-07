@@ -1,0 +1,353 @@
+<div class="purchase-subscription-container">
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading subscription plan...</p>
+  </div>
+
+  <!-- Purchase Flow -->
+  <div class="purchase-flow" *ngIf="!isLoading && plan">
+    
+    <!-- Progress Steps -->
+    <div class="steps-indicator">
+      <div class="step" [class.active]="currentStep >= 1" [class.completed]="currentStep > 1" *ngIf="isAdminFlow">
+        <div class="step-number">1</div>
+        <div class="step-label">Select Student</div>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 1" *ngIf="isAdminFlow"></div>
+      <div class="step" [class.active]="currentStep >= 2" [class.completed]="currentStep > 2" *ngIf="plan.requiresSelection">
+        <div class="step-number">{{ isAdminFlow ? 2 : 1 }}</div>
+        <div class="step-label">Select Events</div>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 2" *ngIf="plan.requiresSelection"></div>
+      <div class="step" [class.active]="currentStep >= 3" [class.completed]="currentStep > 3">
+        <div class="step-number">{{ plan.requiresSelection ? (isAdminFlow ? 3 : 2) : (isAdminFlow ? 2 : 1) }}</div>
+        <div class="step-label">Payment</div>
+      </div>
+      <div class="step-line" [class.completed]="currentStep > 3"></div>
+      <div class="step" [class.active]="currentStep === 4">
+        <div class="step-number">{{ plan.requiresSelection ? (isAdminFlow ? 4 : 3) : (isAdminFlow ? 3 : 2) }}</div>
+        <div class="step-label">Complete</div>
+      </div>
+    </div>
+
+    <!-- Step 1: Student Selection (Admin Only) -->
+    <div class="step-content" *ngIf="currentStep === 1">
+      <div class="student-selection-card">
+        <!-- Plan Header (Compact) -->
+        <div class="plan-header-compact" [class]="'badge-' + plan.badgeColor">
+          <span class="badge-icon">{{ getBadgeIcon(plan.badgeColor) }}</span>
+          <div class="plan-info">
+            <h2>{{ plan.planNameEn }}</h2>
+            <p class="plan-price">
+              <span *ngIf="billingCycle === 'monthly'">{{ plan.priceMonthly | number:'1.2-2' }} SAR/month</span>
+              <span *ngIf="billingCycle === 'yearly'">{{ plan.priceYearly | number:'1.2-2' }} SAR/year</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Student Selection -->
+        <div class="selection-section">
+          <h3>👥 Select Student</h3>
+          <p class="hint">Choose which student you want to purchase this subscription for</p>
+          
+          <!-- Search Box -->
+          <div class="student-search">
+            <label>🔍 Search Students:</label>
+            <input 
+              type="text" 
+              class="search-input" 
+              [(ngModel)]="studentSearchTerm"
+              (ngModelChange)="onStudentSearch()"
+              placeholder="Search by name, ID, or ID number..."
+              autofocus>
+            <small class="helper-text" *ngIf="students.length === 0">⚠️ No students found. Please add students first.</small>
+            <small class="helper-text" *ngIf="students.length > 0 && filteredStudents.length === students.length">📋 {{ students.length }} students available</small>
+            <small class="helper-text" *ngIf="filteredStudents.length < students.length">📋 Showing {{ filteredStudents.length }} of {{ students.length }} students</small>
+          </div>
+
+          <!-- Students List -->
+          <div class="students-list-container">
+            <div class="students-list" *ngIf="filteredStudents.length > 0">
+              <div 
+                class="student-item"
+                *ngFor="let student of filteredStudents"
+                [class.selected]="isStudentSelected(student.studentId)"
+                (click)="selectStudent(student)">
+                <div class="student-radio">
+                  <input 
+                    type="radio" 
+                    name="selectedStudent"
+                    [value]="student.studentId"
+                    [checked]="isStudentSelected(student.studentId)"
+                    (click)="$event.stopPropagation()">
+                </div>
+                <div class="student-details">
+                  <div class="student-name">{{ student.fullName }}</div>
+                  <div class="student-meta">
+                    <span class="meta-item" *ngIf="student.studentCode">
+                      <strong>ID:</strong> {{ student.studentCode }}
+                    </span>
+                    <span class="meta-item" *ngIf="!student.studentCode">
+                      <strong>ID:</strong> #{{ student.studentId }}
+                    </span>
+                    <span class="meta-item" *ngIf="student.idNumber">
+                      <strong>ID Number:</strong> {{ student.idNumber }}
+                    </span>
+                    <span class="meta-item" *ngIf="student.dateOfBirth">
+                      <strong>DOB:</strong> {{ student.dateOfBirth | date:'yyyy-MM-dd' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="no-results" *ngIf="filteredStudents.length === 0 && studentSearchTerm">
+              <p>🔍 No students found matching "{{ studentSearchTerm }}"</p>
+              <small>Try a different search term</small>
+            </div>
+          </div>
+
+          <!-- Plan Summary -->
+          <div class="plan-summary">
+            <h4>Subscription Details:</h4>
+            <div class="summary-items">
+              <div class="summary-item">
+                <span class="label">Plan:</span>
+                <span class="value">{{ plan.planNameEn }}</span>
+              </div>
+              
+              <!-- Billing Cycle Selector -->
+              <div class="summary-item billing-cycle-selector">
+                <span class="label">Billing Cycle:</span>
+                <div class="cycle-toggle">
+                  <button 
+                    class="cycle-option" 
+                    [class.active]="billingCycle === 'monthly'"
+                    (click)="setBillingCycle('monthly')">
+                    <span class="cycle-label">Monthly</span>
+                    <span class="cycle-price">{{ plan.priceMonthly | number:'1.2-2' }} SAR/mo</span>
+                  </button>
+                  <button 
+                    class="cycle-option" 
+                    [class.active]="billingCycle === 'yearly'"
+                    (click)="setBillingCycle('yearly')"
+                    *ngIf="plan.priceYearly">
+                    <span class="cycle-label">Yearly</span>
+                    <span class="cycle-price">{{ plan.priceYearly | number:'1.2-2' }} SAR/yr</span>
+                    <span class="savings-badge" *ngIf="plan.savingsPercentage">Save {{ plan.savingsPercentage }}%</span>
+                  </button>
+                </div>
+              </div>
+              
+              <div class="summary-item">
+                <span class="label">Price:</span>
+                <span class="value">
+                  <span *ngIf="billingCycle === 'monthly'">{{ plan.priceMonthly | number:'1.2-2' }} SAR/month</span>
+                  <span *ngIf="billingCycle === 'yearly'">{{ plan.priceYearly | number:'1.2-2' }} SAR/year</span>
+                </span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Events:</span>
+                <span class="value">{{ plan.requiresSelection ? 'Choose ' + plan.maxEventSelections + ' from ' + plan.eligibleEvents.length : 'All ' + plan.eligibleEvents.length + ' included' }}</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Auto-Renewal:</span>
+                <span class="value">
+                  <label class="inline-checkbox">
+                    <input type="checkbox" [(ngModel)]="autoRenew">
+                    <span>Yes (recommended)</span>
+                  </label>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="step-actions">
+        <button class="btn btn-secondary" (click)="goToCatalog()">Cancel</button>
+        <button class="btn btn-primary" (click)="nextStep()" [disabled]="!selectedStudentId">
+          {{ plan.requiresSelection ? 'Select Events →' : 'Continue to Payment →' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 2: Event Selection -->
+    <div class="step-content" *ngIf="currentStep === 2">
+      <div class="event-selection-card">
+        <h2>Select {{ plan.maxEventSelections }} Events</h2>
+        <p class="selection-hint">
+          Choose {{ plan.maxEventSelections }} events from the {{ plan.eligibleEvents.length }} available options
+        </p>
+
+        <div class="selection-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" [style.width.%]="(selectedEventIds.length / (plan.maxEventSelections || 1)) * 100"></div>
+          </div>
+          <span class="progress-text">{{ selectedEventIds.length }} / {{ plan.maxEventSelections }} selected</span>
+        </div>
+
+        <div class="events-grid">
+          <div 
+            class="event-card"
+            *ngFor="let event of plan.eligibleEvents"
+            [class.selected]="isEventSelected(event.eventId)"
+            [class.disabled]="!isEventSelected(event.eventId) && selectedEventIds.length >= (plan.maxEventSelections || 0)"
+            (click)="toggleEventSelection(event.eventId)">
+            <div class="event-checkbox">
+              <input type="checkbox" [checked]="isEventSelected(event.eventId)" (click)="$event.stopPropagation()">
+            </div>
+            <div class="event-info">
+              <h3>{{ event.eventNameEn }}</h3>
+              <p class="event-price">{{ event.basePrice | number:'1.2-2' }} SAR</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="step-actions">
+        <button class="btn btn-secondary" (click)="previousStep()">← Back</button>
+        <button class="btn btn-primary" (click)="nextStep()">Continue to Payment →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Payment -->
+    <div class="step-content" *ngIf="currentStep === 3">
+      <div class="payment-card">
+        <h2>Payment Details</h2>
+        
+        <!-- Price Summary -->
+        <div class="price-summary">
+          <div class="summary-row">
+            <span>Subscription Price:</span>
+            <span class="price">{{ getSubscriptionPrice() | number:'1.2-2' }} SAR</span>
+          </div>
+          <div class="summary-row total">
+            <span>Total Amount:</span>
+            <span class="price">{{ getSubscriptionPrice() | number:'1.2-2' }} SAR</span>
+          </div>
+        </div>
+
+        <!-- Payment Methods -->
+        <div class="payment-methods">
+          <h3>Payment Methods</h3>
+          
+          <div class="payment-entry" *ngFor="let entry of paymentEntries; let i = index">
+            <div class="entry-header">
+              <span>Payment {{ i + 1 }}</span>
+              <button class="btn-remove" *ngIf="paymentEntries.length > 1" (click)="removePaymentEntry(i)">✕</button>
+            </div>
+            
+            <div class="entry-fields">
+              <div class="field">
+                <label>Method:</label>
+                <select [(ngModel)]="entry.methodType" class="form-control">
+                  <option *ngFor="let method of paymentMethods" [value]="method.value">
+                    {{ method.label }}
+                  </option>
+                </select>
+              </div>
+              
+              <div class="field">
+                <label>Amount (SAR):</label>
+                <input type="number" [(ngModel)]="entry.amount" class="form-control" step="0.01" min="0">
+              </div>
+              
+              <div class="field">
+                <label>Reference Number:</label>
+                <input type="text" [(ngModel)]="entry.referenceNumber" class="form-control" placeholder="Optional">
+              </div>
+              
+              <div class="field full-width">
+                <label>Notes:</label>
+                <input type="text" [(ngModel)]="entry.notes" class="form-control" placeholder="Optional">
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-secondary btn-sm" (click)="addPaymentEntry()">
+            ➕ Add Another Payment Method
+          </button>
+
+          <!-- Total Paid -->
+          <div class="total-paid">
+            <span>Total Paid:</span>
+            <span class="amount" [class.error]="getTotalPaymentAmount() !== getSubscriptionPrice()">
+              {{ getTotalPaymentAmount() | number:'1.2-2' }} SAR
+            </span>
+          </div>
+          
+          <div class="payment-warning" *ngIf="getTotalPaymentAmount() !== getSubscriptionPrice()">
+            ⚠️ Total payment must equal {{ getSubscriptionPrice() | number:'1.2-2' }} SAR
+          </div>
+        </div>
+      </div>
+
+      <!-- Error Message -->
+      <div class="error-alert" *ngIf="errorMessage">
+        <span class="error-icon">⚠️</span>
+        <span class="error-text">{{ errorMessage }}</span>
+      </div>
+
+      <!-- Navigation -->
+      <div class="step-actions">
+        <button class="btn btn-secondary" (click)="previousStep()" [disabled]="isPurchasing">← Back</button>
+        <button class="btn btn-primary" (click)="purchaseSubscription()" [disabled]="isPurchasing">
+          <span *ngIf="!isPurchasing">Complete Purchase 💳</span>
+          <span *ngIf="isPurchasing">Processing...</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Step 4: Success -->
+    <div class="step-content" *ngIf="currentStep === 4">
+      <div class="success-card">
+        <div class="success-icon">🎉</div>
+        <h2>Subscription Activated!</h2>
+        <p>Your subscription has been successfully activated.</p>
+
+        <div class="success-details">
+          <div class="detail-row">
+            <span class="detail-label">Plan:</span>
+            <span class="detail-value">{{ plan.planNameEn }}</span>
+          </div>
+          <div class="detail-row" *ngIf="successData?.invoiceNumber">
+            <span class="detail-label">Invoice Number:</span>
+            <span class="detail-value">{{ successData.invoiceNumber }}</span>
+          </div>
+          <div class="detail-row" *ngIf="successData?.subscriptionId">
+            <span class="detail-label">Subscription ID:</span>
+            <span class="detail-value">#{{ successData.subscriptionId }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Billing Cycle:</span>
+            <span class="detail-value">{{ billingCycle }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Auto-Renewal:</span>
+            <span class="detail-value">{{ autoRenew ? 'Enabled' : 'Disabled' }}</span>
+          </div>
+        </div>
+
+        <!-- Selected Events -->
+        <div class="selected-events" *ngIf="selectedEventIds.length > 0">
+          <h3>Your Selected Events:</h3>
+          <div class="event-pills">
+            <span class="event-pill" *ngFor="let eventId of selectedEventIds">
+              {{ getEventNameById(eventId) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="success-actions">
+          <button class="btn btn-secondary" (click)="goToCatalog()">Browse More Plans</button>
+          <button class="btn btn-primary" (click)="goToMySubscriptions()">View My Subscriptions</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

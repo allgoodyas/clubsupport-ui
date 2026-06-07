@@ -1,0 +1,211 @@
+<div class="student-details-container">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <button class="btn-back" (click)="goBack()">←</button>
+      <h1>{{ 'STUDENT_DETAILS.TITLE' | translate }}</h1>
+    </div>
+    <div class="header-right">
+      <app-language-switcher></app-language-switcher>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'STUDENT_DETAILS.LOADING' | translate }}</p>
+  </div>
+
+  <!-- Student Details -->
+  <div class="details-content" *ngIf="!isLoading && student">
+    <!-- Photo Section -->
+    <div class="photo-section">
+      <div class="photo-container">
+        <img *ngIf="photoUrl" [src]="photoUrl" [alt]="student.fullName" class="student-photo" />
+        <div *ngIf="!photoUrl" class="photo-placeholder">
+          <span class="placeholder-icon">{{ student.gender === 'Male' ? '👦' : '👧' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Section -->
+    <div class="info-section">
+      <!-- Name & Badge -->
+      <div class="name-header">
+        <h2>{{ student.fullName }}</h2>
+        <span class="badge-self" *ngIf="student.isSelfRegistered">👤 {{ 'STUDENT_DETAILS.SELF' | translate }}</span>
+        <span class="status-badge" [class.active]="student.isActive" [class.inactive]="!student.isActive">
+          {{ student.isActive ? ('✓ ' + ('STUDENT_DETAILS.ACTIVE' | translate)) : ('✕ ' + ('STUDENT_DETAILS.INACTIVE' | translate)) }}
+        </span>
+      </div>
+
+      <!-- Teams Card -->
+      <div class="detail-card" *ngIf="studentTeams.length > 0">
+        <h3>👥 Teams</h3>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:4px;">
+          <span *ngFor="let t of studentTeams"
+                [ngStyle]="getTeamBadgeStyle(t.color)"
+                style="display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:20px; font-size:0.8rem; font-weight:700;">
+            {{ t.nameEn }}
+            <span *ngIf="t.nameAr" style="opacity:0.75; font-weight:400;">· {{ t.nameAr }}</span>
+            <span *ngIf="t.ageGroup" style="opacity:0.65; font-size:0.72rem;">{{ t.ageGroup }}</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- ===================================================== -->
+      <!-- PAYMENT SUMMARY CARD - NEW -->
+      <!-- ===================================================== -->
+      
+      <div class="detail-card payment-summary-card" *ngIf="paymentSummary">
+        <h3>💰 {{ 'STUDENT_DETAILS.PAYMENT_SUMMARY' | translate }}</h3>
+        
+        <div class="payment-summary-grid">
+          <div class="summary-stat">
+            <div class="stat-value">{{ paymentSummary.totalInvoices }}</div>
+            <div class="stat-label">{{ 'STUDENT_DETAILS.TOTAL_INVOICES' | translate }}</div>
+          </div>
+          
+          <div class="summary-stat success">
+            <div class="stat-value">{{ paymentSummary.totalPaid | number:'1.2-2' }}</div>
+            <div class="stat-label">{{ 'STUDENT_DETAILS.TOTAL_PAID' | translate }}</div>
+          </div>
+          
+          <div class="summary-stat" [class.warning]="paymentSummary.unpaidInvoices > 0">
+            <div class="stat-value">{{ paymentSummary.unpaidInvoices }}</div>
+            <div class="stat-label">{{ 'STUDENT_DETAILS.UNPAID_INVOICES' | translate }}</div>
+          </div>
+          
+          <div class="summary-stat" [class.danger]="paymentSummary.currentDue > 0">
+            <div class="stat-value">{{ paymentSummary.currentDue | number:'1.2-2' }}</div>
+            <div class="stat-label">{{ 'STUDENT_DETAILS.OUTSTANDING' | translate }}</div>
+          </div>
+        </div>
+
+        <!-- Payment Button with Badge -->
+        <div class="payment-action">
+          <button class="btn btn-payment" (click)="openPaymentPanel()">
+            <span class="btn-icon">💳</span>
+            <span class="btn-text">{{ 'STUDENT_DETAILS.VIEW_PAY_INVOICES' | translate }}</span>
+            <span class="payment-badge" *ngIf="paymentSummary.unpaidInvoices > 0">
+              {{ paymentSummary.unpaidInvoices }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading Payment Summary -->
+      <div class="detail-card payment-summary-card" *ngIf="loadingPaymentSummary">
+        <h3>💰 {{ 'STUDENT_DETAILS.PAYMENT_SUMMARY' | translate }}</h3>
+        <div class="loading-summary">
+          <div class="spinner-small"></div>
+          <p>{{ 'STUDENT_DETAILS.LOADING_PAYMENT' | translate }}</p>
+        </div>
+      </div>
+
+      <!-- Student Details Card -->
+      <div class="detail-card">
+        <h3>📋 {{ 'STUDENT_DETAILS.STUDENT_DETAILS' | translate }}</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">{{ 'STUDENT_DETAILS.AGE' | translate }}</span>
+            <span class="detail-value">{{ student.age }} {{ 'STUDENT_DETAILS.YEARS_OLD' | translate }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">{{ 'STUDENT_DETAILS.GENDER' | translate }}</span>
+            <span class="detail-value">
+              {{ student.gender === 'Male' ? ('🚹 ' + ('STUDENT_DETAILS.MALE' | translate)) : ('🚺 ' + ('STUDENT_DETAILS.FEMALE' | translate)) }}
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">{{ 'STUDENT_DETAILS.DATE_OF_BIRTH' | translate }}</span>
+            <span class="detail-value">{{ formatDate(student.dateOfBirth) }}</span>
+          </div>
+          <div class="detail-item" *ngIf="student.hasPhoto">
+            <span class="detail-label">{{ 'STUDENT_DETAILS.PHOTO' | translate }}</span>
+            <span class="detail-value photo-status">✅ {{ 'STUDENT_DETAILS.UPLOADED' | translate }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parent Information Card -->
+      <div class="detail-card">
+        <h3>👨‍👩‍👧‍👦 {{ 'STUDENT_DETAILS.PARENT_INFO' | translate }}</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">{{ 'STUDENT_DETAILS.NAME' | translate }}</span>
+            <span class="detail-value">{{ student.parentFullName }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">{{ 'STUDENT_DETAILS.MOBILE' | translate }}</span>
+            <span class="detail-value mobile">{{ student.parentMobile }}</span>
+          </div>
+          <div class="detail-item" *ngIf="student.parentEmail">
+            <span class="detail-label">{{ 'STUDENT_DETAILS.EMAIL' | translate }}</span>
+            <span class="detail-value">{{ student.parentEmail }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Medical Notes Card -->
+      <div class="detail-card" *ngIf="student.medicalNotes">
+        <h3>🏥 {{ 'STUDENT_DETAILS.MEDICAL_NOTES' | translate }}</h3>
+        <div class="medical-content">
+          {{ student.medicalNotes }}
+        </div>
+      </div>
+
+      <!-- No Medical Notes -->
+      <div class="detail-card empty" *ngIf="!student.medicalNotes">
+        <h3>🏥 {{ 'STUDENT_DETAILS.MEDICAL_NOTES' | translate }}</h3>
+        <div class="empty-medical">
+          <span>{{ 'STUDENT_DETAILS.NO_MEDICAL_NOTES' | translate }}</span>
+        </div>
+      </div>
+
+      <!-- Registration Info Card -->
+      <div class="detail-card info-card">
+        <h3>ℹ️ {{ 'STUDENT_DETAILS.REGISTRATION_INFO' | translate }}</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="detail-label">{{ 'STUDENT_DETAILS.REGISTRATION_TYPE' | translate }}</span>
+            <span class="detail-value">
+              <span *ngIf="student.isSelfRegistered" class="badge-self-sm">👤 {{ 'STUDENT_DETAILS.SELF_REGISTERED' | translate }}</span>
+              <span *ngIf="!student.isSelfRegistered" class="badge-parent-sm">👨‍👩‍👧‍👦 {{ 'STUDENT_DETAILS.PARENT_REGISTERED' | translate }}</span>
+            </span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">{{ 'STUDENT_DETAILS.REGISTERED_ON' | translate }}</span>
+            <span class="detail-value">{{ formatDate(student.createdOn) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button class="btn btn-outline" (click)="goBack()">
+          ← {{ 'STUDENT_DETAILS.BACK_TO_LIST' | translate }}
+        </button>
+        <button class="btn btn-secondary" (click)="editParent()">
+          👨‍👩‍👧‍👦 {{ 'STUDENT_DETAILS.EDIT_PARENT_INFO' | translate }}
+        </button>
+        <button class="btn btn-primary" (click)="editStudent()">
+          ✏️ {{ 'STUDENT_DETAILS.EDIT_STUDENT' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================================================== -->
+<!-- PAYMENT PANEL - NEW -->
+<!-- ===================================================== -->
+
+<app-payment-panel
+  *ngIf="showPaymentPanel"
+  [studentId]="studentId"
+  [isOpen]="showPaymentPanel"
+    [disableOverlayClose]="true"
+  (closePanel)="closePaymentPanel()"
+  (paymentRecorded)="onPaymentRecorded()">
+</app-payment-panel>

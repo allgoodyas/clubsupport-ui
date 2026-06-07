@@ -1,0 +1,406 @@
+// ── Overlay ───────────────────────────────────────────────────────
+.id-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 2000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
+
+// ── Modal ─────────────────────────────────────────────────────────
+.id-modal {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) scale(0.92);
+  opacity: 0;
+  z-index: 2001;
+  width: min(440px, 96vw);
+  background: #111827;
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), opacity 0.2s ease;
+
+  &.id-modal-open {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+
+  // ── Printer-friendly modal shell ─────────────────────────────
+  &.id-modal-print-mode {
+    background: #f8fafc;
+    border-color: #CBD5E1;
+
+    .id-modal-header {
+      background: #ffffff;
+      border-bottom-color: #E2E8F0;
+      background-image: none;
+
+      h3 { color: #0F172A; }
+    }
+
+    .id-modal-body {
+      background: #EFF6FF;   // soft blue-white — makes the card pop slightly
+    }
+
+    .id-modal-footer {
+      background: #ffffff;
+      border-top-color: #E2E8F0;
+    }
+
+    // Desaturate non-theme icon buttons so they match light UI
+    .id-icon-btn {
+      border-color: #E2E8F0;
+      background: #F8FAFC;
+      color: #64748B;
+
+      &:hover:not(:disabled) {
+        background: #EFF6FF;
+        border-color: #1E3A5F;
+        color: #1E3A5F;
+      }
+
+      &--close:hover:not(:disabled) {
+        background: #FEF2F2;
+        border-color: #FCA5A5;
+        color: #DC2626;
+      }
+
+      &--whatsapp {
+        color: #16A34A;
+        border-color: rgba(22,163,74,0.3);
+        background: rgba(22,163,74,0.06);
+        &:hover:not(:disabled) {
+          background: rgba(22,163,74,0.12);
+          border-color: #16A34A;
+        }
+      }
+
+      &--download {
+        color: #6D28D9;
+        border-color: rgba(109,40,217,0.25);
+        background: rgba(109,40,217,0.06);
+        &:hover:not(:disabled) {
+          background: rgba(109,40,217,0.12);
+          border-color: #6D28D9;
+        }
+      }
+    }
+  }
+}
+
+// ── Modal header ──────────────────────────────────────────────────
+.id-modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(0,212,255,0.15);
+  background: linear-gradient(135deg, rgba(0,212,255,0.08), rgba(168,85,247,0.06));
+
+  h3 { margin: 0; font-size: 1rem; font-weight: 700; color: #E2E8F0; }
+}
+
+.id-close {
+  background: rgba(255,255,255,0.08); border: none; color: #94A3B8;
+  width: 28px; height: 28px; border-radius: 6px;
+  cursor: pointer; font-size: 0.85rem; font-family: inherit;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+  &:hover { background: rgba(255,71,87,0.2); color: #FF4757; }
+}
+
+// ── Modal body ────────────────────────────────────────────────────
+.id-modal-body {
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  background: #0A0F1E;
+  transition: background 0.3s ease;
+}
+
+// ── ID Card — dark (existing) ─────────────────────────────────────
+.id-card {
+  width: 280px;
+  background: linear-gradient(160deg, #0D1B2E 0%, #0A0F1E 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(0,212,255,0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,212,255,0.1);
+  position: relative;
+  transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+
+  // ── Printer-friendly card ──────────────────────────────────
+  &--print {
+    background: #ffffff !important;
+    border-color: #CBD5E1 !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08), 0 0 0 1px rgba(203,213,225,0.6) !important;
+
+    .id-accent-top,
+    .id-accent-bottom {
+      background: #1E3A5F !important;   // solid navy — ink-efficient
+    }
+
+    .id-club-name {
+      color: #1E3A5F !important;
+    }
+
+    .id-card-label {
+      color: #94A3B8 !important;
+    }
+
+    // Ring: solid dark border instead of neon gradient
+    .id-photo-ring {
+      background: #1E3A5F !important;
+    }
+
+    .id-photo-wrap {
+      background: #F1F5F9 !important;
+    }
+
+    .id-name {
+      color: #0F172A !important;
+    }
+
+    .id-meta {
+      color: #64748B !important;
+    }
+
+    .id-divider {
+      background: #E2E8F0 !important;
+    }
+
+    .id-qr-wrap {
+      background: #F8FAFC !important;
+      border: 1px solid #E2E8F0 !important;
+      box-shadow: none !important;
+    }
+
+    .id-scan-label {
+      color: #94A3B8 !important;
+    }
+
+    .id-student-id {
+      color: #CBD5E1 !important;
+    }
+  }
+}
+
+// Accent bars
+.id-accent-top, .id-accent-bottom {
+  width: 100%;
+  height: 5px;
+  background: linear-gradient(90deg, #00D4FF, #A855F7);
+  transition: background 0.3s ease;
+}
+
+// Club name
+.id-club-name {
+  font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px;
+  color: #00D4FF; margin-top: 14px; text-align: center;
+  transition: color 0.3s ease;
+}
+
+.id-card-label {
+  font-size: 0.58rem; letter-spacing: 1px;
+  color: rgba(148,163,184,0.6); margin-top: 2px;
+}
+
+// Photo
+.id-photo-ring {
+  width: 110px; height: 110px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00D4FF, #A855F7);
+  padding: 3px;
+  margin-top: 16px;
+  transition: background 0.3s ease;
+}
+
+.id-photo-wrap {
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #1A2235;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.3s ease;
+}
+
+.id-photo { width: 100%; height: 100%; object-fit: cover; }
+
+.id-photo-placeholder { font-size: 3rem; line-height: 1; }
+
+.id-photo-spinner {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+}
+
+// Name
+.id-name {
+  font-size: 1.05rem; font-weight: 700; color: #E2E8F0;
+  text-align: center; margin-top: 14px;
+  padding: 0 16px; line-height: 1.3;
+  transition: color 0.3s ease;
+}
+
+// Meta
+.id-meta {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 0.75rem; color: rgba(148,163,184,0.85);
+  margin-top: 4px;
+  transition: color 0.3s ease;
+}
+.id-dot { opacity: 0.5; }
+
+// Divider
+.id-divider {
+  width: calc(100% - 40px); height: 1px;
+  background: rgba(0,212,255,0.12);
+  margin: 14px 0;
+  transition: background 0.3s ease;
+}
+
+// QR
+.id-qr-wrap {
+  width: 110px; height: 110px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+
+.id-qr { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+.id-qr-loading {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%;
+}
+
+.id-scan-label {
+  font-size: 0.58rem; letter-spacing: 1px;
+  color: rgba(148,163,184,0.5); margin-top: 8px;
+  transition: color 0.3s ease;
+}
+
+.id-student-id {
+  font-size: 0.65rem; font-family: monospace;
+  color: rgba(148,163,184,0.35);
+  margin: 8px 0 14px;
+  transition: color 0.3s ease;
+}
+
+// ── Footer ────────────────────────────────────────────────────────
+.id-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-top: 1px solid rgba(0,212,255,0.1);
+  background: #111827;
+  transition: background 0.3s ease, border-top-color 0.3s ease;
+}
+
+.id-footer-sep {
+  width: 1px;
+  height: 24px;
+  background: rgba(0,212,255,0.12);
+  flex-shrink: 0;
+  transition: background 0.3s ease;
+}
+
+// ── Icon buttons ──────────────────────────────────────────────────
+.id-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,212,255,0.15);
+  background: rgba(0,212,255,0.06);
+  color: #64748B;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.18s;
+  flex-shrink: 0;
+
+  svg { transition: transform 0.18s; }
+
+  &:hover:not(:disabled) {
+    background: rgba(0,212,255,0.14);
+    border-color: rgba(0,212,255,0.45);
+    color: #00D4FF;
+    svg { transform: scale(1.1); }
+  }
+  &:disabled { opacity: 0.25; cursor: not-allowed; }
+
+  &--close:hover:not(:disabled) {
+    background: rgba(255,71,87,0.12);
+    border-color: rgba(255,71,87,0.4);
+    color: #FF4757;
+  }
+
+  // 🌙 / ☀️ theme toggle button
+  &--theme {
+    color: #94A3B8;
+    border-color: rgba(148,163,184,0.2);
+    background: rgba(148,163,184,0.06);
+
+    &:hover:not(:disabled) {
+      background: rgba(255,191,0,0.1);
+      border-color: rgba(255,191,0,0.4);
+      color: #FBBF24;
+      svg { transform: scale(1.1) rotate(15deg); }
+    }
+
+    // Active state when printer mode is ON — sun icon glows amber
+    &.id-icon-btn--theme-active {
+      background: rgba(255,191,0,0.12);
+      border-color: rgba(255,191,0,0.45);
+      color: #F59E0B;
+
+      &:hover:not(:disabled) {
+        background: rgba(255,191,0,0.2);
+        border-color: #F59E0B;
+        svg { transform: scale(1.1) rotate(-15deg); }
+      }
+    }
+  }
+
+  &--whatsapp {
+    color: #25D366;
+    border-color: rgba(37,211,102,0.2);
+    background: rgba(37,211,102,0.06);
+    &:hover:not(:disabled) {
+      background: rgba(37,211,102,0.16);
+      border-color: #25D366;
+      color: #25D366;
+    }
+  }
+
+  &--download {
+    color: #A855F7;
+    border-color: rgba(168,85,247,0.2);
+    background: rgba(168,85,247,0.06);
+    &:hover:not(:disabled) {
+      background: rgba(168,85,247,0.16);
+      border-color: #A855F7;
+      color: #A855F7;
+    }
+  }
+}
+
+// ── Spinner ───────────────────────────────────────────────────────
+.mini-spinner {
+  width: 22px; height: 22px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-top-color: #00D4FF;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

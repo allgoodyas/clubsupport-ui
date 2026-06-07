@@ -1,0 +1,158 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="close()">
+  <div class="modal-container" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="modal-header">
+      <div>
+        <h2>🤝 Assign Trainers</h2>
+        <p class="event-name">{{ eventName }}</p>
+      </div>
+      <button class="btn-close" (click)="close()">
+        ✕
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading" class="loading-container">
+      <div class="spinner-emoji">⏳</div>
+      <p>Loading trainers...</p>
+    </div>
+
+    <!-- Content -->
+    <div *ngIf="!loading" class="modal-body">
+      <!-- Currently Assigned Trainers Section -->
+      <div class="section">
+        <h3>✅ Currently Assigned ({{ assignedTrainers.length }})</h3>
+        
+        <div *ngIf="assignedTrainers.length === 0" class="empty-state">
+          <div class="empty-icon">🚫</div>
+          <p>No trainers assigned yet</p>
+        </div>
+
+        <div *ngIf="assignedTrainers.length > 0" class="trainer-list">
+          <div *ngFor="let trainer of assignedTrainers" class="trainer-card assigned">
+            <div class="trainer-info">
+              <div class="avatar">{{ getInitials(trainer.trainerName) }}</div>
+              <div class="details">
+                <div class="name">{{ trainer.trainerName }}</div>
+                <div class="email">{{ trainer.trainerEmail }}</div>
+                <div class="meta">
+                  <span class="badge" [ngClass]="getRoleBadgeClass(trainer.trainerRole)">
+                    {{ trainer.trainerRole }}
+                  </span>
+                  <span class="assigned-date">
+                    📅 
+                    {{ trainer.assignedDate | date: 'MMM d, y' }}
+                  </span>
+                </div>
+                <div *ngIf="trainer.notes" class="notes">
+                  📝 {{ trainer.notes }}
+                </div>
+              </div>
+            </div>
+            <div class="trainer-actions">
+              <select 
+                class="role-select" 
+                [value]="trainer.trainerRole"
+                (change)="changeRole(trainer, $any($event.target).value)">
+                <option value="Primary">Primary</option>
+                <option value="Assistant">Assistant</option>
+                <option value="Trainer">Trainer</option>
+              </select>
+              <button 
+                class="btn-remove" 
+                (click)="removeTrainer(trainer.trainerId, trainer.trainerName)"
+                title="Remove trainer">
+                🗑️
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Assign New Trainer Section -->
+      <div class="section">
+        <h3>👥➕ Assign New Trainer</h3>
+
+        <!-- Search Box -->
+        <div class="search-box">
+          🔍
+          <input 
+            type="text" 
+            placeholder="Search trainers by name, email, or phone..."
+            [(ngModel)]="searchTerm"
+            (ngModelChange)="onSearchChange()"
+            class="search-input">
+        </div>
+
+        <!-- Available Trainers List -->
+        <div class="available-trainers">
+          <div *ngIf="filteredTrainers.length === 0" class="empty-state">
+            <div class="empty-icon">🔍</div>
+            <p>{{ searchTerm ? 'No trainers found matching your search' : 'All available trainers have been assigned' }}</p>
+          </div>
+
+          <div *ngFor="let trainer of filteredTrainers" 
+               class="trainer-card selectable"
+               [class.selected]="selectedTrainerId === trainer.userId"
+               (click)="selectTrainer(trainer.userId)">
+            <div class="trainer-info">
+              <div class="avatar">{{ getInitials(trainer.fullName) }}</div>
+              <div class="details">
+                <div class="name">{{ trainer.fullName }}</div>
+                <div class="email">{{ trainer.email }}</div>
+                <div *ngIf="trainer.mobileNumber" class="phone">
+                  📞 {{ trainer.mobileNumber }}
+                </div>
+              </div>
+            </div>
+            <div class="select-indicator" *ngIf="selectedTrainerId === trainer.userId">
+              ✅
+            </div>
+          </div>
+        </div>
+
+        <!-- Assignment Form (shown when trainer is selected) -->
+        <div *ngIf="selectedTrainerId" class="assignment-form">
+          <div class="form-group">
+            <label>Trainer Role *</label>
+            <select class="form-control" [(ngModel)]="selectedRole">
+              <option *ngFor="let role of roles" [value]="role.value">
+                {{ role.label }}
+              </option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Notes (Optional)</label>
+            <textarea 
+              class="form-control" 
+              rows="3" 
+              [(ngModel)]="notes"
+              placeholder="Add any notes about this trainer assignment..."></textarea>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn btn-secondary" (click)="resetForm()">
+              <i class="fas fa-times"></i> Cancel
+            </button>
+            <button 
+              class="btn btn-primary" 
+              (click)="assignTrainer()"
+              [disabled]="assigning">
+              <i class="fas fa-spinner fa-spin" *ngIf="assigning"></i>
+              <i class="fas fa-check" *ngIf="!assigning"></i>
+              {{ assigning ? 'Assigning...' : 'Assign Trainer' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="close()">
+        <i class="fas fa-times"></i> Close
+      </button>
+    </div>
+  </div>
+</div>

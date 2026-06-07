@@ -1,0 +1,412 @@
+// ===================================================
+// EDIT PARENT COMPONENT — DYNAMIC THEME STYLES
+// ===================================================
+
+.edit-parent-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 0 2rem;
+  min-height: 100vh;
+  background: var(--bg-app, #0A0F1E);
+}
+
+// ===================================================
+// HEADER — slim sticky, matches other pages
+// ===================================================
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--gradient-primary,
+    linear-gradient(135deg, var(--accent-primary, #00D4FF), var(--accent-info, #A855F7)));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  margin-bottom: 0;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+  }
+
+  .btn-back {
+    width: 34px;
+    height: 34px;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-family: inherit;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.24);
+      border-color: rgba(255, 255, 255, 0.7);
+      transform: translateX(-3px);
+    }
+  }
+}
+
+// ===================================================
+// INNER CONTENT PADDING
+// ===================================================
+
+.form-container {
+  padding: 20px;
+  background: transparent;
+}
+
+// ===================================================
+// LOADING
+// ===================================================
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--bg-border, #1E2D45);
+    border-top-color: var(--accent-primary, #00D4FF);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  p {
+    margin-top: 1rem;
+    color: var(--text-secondary, #94A3B8);
+    font-size: 0.9rem;
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ===================================================
+// CONTEXT CARD — dark theme, matches detail cards
+// ===================================================
+
+.context-card {
+  background: var(--bg-card, #1A2235);
+  border: 1px solid var(--bg-border, #1E2D45);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+
+  h3 {
+    margin: 0 0 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--accent-primary, #00D4FF);
+  }
+
+  .student-info {
+    .student-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary, #E2E8F0);
+      margin-bottom: 3px;
+    }
+
+    .student-meta {
+      font-size: 0.82rem;
+      color: var(--text-secondary, #94A3B8);
+    }
+  }
+}
+
+// ===================================================
+// FORM CARD — light surface, must reset dark theme vars
+// ===================================================
+
+.parent-form {
+  // ✅ Redefine dark-theme CSS variables to light equivalents
+  // so var(--text-primary) resolves to dark inside this card
+  --text-primary:   #111827;
+  --text-secondary: #6b7280;
+  --text-disabled:  #9ca3af;
+  --surface:        #ffffff;
+  --primary-color:  var(--accent-primary, #00D4FF);
+
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 22px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  color: #111827;
+}
+
+.form-group {
+  margin-bottom: 20px;
+
+  .form-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #374151;
+
+    .optional-badge {
+      margin-left: 6px;
+      padding: 2px 8px;
+      background: #f3f4f6;
+      color: #6b7280;
+      font-size: 0.7rem;
+      font-weight: 500;
+      border-radius: 4px;
+    }
+
+    .readonly-badge {
+      margin-left: 6px;
+      padding: 2px 8px;
+      background: #fee2e2;
+      color: #991b1b;
+      font-size: 0.7rem;
+      font-weight: 500;
+      border-radius: 4px;
+    }
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    font-family: inherit;
+    // ✅ Explicit dark text — beats global styles.scss override
+    color: #111827 !important;
+    background: #ffffff;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+
+    &:focus {
+      outline: none;
+      border-color: var(--accent-primary, #00D4FF);
+      box-shadow: 0 0 0 3px rgba(0, 212, 255, 0.12);
+    }
+
+    &::placeholder {
+      color: #9ca3af !important;
+    }
+
+    &.has-changes {
+      border-color: #fbbf24;
+      background: #fffbeb;
+    }
+
+    &.readonly-input {
+      background: #f9fafb;
+      color: #6b7280 !important;
+      cursor: not-allowed;
+      border-color: #d1d5db;
+    }
+  }
+
+  .field-hint {
+    margin-top: 5px;
+    font-size: 0.8125rem;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+}
+
+// ===================================================
+// CHANGE INDICATORS
+// ===================================================
+
+.changes-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #fffbeb;
+  border: 1.5px solid #fbbf24;
+  border-radius: 8px;
+  margin: 16px 0;
+
+  .indicator-icon { font-size: 1.1rem; }
+  .indicator-text { font-weight: 600; color: #92400e; font-size: 0.875rem; }
+}
+
+.no-changes-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 8px;
+  margin: 16px 0;
+
+  .indicator-icon { font-size: 1.1rem; color: #16a34a; }
+  .indicator-text { font-weight: 600; color: #166534; font-size: 0.875rem; }
+}
+
+// ===================================================
+// FORM ACTIONS
+// ===================================================
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #f3f4f6;
+
+  .btn {
+    padding: 9px 22px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.btn-outline {
+      background: #f9fafb;
+      color: #374151;
+      border: 1.5px solid #e5e7eb;
+
+      &:hover:not(:disabled) {
+        background: #f3f4f6;
+        border-color: #d1d5db;
+      }
+    }
+
+    &.btn-primary {
+      background: var(--gradient-primary,
+        linear-gradient(135deg, var(--accent-primary, #00D4FF), var(--accent-info, #A855F7)));
+      color: #ffffff;
+      box-shadow: 0 3px 10px rgba(0, 212, 255, 0.3);
+
+      &:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 14px rgba(0, 212, 255, 0.4);
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+    }
+  }
+}
+
+// ===================================================
+// INFO BOX — dark card style, matches page
+// ===================================================
+
+.info-box {
+  margin-top: 16px;
+  padding: 16px 18px;
+  background: var(--bg-card, #1A2235);
+  border: 1px solid var(--bg-border, #1E2D45);
+  border-radius: 10px;
+  display: flex;
+  gap: 12px;
+
+  .info-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .info-content {
+    flex: 1;
+
+    h4 {
+      margin: 0 0 8px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: var(--accent-primary, #00D4FF);
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 1.1rem;
+      color: var(--text-secondary, #94A3B8);
+      font-size: 0.8125rem;
+      line-height: 1.7;
+
+      li {
+        margin-bottom: 4px;
+
+        strong {
+          font-weight: 600;
+          color: var(--text-primary, #E2E8F0);
+        }
+      }
+    }
+  }
+}
+
+// ===================================================
+// RESPONSIVE
+// ===================================================
+
+@media (max-width: 768px) {
+  .form-container { padding: 14px; }
+
+  .page-header {
+    .header-left h1 { font-size: 0.95rem; }
+  }
+
+  .parent-form { padding: 16px; }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .info-box {
+    flex-direction: column;
+    .info-icon { text-align: center; }
+  }
+}
+
+@media (max-width: 480px) {
+  .form-container { padding: 10px; }
+  .parent-form { padding: 14px; }
+}

@@ -1,0 +1,193 @@
+<div class="modal-overlay" *ngIf="isOpen" (click)="close()">
+  <div class="modal-container" style="max-height: 90vh; overflow-y: auto;" (click)="$event.stopPropagation()">
+    
+    <!-- Header -->
+    <div class="modal-header">
+      <div>
+        <h2>📝 Enroll Student</h2>
+        <p class="event-name">{{ eventName }}</p>
+      </div>
+      <button class="btn-close" (click)="close()">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div class="modal-body">
+      
+      <!-- Student Selection -->
+      <div class="form-group">
+        <label>Select Student: <span class="required">*</span></label>
+        <select 
+          [(ngModel)]="selectedStudentId" 
+          (ngModelChange)="onStudentChange()"
+          class="form-control"
+          [disabled]="isSaving">
+          <option [value]="0">-- Select Student --</option>
+          <option *ngFor="let student of students" [value]="student.studentId">
+            {{ student.fullName }}
+          </option>
+        </select>
+      </div>
+
+      <!-- Checking Coverage -->
+      <div *ngIf="isCheckingCoverage" style="background: #ede9fe; padding: 15px; margin: 15px 0; border-radius: 8px; text-align: center;">
+        <div style="display: inline-block; width: 20px; height: 20px; border: 3px solid #7c3aed; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        <p style="margin: 10px 0 0 0; color: #6d28d9;">Checking subscription coverage...</p>
+      </div>
+
+      <!-- Subscription Coverage Badge -->
+      <div *ngIf="isCoveredBySubscription && subscriptionCoverage" 
+           style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); padding: 20px; margin: 15px 0; border-radius: 12px; border: 3px solid #10b981;">
+        <div style="display: flex; align-items: center; gap: 15px;">
+          <div style="font-size: 3rem;">✨</div>
+          <div style="flex: 1;">
+            <h3 style="margin: 0 0 5px 0; color: #065f46; font-size: 1.25rem;">FREE Enrollment!</h3>
+            <p style="margin: 0; color: #047857; font-weight: 500;">{{ subscriptionCoverage.message }}</p>
+            <p style="margin: 5px 0 0 0; color: #059669; font-size: 0.875rem;">
+              <strong>Plan:</strong> {{ subscriptionCoverage.subscriptionPlanName }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Event Fee Info -->
+      <div class="fee-info" *ngIf="eventFee > 0 && !isCoveredBySubscription" style="background: #f0f9ff; padding: 15px; margin: 15px 0; border-radius: 8px;">
+        <div class="fee-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span>Event Fee:</span>
+          <span class="fee-amount" style="font-weight: 600;">{{ eventFee | number:'1.2-2' }} SAR</span>
+        </div>
+        <div class="fee-row" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+          <span>Tax (15%):</span>
+          <span class="fee-amount" style="font-weight: 600;">{{ eventFee * 0.15 | number:'1.2-2' }} SAR</span>
+        </div>
+        <div class="fee-row total" style="display: flex; justify-content: space-between; border-top: 2px solid #bae6fd; padding-top: 12px; margin-top: 12px;">
+          <span><strong>Total Amount:</strong></span>
+          <span class="fee-amount"><strong>{{ paymentAmount | number:'1.2-2' }} SAR</strong></span>
+        </div>
+      </div>
+
+      <!-- Enrollment Notes -->
+      <div class="form-group">
+        <label>Enrollment Notes (Optional):</label>
+        <textarea 
+          [(ngModel)]="enrollmentNotes" 
+          class="form-control"
+          rows="2"
+          placeholder="Add any notes about this enrollment..."
+          [disabled]="isSaving"></textarea>
+      </div>
+
+      <!-- ============================================ -->
+      <!-- PAYMENT SECTION - HIDDEN IF COVERED BY SUBSCRIPTION -->
+      <!-- ============================================ -->
+      <div *ngIf="!isCoveredBySubscription" style="background: #fef3c7; border: 2px solid #fbbf24; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <h3 style="margin: 0 0 15px 0; color: #92400e;">💳 Payment Options</h3>
+        
+        <div style="margin-bottom: 15px;">
+          <label style="display: flex; align-items: center; cursor: pointer;">
+            <input 
+              type="checkbox" 
+              [(ngModel)]="payNow"
+              (ngModelChange)="onPayNowChange()"
+              [disabled]="isSaving"
+              style="width: 20px; height: 20px; margin-right: 10px; cursor: pointer;">
+            <span style="font-size: 16px; font-weight: 600; color: #92400e;">Pay Now</span>
+          </label>
+          <small style="display: block; margin-top: 5px; color: #78350f;">Check this to record payment immediately</small>
+        </div>
+
+        <!-- Payment Details (shown when Pay Now is checked) -->
+        <div *ngIf="payNow" style="border-top: 2px solid #fbbf24; padding-top: 20px; margin-top: 20px;">
+          
+          <!-- Payment Method -->
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Payment Method: <span style="color: #dc2626;">*</span></label>
+            <select 
+              [(ngModel)]="paymentMethod" 
+              class="form-control"
+              style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px;"
+              [disabled]="isSaving">
+              <option *ngFor="let method of paymentMethods" [value]="method.value">
+                {{ method.label }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Payment Amount (readonly) -->
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Amount (SAR):</label>
+            <input 
+              type="number" 
+              [(ngModel)]="paymentAmount" 
+              class="form-control"
+              style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; background: #f9fafb;"
+              step="0.01"
+              readonly>
+            <small style="display: block; margin-top: 4px; color: #6b7280;">Includes 15% VAT</small>
+          </div>
+
+          <!-- Payment Reference -->
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Reference Number (Optional):</label>
+            <input 
+              type="text" 
+              [(ngModel)]="paymentReference" 
+              class="form-control"
+              style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px;"
+              placeholder="Transaction ID, Check number, etc."
+              [disabled]="isSaving">
+            <small style="display: block; margin-top: 4px; color: #6b7280;">Enter transaction ID, check number, or other reference</small>
+          </div>
+
+          <!-- Payment Notes -->
+          <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 8px; font-weight: 500;">Payment Notes (Optional):</label>
+            <textarea 
+              [(ngModel)]="paymentNotes" 
+              class="form-control"
+              style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px;"
+              rows="2"
+              placeholder="Add any notes about the payment..."
+              [disabled]="isSaving"></textarea>
+          </div>
+
+        </div>
+
+        <!-- Info message when Pay Later is selected -->
+        <div *ngIf="!payNow" style="display: flex; gap: 12px; padding: 16px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; margin-top: 16px;">
+          <div style="font-size: 20px;">ℹ️</div>
+          <div style="font-size: 14px; color: #1e40af; line-height: 1.5;">
+            <strong style="display: block; margin-bottom: 4px;">Pay Later:</strong>
+            An invoice will be created and can be paid later from the student's profile or invoices page.
+          </div>
+        </div>
+
+      </div>
+      <!-- END PAYMENT SECTION -->
+
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 12px; padding: 20px; border-top: 1px solid #e5e7eb; background: #f9fafb;">
+      <button 
+        class="btn btn-secondary" 
+        (click)="close()"
+        style="padding: 10px 20px; border-radius: 6px; background: white; border: 1px solid #d1d5db; cursor: pointer;"
+        [disabled]="isSaving">
+        ✕ Cancel
+      </button>
+      <button 
+        class="btn btn-primary" 
+        (click)="enrollStudent()"
+        style="padding: 10px 20px; border-radius: 6px; background: #3b82f6; color: white; border: none; cursor: pointer;"
+        [disabled]="!selectedStudentId || selectedStudentId === 0 || isSaving">
+        <span *ngIf="!isSaving">
+          {{ payNow ? '💳 Enroll & Pay' : '📝 Enroll Only' }}
+        </span>
+        <span *ngIf="isSaving">
+          ⏳ Processing...
+        </span>
+      </button>
+    </div>
+
+  </div>
+</div>

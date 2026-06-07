@@ -1,0 +1,265 @@
+<div class="event-details-container" *ngIf="!loading && event">
+  
+  <app-page-header [title]="event!.eventNameEn">
+    <app-language-switcher [iconOnly]="false"></app-language-switcher>
+    <button class="btn btn-primary" (click)="editEvent()">✏️ {{ 'EVENT_DETAILS.EDIT_EVENT' | translate }}</button>
+    <button class="btn btn-primary" (click)="openPaymentPanel()">💳 {{ 'EVENT_DETAILS.RECEIVE_PAYMENT' | translate }}</button>
+  </app-page-header>
+
+  <!-- Compact hero: real banner OR slim placeholder strip -->
+  <div class="event-banner" *ngIf="bannerUrl">
+    <img [src]="bannerUrl" [alt]="event!.eventNameEn" />
+  </div>
+
+  <div class="event-hero" *ngIf="!bannerUrl">
+    <div class="hero-icon">{{ getEventIcon(event!.eventType) }}</div>
+    <div class="hero-info">
+      <div class="hero-title-row">
+        <span class="hero-title">{{ event!.eventNameEn }}</span>
+        <span class="hero-title-ar" *ngIf="event!.eventNameAr">{{ event!.eventNameAr }}</span>
+      </div>
+      <div class="badges">
+        <span class="badge" [ngClass]="getStatusBadgeClass(event!.status || 'Draft')">{{ event!.status || 'Draft' }}</span>
+        <span class="badge badge-info" *ngIf="event!.isFeatured">⭐ Featured</span>
+        <span class="badge badge-warning" *ngIf="event!.isRecurring">🔁 Recurring</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-cards">
+    <div class="info-card">
+      <div class="card-icon">📅</div>
+      <div class="card-content">
+        <div class="card-label">{{ 'EVENT_DETAILS.EVENT_TYPE' | translate }}</div>
+        <div class="card-value">{{ event.eventType }}</div>
+      </div>
+    </div>
+
+    <div class="info-card" *ngIf="event.sport">
+      <div class="card-icon">⚽</div>
+      <div class="card-content">
+        <div class="card-label">{{ 'EVENT_DETAILS.SPORT' | translate }}</div>
+        <div class="card-value">{{ event.sport }}</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <div class="card-icon">👥</div>
+      <div class="card-content">
+        <div class="card-label">{{ 'EVENT_DETAILS.ENROLLMENT' | translate }}</div>
+        <div class="card-value">{{ event.currentEnrollment }}/{{ event.maxParticipants }}</div>
+      </div>
+    </div>
+
+    <div class="info-card" *ngIf="event.isPaid">
+      <div class="card-icon">💰</div>
+      <div class="card-content">
+        <div class="card-label">{{ 'EVENT_DETAILS.PRICE' | translate }}</div>
+        <div class="card-value">{{ event.basePrice | number:'1.2-2' }} {{ event.currency }}</div>
+      </div>
+    </div>
+
+    <div class="info-card" *ngIf="!event.isPaid">
+      <div class="card-icon">🎁</div>
+      <div class="card-content">
+        <div class="card-label">{{ 'EVENT_DETAILS.PRICE' | translate }}</div>
+        <div class="card-value free">{{ 'EVENT_DETAILS.FREE_EVENT' | translate }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="capacity-section">
+    <div class="capacity-header">
+      <span class="capacity-label">{{ 'EVENT_DETAILS.ENROLLMENT_STATUS' | translate }}</span>
+      <span class="capacity-percentage" [ngClass]="getCapacityClass()">
+        {{ getCapacityPercentage() | number:'1.0-0' }}% {{ 'EVENT_DETAILS.PERCENT_FULL' | translate }}
+      </span>
+    </div>
+    <div class="capacity-bar">
+      <div class="capacity-fill" [style.width.%]="getCapacityPercentage()" [ngClass]="getCapacityClass()"></div>
+    </div>
+    <div class="capacity-details">
+      <span>{{ event.availableSpots }} {{ 'EVENT_DETAILS.SPOTS_AVAILABLE' | translate }}</span>
+      <span *ngIf="event.enableWaitlist && event.waitlistCount > 0">{{ event.waitlistCount }} {{ 'EVENT_DETAILS.ON_WAITLIST' | translate }}</span>
+
+  <!-- Phase 2: Management Actions -->
+  <div class="management-actions">
+    <button class="btn btn-trainer" (click)="openTrainerModal()">
+      🤝 {{ 'EVENT_DETAILS.ASSIGN_TRAINERS' | translate }}
+    </button>
+    <button class="btn btn-attendance" (click)="openAttendanceModal()">
+      📋 {{ 'EVENT_DETAILS.MARK_ATTENDANCE' | translate }}
+    </button>
+  </div>
+    </div>
+  </div>
+
+  <div class="details-grid">
+    
+    <div class="detail-card full-width" *ngIf="event.description">
+      <h3 class="card-title">{{ 'EVENT_DETAILS.DESCRIPTION' | translate }}</h3>
+      <p class="description-text">{{ event.description }}</p>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="card-title">{{ 'EVENT_DETAILS.SCHEDULE' | translate }}</h3>
+      <div class="detail-rows">
+        <div class="detail-row">
+          <span class="label">{{ 'EVENT_DETAILS.START_DATE' | translate }}</span>
+          <span class="value">{{ formatDate(event.startDate) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">{{ 'EVENT_DETAILS.END_DATE' | translate }}</span>
+          <span class="value">{{ formatDate(event.endDate) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">{{ 'EVENT_DETAILS.TIME' | translate }}</span>
+          <span class="value">{{ event.startTime }} - {{ event.endTime }}</span>
+        </div>
+        <div class="detail-row" *ngIf="event.isRecurring">
+          <span class="label">{{ 'EVENT_DETAILS.RECURRENCE' | translate }}</span>
+          <span class="value">{{ event.recurrenceType }}</span>
+        </div>
+        <div class="detail-row" *ngIf="event.isRecurring && event.recurrenceDays && event.recurrenceDays.length > 0">
+          <span class="label">{{ 'EVENT_DETAILS.DAYS' | translate }}</span>
+          <span class="value">{{ getRecurrenceDaysText(event.recurrenceDays) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card" *ngIf="event.venueName">
+      <h3 class="card-title">{{ 'EVENT_DETAILS.LOCATION' | translate }}</h3>
+      <div class="detail-rows">
+        <div class="detail-row">
+          <span class="label">{{ 'EVENT_DETAILS.VENUE' | translate }}</span>
+          <span class="value">{{ event.venueName }}</span>
+        </div>
+        <div class="detail-row" *ngIf="event.venueAddress">
+          <span class="label">{{ 'EVENT_DETAILS.ADDRESS' | translate }}</span>
+          <span class="value">{{ event.venueAddress }}</span>
+        </div>
+        <div class="detail-row" *ngIf="event.locationUrl">
+          <span class="label">{{ 'EVENT_DETAILS.MAP' | translate }}</span>
+          <a [href]="event.locationUrl" target="_blank" class="link">{{ 'EVENT_DETAILS.VIEW_ON_MAP' | translate }}</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="card-title">{{ 'EVENT_DETAILS.ELIGIBILITY' | translate }}</h3>
+      <div class="detail-rows">
+        <div class="detail-row" *ngIf="event.minAge || event.maxAge">
+          <span class="label">{{ 'EVENT_DETAILS.AGE_RANGE' | translate }}</span>
+          <span class="value">
+            <span *ngIf="event.minAge">{{ event.minAge }}+</span>
+            <span *ngIf="event.minAge && event.maxAge"> - </span>
+            <span *ngIf="event.maxAge">{{ event.maxAge }} years</span>
+          </span>
+        </div>
+        <div class="detail-row" *ngIf="event.gender">
+          <span class="label">{{ 'EVENT_DETAILS.GENDER' | translate }}</span>
+          <span class="value">{{ event.gender }}</span>
+        </div>
+        <div class="detail-row" *ngIf="event.skillLevel">
+          <span class="label">{{ 'EVENT_DETAILS.SKILL_LEVEL' | translate }}</span>
+          <span class="value">{{ event.skillLevel }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card" *ngIf="event.isPaid">
+      <h3 class="card-title">{{ 'EVENT_DETAILS.PRICING_DETAILS' | translate }}</h3>
+      <div class="detail-rows">
+        <div class="detail-row">
+          <span class="label">{{ 'EVENT_DETAILS.BASE_PRICE' | translate }}</span>
+          <span class="value">{{ event.basePrice | number:'1.2-2' }} {{ event.currency }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">{{ 'EVENT_DETAILS.MULTIPLE_OFFERS' | translate }}</span>
+          <span class="value">{{ event.allowMultipleOffers ? ('EVENT_DETAILS.ALLOWED' | translate) : ('EVENT_DETAILS.NOT_ALLOWED' | translate) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">{{ 'EVENT_DETAILS.COUPONS' | translate }}</span>
+          <span class="value">{{ event.allowCoupons ? ('EVENT_DETAILS.ALLOWED' | translate) : ('EVENT_DETAILS.NOT_ALLOWED' | translate) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card">
+      <h3 class="card-title">{{ 'EVENT_DETAILS.REGISTRATION' | translate }}</h3>
+      <div class="detail-rows">
+        <div class="detail-row" *ngIf="event.registrationStartDate">
+          <span class="label">{{ 'EVENT_DETAILS.REG_OPENS' | translate }}</span>
+          <span class="value">{{ formatDate(event.registrationStartDate) }}</span>
+        </div>
+        <div class="detail-row" *ngIf="event.registrationEndDate">
+          <span class="label">{{ 'EVENT_DETAILS.REG_CLOSES' | translate }}</span>
+          <span class="value">{{ formatDate(event.registrationEndDate) }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">{{ 'EVENT_DETAILS.WAITLIST' | translate }}</span>
+          <span class="value">{{ event.enableWaitlist ? ('EVENT_DETAILS.ENABLED' | translate) : ('EVENT_DETAILS.DISABLED' | translate) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-card full-width" *ngIf="event.whatToBring || event.medicalRequirements">
+      <h3 class="card-title">{{ 'EVENT_DETAILS.REQUIREMENTS' | translate }}</h3>
+      <div class="requirements-grid">
+        <div class="requirement-item" *ngIf="event.whatToBring">
+          <strong>{{ 'EVENT_DETAILS.WHAT_TO_BRING' | translate }}</strong>
+          <p>{{ event.whatToBring }}</p>
+        </div>
+        <div class="requirement-item" *ngIf="event.medicalRequirements">
+          <strong>{{ 'EVENT_DETAILS.MEDICAL_REQUIREMENTS' | translate }}</strong>
+          <p>{{ event.medicalRequirements }}</p>
+        </div>
+      </div>
+      <div class="checkmarks">
+        <span class="checkmark" *ngIf="event.requiresParentalConsent">{{ 'EVENT_DETAILS.PARENTAL_CONSENT' | translate }}</span>
+        <span class="checkmark" *ngIf="event.certificateProvided">{{ 'EVENT_DETAILS.CERTIFICATE_PROVIDED' | translate }}</span>
+        <span class="checkmark" *ngIf="event.mealsIncluded">{{ 'EVENT_DETAILS.MEALS_INCLUDED' | translate }}</span>
+        <span class="checkmark" *ngIf="event.transportationProvided">{{ 'EVENT_DETAILS.TRANSPORTATION_PROVIDED' | translate }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Enrolled Students Section -->
+  <app-enrolled-students-list 
+    [eventId]="eventId"
+    [eventFee]="event?.basePrice || 0"  
+  ></app-enrolled-students-list>
+
+  <div class="actions-footer">
+    <button class="btn btn-secondary" (click)="goBack()">{{ 'EVENT_DETAILS.BACK_TO_EVENTS' | translate }}</button>
+    <button class="btn btn-primary" (click)="editEvent()">✏️ {{ 'EVENT_DETAILS.EDIT_EVENT' | translate }}</button>
+  </div>
+
+  <!-- Phase 2: Modals -->
+  <app-trainer-assignment-modal
+    [eventId]="eventId"
+    [eventName]="event?.eventNameEn || ''"
+    [isOpen]="showTrainerModal"
+    (closeModal)="closeTrainerModal()"
+    (trainerAssigned)="onTrainerAssigned()">
+  </app-trainer-assignment-modal>
+
+  <app-attendance-modal
+    [eventId]="eventId"
+    [eventName]="event?.eventNameEn || ''"
+    [isOpen]="showAttendanceModal"
+    (closeModal)="closeAttendanceModal()"
+    (attendanceMarked)="onAttendanceMarked()">
+  </app-attendance-modal>
+</div>
+
+<div class="loading-container" *ngIf="loading">
+  <div class="spinner"></div>
+  <p>{{ 'EVENT_DETAILS.LOADING' | translate }}</p>
+</div>
+<app-payment-panel
+  [eventId]="eventId"
+  [isOpen]="showPaymentPanel"
+  (closePanel)="closePaymentPanel()"
+  (paymentRecorded)="onPaymentRecorded()">
+</app-payment-panel>

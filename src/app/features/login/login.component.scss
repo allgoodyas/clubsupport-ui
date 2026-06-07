@@ -1,0 +1,434 @@
+.login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  padding: var(--spacing-lg);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  padding: 24px;
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+// ── Header ──────────────────────────────────────────────────────
+
+.login-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.logo { margin-bottom: 12px; }
+
+.logo-circle {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: white;
+  box-shadow: var(--shadow-md);
+}
+
+.login-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 4px;
+}
+
+.login-subtitle {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin: 0;
+
+  &.welcome {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+}
+
+// ── Form ─────────────────────────────────────────────────────────
+
+.login-form {
+  margin-bottom: 16px;
+}
+
+.login-form label {
+  color: #374151;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.login-form input[type="text"],
+.login-form input[type="password"],
+.login-form input[type="tel"],
+.login-form select {
+  color: #1f2937 !important;
+  background-color: #ffffff !important;
+}
+
+.login-form input::placeholder {
+  color: #9ca3af !important;
+  opacity: 1;
+}
+
+// mobile input wrapper — for tick/spinner icons
+.input-wrap {
+  position: relative;
+
+  input {
+    width: 100%;
+    padding-right: 36px !important;  // room for icon
+
+    &.verified {
+      border-color: #16a34a !important;
+    }
+
+    &.has-error {
+      border-color: #dc2626 !important;
+    }
+  }
+}
+
+// inline field spinner
+.field-spinner {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid #e5e7eb;
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: block;
+}
+
+// verified tick
+.field-tick {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #16a34a;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}
+
+// error text under field
+.form-error {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: #dc2626;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: #6b7280;
+}
+
+.form-group {
+  &.has-error input {
+    border-color: #dc2626 !important;
+  }
+}
+
+// ── Club badge ────────────────────────────────────────────────────
+
+.selected-club {
+  background: #f5f5f5;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  border-left: 3px solid var(--primary-color);
+}
+
+.selected-club.master-admin {
+  background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%);
+  border-left-color: var(--warning);
+}
+
+.club-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.club-info strong {
+  font-size: 0.875rem;
+  color: #1f2937;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 99px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+}
+
+.role-badge.master {
+  background: var(--warning);
+  color: #1f2937;
+}
+
+.role-badge.branded {
+  background: linear-gradient(135deg,
+    rgba(var(--accent-primary-rgb, 0,212,255), 0.15),
+    rgba(168,85,247,0.12));
+  color: var(--accent-primary, #00D4FF);
+  border: 1px solid rgba(var(--accent-primary-rgb, 0,212,255), 0.3);
+}
+
+// ── Remember me ───────────────────────────────────────────────────
+
+.remember-row { margin-bottom: 12px; }
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: normal;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin: 0;
+  color: #374151;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+}
+
+// ── Error banner ──────────────────────────────────────────────────
+
+/* Club deactivated banner */
+.club-deactivated-banner {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #fff3f3;
+  border: 1.5px solid #f44336;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+
+  .deactivated-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .deactivated-body {
+    strong {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #c62828;
+      margin-bottom: 4px;
+    }
+    p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: #b71c1c;
+      line-height: 1.4;
+    }
+  }
+}
+
+.error-banner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 0.82rem;
+  color: #dc2626;
+  line-height: 1.4;
+}
+
+// ── Submit button ─────────────────────────────────────────────────
+
+.btn-block {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin2 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin2 {
+  to { transform: rotate(360deg); }
+}
+
+// ── Footer ────────────────────────────────────────────────────────
+
+.login-footer {
+  text-align: center;
+  padding-top: 14px;
+  border-top: 1px solid #e0e0e0;
+  color: #6b7280;
+  font-size: 0.78rem;
+
+  p { margin: 0; }
+}
+
+.login-language-switcher {
+  position: absolute;
+  top: var(--spacing-lg);
+  right: var(--spacing-lg);
+  z-index: 100;
+}
+
+// ── Club-branded header ───────────────────────────────────────────
+
+.club-header { padding-bottom: 8px; }
+
+.club-logo-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+
+  .club-logo-img-container {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--gradient-primary, linear-gradient(135deg, #0B5345, #17A589));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    border: 2px solid rgba(255,255,255,0.4);
+  }
+}
+
+.club-logo-img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.club-initials {
+  width: 72px;
+  height: 72px;
+  font-size: 1.5rem;
+  border-radius: 14px;
+  background: var(--gradient-primary, linear-gradient(135deg, #00D4FF, #A855F7));
+  color: #0A0F1E;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.club-name {
+  font-size: 1.3rem !important;
+  margin-bottom: 2px !important;
+  background: var(--gradient-primary, linear-gradient(135deg, #00D4FF, #A855F7));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.club-name-ar {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #94A3B8);
+  margin: 0 0 6px;
+  direction: rtl;
+}
+
+// ── Branding shimmer ──────────────────────────────────────────────
+
+.branding-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 60px 24px;
+}
+
+.shimmer-logo {
+  width: 72px;
+  height: 72px;
+  border-radius: 14px;
+  background: var(--bg-card, #1A2235);
+  animation: shimmer 1.4s infinite;
+}
+
+.shimmer-text {
+  width: 140px;
+  height: 18px;
+  border-radius: 8px;
+  background: var(--bg-card, #1A2235);
+  animation: shimmer 1.4s infinite 0.2s;
+}
+
+@keyframes shimmer {
+  0%   { opacity: 0.5; }
+  50%  { opacity: 1;   }
+  100% { opacity: 0.5; }
+}
+
+// ── Mobile ────────────────────────────────────────────────────────
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 18px;
+  }
+
+  .login-title {
+    font-size: 1.2rem;
+  }
+
+  .login-language-switcher {
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+  }
+}

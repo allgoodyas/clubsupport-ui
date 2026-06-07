@@ -1,0 +1,141 @@
+<!-- payment-receipt.component.html -->
+<div class="receipt-overlay" *ngIf="isOpen" (click)="close()">
+  <div class="receipt-container" (click)="$event.stopPropagation()">
+    
+    <!-- Action Buttons (hidden when printing) -->
+    <div class="receipt-actions no-print">
+      <button class="btn-action btn-print" (click)="printReceipt()">
+        <span class="btn-icon">🖨️</span>
+        <span class="btn-text">Print Receipt</span>
+      </button>
+      <button class="btn-action btn-close" (click)="close()">
+        <span class="btn-icon">✕</span>
+        <span class="btn-text">Close</span>
+      </button>
+    </div>
+
+    <!-- Receipt Content (printable) -->
+    <div class="receipt-content" *ngIf="receiptData">
+      
+      <!-- Header -->
+      <div class="receipt-header">
+        <div class="logo-section">
+          <div class="logo">🏆</div>
+          <h1>Club Management System</h1>
+          <p class="subtitle">Payment Receipt</p>
+        </div>
+        
+        <div class="receipt-info">
+          <div class="receipt-number">
+            <span class="label">Receipt No:</span>
+            <span class="value">{{receiptData?.receiptNumber}}</span>
+          </div>
+          <div class="receipt-date">
+            <span class="label">Date:</span>
+            <span class="value">{{getCurrentDateTime()}}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider"></div>
+
+      <!-- Payment Status Badge -->
+      <div class="status-badge" [class.full-payment]="receiptData?.isFullPayment" [class.partial-payment]="!receiptData?.isFullPayment">
+        <span class="status-icon">{{receiptData?.isFullPayment ? '✓' : '📊'}}</span>
+        <span class="status-text">{{receiptData?.isFullPayment ? 'PAID IN FULL' : 'PARTIAL PAYMENT'}}</span>
+      </div>
+
+      <!-- Student & Event Details -->
+      <div class="details-section">
+        <div class="detail-row">
+          <span class="label">Student Name:</span>
+          <span class="value">{{receiptData?.studentName}}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Student ID:</span>
+          <span class="value">#{{receiptData?.studentId}}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Event Name:</span>
+          <span class="value">{{receiptData?.eventName}}</span>
+        </div>
+        <div class="detail-row" *ngIf="receiptData?.invoiceNumber">
+          <span class="label">Invoice Number:</span>
+          <span class="value">{{receiptData?.invoiceNumber}}</span>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider"></div>
+
+      <!-- Payment Methods Breakdown -->
+      <div class="payment-section">
+        <h3 class="section-title">Payment Details</h3>
+        
+        <div class="payment-methods-list">
+          <div class="method-row" *ngFor="let method of receiptData?.paymentMethods">
+            <div class="method-name">
+              <span class="method-icon">{{getMethodIcon(method.methodType)}}</span>
+              <span class="method-label">{{method.methodType}}</span>
+              <span class="method-ref" *ngIf="method.referenceNumber">
+                (Ref: {{method.referenceNumber}})
+              </span>
+            </div>
+            <div class="method-amount">{{formatCurrency(method.amount)}} SAR</div>
+          </div>
+        </div>
+
+        <!-- Totals -->
+        <div class="totals-section">
+          <div class="total-row grand-total">
+            <span class="label">Total Paid:</span>
+            <span class="value">{{formatCurrency(receiptData?.amountPaid)}} SAR</span>
+          </div>
+          
+          <!-- Remaining Balance (if partial) -->
+          <div class="total-row remaining" *ngIf="!receiptData?.isFullPayment && receiptData?.remainingBalance">
+            <span class="label">Remaining Balance:</span>
+            <span class="value highlight">{{formatCurrency(receiptData?.remainingBalance)}} SAR</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notes (if any) -->
+      <div class="notes-section" *ngIf="receiptData?.notes">
+        <h3 class="section-title">Notes</h3>
+        <p class="notes-text">{{receiptData?.notes}}</p>
+      </div>
+
+      <!-- Divider -->
+      <div class="divider"></div>
+
+      <!-- Footer -->
+      <div class="receipt-footer">
+        <div class="footer-message">
+          <p *ngIf="receiptData?.isFullPayment">✓ Thank you! This invoice has been paid in full.</p>
+          <p *ngIf="!receiptData?.isFullPayment">⚠️ This is a partial payment. Please pay the remaining balance by the due date.</p>
+        </div>
+        
+        <div class="footer-info">
+          <p class="disclaimer">This is an official receipt. Please keep for your records.</p>
+          <p class="contact">For any inquiries, please contact club administration.</p>
+        </div>
+      </div>
+
+      <!-- Signature Section -->
+      <div class="signature-section">
+        <div class="signature-box">
+          <div class="signature-line"></div>
+          <p class="signature-label">Authorized Signature</p>
+        </div>
+        <div class="signature-box">
+          <div class="signature-line"></div>
+          <p class="signature-label">Date</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div>

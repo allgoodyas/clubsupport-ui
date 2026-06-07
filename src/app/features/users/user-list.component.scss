@@ -1,0 +1,418 @@
+// ====================================================
+// USER LIST - DYNAMIC THEME STYLES
+// Uses enhanced CSS variables from theme configuration
+// ====================================================
+
+.user-list-container {
+  padding: 0;
+  max-width: 100%;
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg-app, #0A0F1E);
+}
+
+// Header
+.users-header {
+  background: var(--gradient-primary, linear-gradient(135deg, #00D4FF, #A855F7));
+  padding: 12px var(--spacing-xl, 1.5rem);
+  margin-bottom: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  .header-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+
+    .page-title-section {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      
+      .page-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        white-space: nowrap;
+      }
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-shrink: 0;
+
+      .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        color: white;
+        font-size: 0.875rem;
+        white-space: nowrap;
+
+        &.btn-primary {
+          background: var(--bg-card, #1A2235);
+          
+          &:hover {
+            background: var(--bg-panel, #111827);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+          }
+        }
+
+        &.btn-outline {
+          background: rgba(255, 255, 255, 0.1);
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          padding: 6px 10px;
+          font-size: 1.125rem;
+          
+          &:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          }
+          
+          &:active {
+            transform: translateY(0);
+          }
+        }
+      }
+    }
+  }
+}
+
+// Search Section
+.search-section {
+  max-width: 1400px;
+  margin: 0 auto 1.5rem;
+  padding: 0 var(--spacing-xl, 1.5rem);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  .search-box {
+    flex: 1;  // takes all remaining width
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: var(--bg-card, #1A2235);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--bg-border, #1E2D45);
+
+    .search-icon {
+      font-size: 1.25rem;
+      margin-right: 0.75rem;
+      color: var(--text-secondary, #94A3B8);
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 1rem;
+      color: var(--text-primary, #E2E8F0);
+      background: transparent;
+
+      &::placeholder {
+        color: var(--text-disabled, #4A5568);
+      }
+    }
+
+    .result-count {
+      color: var(--text-secondary, #94A3B8);
+      font-size: 0.875rem;
+      margin-left: 1rem;
+      padding-left: 1rem;
+      border-left: 1px solid var(--bg-border, #1E2D45);
+    }
+  }
+
+  // Add New User button — flush right
+  .btn-add-user {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: 12px;
+  }
+}
+
+// Loading State
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--bg-border, #1E2D45);
+    border-top-color: var(--accent-primary, #00D4FF);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  p {
+    margin-top: 1rem;
+    color: var(--text-secondary, #94A3B8);
+    font-size: 1rem;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// Users Table
+.users-table-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-xl, 1.5rem);
+  
+  .users-table {
+    width: 100%;
+    background: var(--bg-card, #1A2235);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--bg-border, #1E2D45);
+    overflow: hidden;
+  }
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  thead {
+    background: var(--gradient-primary, linear-gradient(135deg, #00D4FF, #A855F7));
+    color: white;
+
+    th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  }
+
+  tbody {
+    tr {
+      border-bottom: 1px solid var(--bg-border, #1E2D45);
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: var(--bg-panel, #111827);
+      }
+
+      &.inactive-row {
+        opacity: 0.6;
+        background: var(--bg-panel, #111827);
+      }
+
+      td {
+        padding: 1rem;
+        color: var(--text-secondary, #94A3B8);
+        font-size: 0.875rem;
+      }
+    }
+  }
+}
+
+// User Name
+.user-name {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .name-text {
+    font-weight: 600;
+    color: var(--text-primary, #E2E8F0);
+  }
+}
+
+// Mobile
+.mobile {
+  color: var(--text-secondary, #94A3B8);
+  font-family: monospace;
+}
+
+// Email
+.email {
+  color: var(--text-secondary, #94A3B8);
+}
+
+// Role Badge
+.role-badge {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  background: var(--accent-info-dim, rgba(168, 85, 247, 0.13));
+  color: var(--accent-info, #A855F7);
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1px solid var(--accent-info, #A855F7);
+}
+
+// Status Badge
+.status-badge {
+  display: inline-block;
+  padding: 0.375rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+
+  &.status-active {
+    background: var(--accent-success-dim, rgba(0, 255, 157, 0.13));
+    color: var(--accent-success, #00FF9D);
+    border: 1px solid var(--accent-success, #00FF9D);
+  }
+
+  &.status-inactive {
+    background: var(--accent-danger-dim, rgba(255, 71, 87, 0.13));
+    color: var(--accent-danger, #FF4757);
+    border: 1px solid var(--accent-danger, #FF4757);
+  }
+}
+
+// Date
+.date {
+  color: var(--text-secondary, #94A3B8);
+  font-size: 0.8125rem;
+}
+
+// Action Buttons
+.action-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-action {
+  padding: 0.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1.125rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+
+  &.btn-edit {
+    background: var(--accent-primary-dim, rgba(0, 212, 255, 0.13));
+    color: var(--accent-primary, #00D4FF);
+    border: 1px solid var(--accent-primary, #00D4FF);
+
+    &:hover {
+      background: var(--accent-primary, #00D4FF);
+      color: white;
+      transform: scale(1.05);
+    }
+  }
+}
+
+// Empty State
+.empty-state {
+  padding: 4rem 2rem;
+  text-align: center;
+
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+    color: var(--text-disabled, #4A5568);
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary, #E2E8F0);
+    margin-bottom: 0.5rem;
+  }
+
+  p {
+    color: var(--text-secondary, #94A3B8);
+    margin-bottom: 2rem;
+  }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .users-header {
+    padding: 10px var(--spacing-lg, 1rem);
+
+    .header-content {
+      flex-wrap: wrap;
+      gap: 10px;
+
+      .page-title-section {
+        flex: 1 1 100%;
+        order: 1;
+        gap: 8px;
+        
+        .btn-dashboard {
+          padding: 5px 8px;
+          font-size: 1.125rem;
+        }
+        
+        .page-title {
+          font-size: 1.125rem;
+        }
+      }
+
+      .header-actions {
+        flex: 1 1 100%;
+        order: 2;
+        justify-content: flex-end;
+        gap: 6px;
+
+        .btn {
+          font-size: 1rem;
+          padding: 6px 10px;
+          
+          &.btn-primary {
+            font-size: 0.75rem;
+          }
+        }
+      }
+    }
+  }
+
+  .search-section {
+    padding: 0 var(--spacing-lg, 1rem);
+  }
+
+  .users-table-container {
+    padding: 0 var(--spacing-lg, 1rem);
+    overflow-x: auto;
+    
+    .users-table {
+      min-width: 800px;
+    }
+  }
+}

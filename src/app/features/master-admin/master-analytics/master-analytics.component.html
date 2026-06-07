@@ -1,0 +1,239 @@
+<div class="ma-container">
+
+  <!-- ── Header ── -->
+  <header class="ma-header">
+    <div class="ma-header-left">
+      <button class="ma-back" (click)="goBack()">&#8592; Dashboard</button>
+      <div>
+        <h1 class="ma-title">&#128200; Master Analytics</h1>
+        <p class="ma-sub">Cross-club insights · Sport demand · Pricing intelligence</p>
+      </div>
+    </div>
+    <div class="ma-header-right">
+      <input type="date" [(ngModel)]="fromDate" class="ma-date-input" />
+      <span class="ma-date-sep">to</span>
+      <input type="date" [(ngModel)]="toDate"   class="ma-date-input" />
+      <button class="ma-apply-btn" (click)="load()" [disabled]="loading">
+        {{ loading ? '...' : 'Apply' }}
+      </button>
+      <button class="ma-export-btn" (click)="exportExcel()" [disabled]="exporting || !data">
+        &#128229; {{ exporting ? 'Generating...' : 'Export Excel' }}
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Loading ── -->
+  <div class="ma-loading" *ngIf="loading">
+    <div class="ma-spinner"></div>
+    <span>Loading analytics data...</span>
+  </div>
+
+  <!-- ── Error ── -->
+  <div class="ma-error" *ngIf="error && !loading">&#9888;&#65039; {{ error }}</div>
+
+  <ng-container *ngIf="data && !loading">
+  <div class="ma-body">
+
+    <!-- ── KPI Row ── -->
+    <div class="ma-kpi-grid">
+      <div class="ma-kpi blue">
+        <div class="ma-kpi-val">{{ data.activeClubs }} <span class="ma-kpi-of">/ {{ data.totalClubs }}</span></div>
+        <div class="ma-kpi-lbl">Active clubs</div>
+      </div>
+      <div class="ma-kpi teal">
+        <div class="ma-kpi-val">{{ data.totalStudents | number }}</div>
+        <div class="ma-kpi-lbl">Total students</div>
+      </div>
+      <div class="ma-kpi purple">
+        <div class="ma-kpi-val">{{ data.totalEnrollments | number }}</div>
+        <div class="ma-kpi-lbl">Enrollments</div>
+      </div>
+      <div class="ma-kpi green">
+        <div class="ma-kpi-val">{{ sar(data.totalRevenue) }}</div>
+        <div class="ma-kpi-lbl">Total revenue</div>
+      </div>
+      <div class="ma-kpi" [class.green]="data.netProfit>=0" [class.red]="data.netProfit<0">
+        <div class="ma-kpi-val">{{ sar(data.netProfit) }}</div>
+        <div class="ma-kpi-lbl">Net profit</div>
+      </div>
+      <div class="ma-kpi amber">
+        <div class="ma-kpi-val">{{ data.avgCollectionRate }}%</div>
+        <div class="ma-kpi-lbl">Avg collection rate</div>
+      </div>
+    </div>
+
+    <!-- ── Tabs ── -->
+    <div class="ma-tabs">
+      <button [class.active]="activeTab==='overview'" (click)="activeTab='overview'">&#128202; Overview</button>
+      <button [class.active]="activeTab==='sports'"   (click)="activeTab='sports'">&#127936; Sport demand</button>
+      <button [class.active]="activeTab==='regions'"  (click)="activeTab='regions'">&#127757; By region</button>
+      <button [class.active]="activeTab==='clubs'"    (click)="activeTab='clubs'">&#127968; All clubs</button>
+    </div>
+
+    <!-- ════ TAB: OVERVIEW ════ -->
+    <div *ngIf="activeTab==='overview'">
+      <div class="ma-two-col">
+
+        <!-- Event types -->
+        <div class="ma-section">
+          <div class="ma-section-title">Event type breakdown</div>
+          <table class="ma-table">
+            <thead><tr>
+              <th>Type</th>
+              <th class="r">Events</th>
+              <th class="r">Enrollments</th>
+              <th class="r">Avg price</th>
+              <th class="r">Revenue</th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let r of data.eventTypes">
+                <td>{{ r.eventType }}</td>
+                <td class="r">{{ r.eventCount }}</td>
+                <td class="r">{{ r.totalEnrollments | number }}</td>
+                <td class="r">{{ sar(r.avgPrice) }}</td>
+                <td class="r teal-val">{{ sar(r.totalRevenue) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Top sport demand mini chart -->
+        <div class="ma-section">
+          <div class="ma-section-title">Top sports by enrollment</div>
+          <div class="ma-bar-chart">
+            <div class="ma-bar-row" *ngFor="let s of data.sportDemand.slice(0,8)">
+              <div class="ma-bar-label">{{ s.sport }}</div>
+              <div class="ma-bar-track">
+                <div class="ma-bar-fill" [style.width]="barWidth(s.totalEnrollments)"></div>
+              </div>
+              <div class="ma-bar-val">{{ s.totalEnrollments | number }}</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ════ TAB: SPORT DEMAND ════ -->
+    <div *ngIf="activeTab==='sports'">
+      <div class="ma-section">
+        <div class="ma-section-title">
+          Sport demand + pricing intelligence
+          <span class="ma-section-badge">Suggested price = 70th percentile across all clubs</span>
+        </div>
+        <div class="ma-table-wrap">
+          <table class="ma-table">
+            <thead><tr>
+              <th>Sport / type</th>
+              <th class="r">Enrollments</th>
+              <th class="r">Clubs offering</th>
+              <th class="r">Min price</th>
+              <th class="r">Avg price</th>
+              <th class="r">Max price</th>
+              <th class="r suggested-col">&#128161; Suggested price</th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let s of data.sportDemand">
+                <td class="sport-name">{{ s.sport }}</td>
+                <td class="r">{{ s.totalEnrollments | number }}</td>
+                <td class="r">{{ s.clubCount }}</td>
+                <td class="r muted-val">{{ sar(s.minPrice) }}</td>
+                <td class="r">{{ sar(s.avgPrice) }}</td>
+                <td class="r muted-val">{{ sar(s.maxPrice) }}</td>
+                <td class="r suggested-val">{{ sar(s.suggestedPrice) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="ma-insight-box">
+          <strong>How to use this:</strong> The suggested price is the 70th percentile — meaning 70% of clubs charge less. If your club charges less than the suggested price for a sport with high enrollment, you are leaving revenue on the table. If you charge more and enrollments are low, that sport may be price-sensitive in your region.
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ TAB: REGIONS ════ -->
+    <div *ngIf="activeTab==='regions'">
+      <div class="ma-section">
+        <div class="ma-section-title">
+          Sport demand by region
+          <div class="ma-region-filter">
+            <label>Region</label>
+            <select [(ngModel)]="selectedRegion">
+              <option *ngFor="let r of regions" [value]="r">{{ r }}</option>
+            </select>
+          </div>
+        </div>
+        <div class="ma-table-wrap">
+          <table class="ma-table">
+            <thead><tr>
+              <th>Region</th>
+              <th>Sport</th>
+              <th class="r">Enrollments</th>
+              <th class="r">Clubs</th>
+              <th class="r">Avg price</th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let r of filteredSportByRegion">
+                <td class="region-cell">{{ r.regionName }}</td>
+                <td class="sport-name">{{ r.sport }}</td>
+                <td class="r">{{ r.enrollments | number }}</td>
+                <td class="r">{{ r.clubCount }}</td>
+                <td class="r">{{ sar(r.avgPrice) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ TAB: ALL CLUBS ════ -->
+    <div *ngIf="activeTab==='clubs'">
+      <div class="ma-section">
+        <div class="ma-section-title">Club-by-club scorecard</div>
+        <div class="ma-table-wrap">
+          <table class="ma-table sortable">
+            <thead><tr>
+              <th (click)="sortClubs('clubNameEn')">Club {{ sortIcon('clubNameEn') }}</th>
+              <th (click)="sortClubs('regionName')">Region {{ sortIcon('regionName') }}</th>
+              <th class="r" (click)="sortClubs('totalStudents')">Students {{ sortIcon('totalStudents') }}</th>
+              <th class="r" (click)="sortClubs('totalEnrollments')">Enrolments {{ sortIcon('totalEnrollments') }}</th>
+              <th class="r" (click)="sortClubs('totalRevenue')">Revenue {{ sortIcon('totalRevenue') }}</th>
+              <th class="r" (click)="sortClubs('totalExpenses')">Expenses {{ sortIcon('totalExpenses') }}</th>
+              <th class="r" (click)="sortClubs('netProfit')">Net {{ sortIcon('netProfit') }}</th>
+              <th class="r" (click)="sortClubs('collectionRate')">Collection {{ sortIcon('collectionRate') }}</th>
+              <th class="r" (click)="sortClubs('revenuePerStudent')">Rev/Student {{ sortIcon('revenuePerStudent') }}</th>
+              <th>Last activity</th>
+            </tr></thead>
+            <tbody>
+              <tr *ngFor="let c of sortedClubs">
+                <td>
+                  <div class="club-name-cell">{{ c.clubNameEn }}</div>
+                  <div class="club-code-cell">{{ c.clubCode }}</div>
+                </td>
+                <td class="muted-val">{{ c.regionName || c.cityName || '—' }}</td>
+                <td class="r">{{ c.totalStudents | number }}</td>
+                <td class="r">{{ c.totalEnrollments | number }}</td>
+                <td class="r teal-val">{{ sar(c.totalRevenue) }}</td>
+                <td class="r coral-val">{{ sar(c.totalExpenses) }}</td>
+                <td class="r" [class.pos-val]="c.netProfit>=0" [class.neg-val]="c.netProfit<0">{{ sar(c.netProfit) }}</td>
+                <td class="r">
+                  <span class="collection-pill"
+                    [class.high]="c.collectionRate>=80"
+                    [class.mid]="c.collectionRate>=50 && c.collectionRate<80"
+                    [class.low]="c.collectionRate<50">
+                    {{ c.collectionRate }}%
+                  </span>
+                </td>
+                <td class="r">{{ sar(c.revenuePerStudent) }}</td>
+                <td class="muted-val small-cell">{{ c.lastActivityDate }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- ma-body -->
+  </ng-container>
+
+</div>

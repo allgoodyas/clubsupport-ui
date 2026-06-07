@@ -1,0 +1,273 @@
+<div class="students-list-container page-with-sidebar">
+  <div class="page-header-row">
+    <app-page-header
+      pageIcon="ti-run"
+      pageTitle="{{ 'STUDENTS.TITLE' | translate }}"
+      pageSubtitle="Manage enrolled members">
+    </app-page-header>
+  </div>
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+    <div class="page-content">
+  <!-- ── Bulk-print bar — slides in when any student is ticked ── -->
+  <div class="bulk-bar" *ngIf="selectedCount > 0">
+    <div class="bulk-bar-left">
+      <span class="bulk-count">
+        <span class="bulk-num">{{ selectedCount }}</span>
+        student{{ selectedCount === 1 ? '' : 's' }} selected
+      </span>
+      <button class="bulk-clear" (click)="clearSelection()">✕ Clear</button>
+    </div>
+    <div class="bulk-bar-right">
+      <button class="bulk-print-btn bulk-print-dark"
+        [disabled]="bulkPrinting"
+        (click)="printBulkCards(false)"
+        title="Print dark-themed ID cards — 9 per A4 sheet">
+        🌙 Print dark
+      </button>
+      <button class="bulk-print-btn bulk-print-light"
+        [disabled]="bulkPrinting"
+        (click)="printBulkCards(true)"
+        title="Print printer-friendly ID cards — 9 per A4 sheet">
+        ☀️ Print friendly
+      </button>
+      <span class="bulk-sheet-hint" *ngIf="!bulkPrinting">
+        {{ sheetsNeeded }} sheet{{ sheetsNeeded === 1 ? '' : 's' }} · 9 cards / A4
+      </span>
+      <span class="bulk-sheet-hint" *ngIf="bulkPrinting">⏳ Generating...</span>
+    </div>
+  </div>
+
+  <!-- ── Toolbar ── -->
+  <div class="sl-toolbar">
+
+    <label class="sl-select-all" title="Select / deselect all on this page" (click)="$event.stopPropagation()">
+      <input type="checkbox"
+        [checked]="allPageSelected"
+        [indeterminate]="somePageSelected && !allPageSelected"
+        (change)="toggleSelectAll($event)" />
+    </label>
+
+    <div class="sl-search">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <input type="text" [(ngModel)]="searchQuery" (ngModelChange)="onSearchChange()"
+             [placeholder]="'STUDENTS.SEARCH_PLACEHOLDER' | translate" />
+    </div>
+
+    <div class="sl-btn-group">
+      <button [class.active]="genderFilter==='all'"    (click)="genderFilter='all';    onFilterChange()">All</button>
+      <button [class.active]="genderFilter==='Male'"   (click)="genderFilter='Male';   onFilterChange()">🚹 M</button>
+      <button [class.active]="genderFilter==='Female'" (click)="genderFilter='Female'; onFilterChange()">🚺 F</button>
+    </div>
+
+    <div class="sl-btn-group">
+      <button [class.active]="selfRegisteredFilter==='all'"    (click)="selfRegisteredFilter='all';    onFilterChange()">All</button>
+      <button [class.active]="selfRegisteredFilter==='self'"   (click)="selfRegisteredFilter='self';   onFilterChange()">👤 Self</button>
+      <button [class.active]="selfRegisteredFilter==='parent'" (click)="selfRegisteredFilter='parent'; onFilterChange()">👨‍👩‍👧 Parent</button>
+    </div>
+
+    <div class="sl-age">
+      <input type="number" [(ngModel)]="ageMinFilter" (ngModelChange)="onFilterChange()"
+             placeholder="Min" min="0" max="100" />
+      <span>–</span>
+      <input type="number" [(ngModel)]="ageMaxFilter" (ngModelChange)="onFilterChange()"
+             placeholder="Max" min="0" max="100" />
+    </div>
+
+    <div style="flex:1"></div>
+
+    <button class="sl-clear"
+      *ngIf="searchQuery || genderFilter !== 'all' || selfRegisteredFilter !== 'all' || ageMinFilter || ageMaxFilter"
+      (click)="clearFilters()">✕</button>
+
+    <select class="sl-page-size" [(ngModel)]="pageSize" (ngModelChange)="currentPage = 1">
+      <option [value]="10">10</option>
+      <option [value]="20">20</option>
+      <option [value]="50">50</option>
+    </select>
+
+    <div class="sl-pager" *ngIf="totalPages > 1">
+      <button class="sl-pg-btn" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)">&#8249;</button>
+      <ng-container *ngFor="let p of pageNums">
+        <button class="sl-pg-btn" [class.active]="p === currentPage"
+          *ngIf="p === 1 || p === totalPages || (p >= currentPage - 1 && p <= currentPage + 1)"
+          (click)="goToPage(p)">{{ p }}</button>
+        <span class="sl-pg-dots"
+          *ngIf="(p === currentPage - 2 && currentPage > 3) || (p === currentPage + 2 && currentPage < totalPages - 2)">&hellip;</span>
+      </ng-container>
+      <button class="sl-pg-btn" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)">&#8250;</button>
+      <span class="sl-pg-info">{{ (currentPage - 1) * pageSize + 1 }}–{{ pageEnd }} / {{ filteredStudents.length }}</span>
+    </div>
+
+    <button class="sl-icon-btn" (click)="toggleViewMode()"
+      [title]="viewMode === 'grid' ? 'Switch to table' : 'Switch to grid'">
+      <span *ngIf="viewMode === 'grid'">▦</span>
+      <span *ngIf="viewMode === 'table'">☰</span>
+    </button>
+
+    <button class="sl-register" (click)="registerStudent()">+ {{ 'STUDENTS.REGISTER' | translate }}</button>
+  </div>
+
+  <div class="results-info">
+    <span class="count">{{ filteredStudents.length }}
+      {{ filteredStudents.length === 1 ? ('STUDENTS.STUDENT' | translate) : ('STUDENTS.STUDENTS' | translate) }}
+    </span>
+    <span class="total" *ngIf="filteredStudents.length !== students.length">
+      {{ 'STUDENTS.OF' | translate }} {{ students.length }} {{ 'STUDENTS.TOTAL' | translate }}
+    </span>
+  </div>
+
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>{{ 'STUDENTS.LOADING_STUDENTS' | translate }}</p>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && filteredStudents.length === 0 && students.length === 0">
+    <div class="empty-icon">🏃</div>
+    <h3>{{ 'STUDENTS.NO_STUDENTS_YET' | translate }}</h3>
+    <p>{{ 'STUDENTS.START_BY_REGISTERING' | translate }}</p>
+    <button class="btn btn-primary" (click)="registerStudent()">+ {{ 'STUDENTS.REGISTER_FIRST_STUDENT' | translate }}</button>
+  </div>
+
+  <div class="empty-state" *ngIf="!isLoading && filteredStudents.length === 0 && students.length > 0">
+    <div class="empty-icon">🔍</div>
+    <h3>{{ 'STUDENTS.NO_RESULTS_FOUND' | translate }}</h3>
+    <p>{{ 'STUDENTS.TRY_ADJUSTING_FILTERS' | translate }}</p>
+    <button class="btn btn-outline" (click)="clearFilters()">{{ 'STUDENTS.CLEAR_FILTERS' | translate }}</button>
+  </div>
+
+  <!-- ══ GRID VIEW ══ -->
+  <div class="students-grid" *ngIf="!isLoading && viewMode === 'grid' && filteredStudents.length > 0">
+    <div class="student-card"
+         *ngFor="let student of pagedStudents"
+         [class.student-card--selected]="isSelected(student.studentId)"
+         (click)="viewStudent(student.studentId)">
+
+      <!-- Checkbox top-left -->
+      <label class="card-checkbox" (click)="$event.stopPropagation()">
+        <input type="checkbox"
+          [checked]="isSelected(student.studentId)"
+          (change)="toggleSelect(student.studentId, $event)" />
+      </label>
+
+      <div class="student-photo">
+        <img *ngIf="student.hasPhoto && getPhotoUrl(student.studentId)"
+          [src]="getPhotoUrl(student.studentId)" [alt]="student.fullName" />
+        <div *ngIf="!student.hasPhoto || !getPhotoUrl(student.studentId)" class="photo-placeholder">
+          <span class="placeholder-icon">{{ student.gender === 'Male' ? '👦' : '👧' }}</span>
+        </div>
+      </div>
+
+      <div class="student-info">
+        <div class="student-header">
+          <h3>{{ student.fullName }}</h3>
+          <span class="badge-self" *ngIf="student.isSelfRegistered">👤 {{ 'STUDENTS.SELF' | translate }}</span>
+        </div>
+        <div class="student-details">
+          <div class="detail-row">
+            <span class="icon">{{ student.gender === 'Male' ? '🚹' : '🚺' }}</span>
+            <span>{{ student.age }} {{ 'STUDENTS.YEARS_OLD' | translate }}</span>
+          </div>
+          <div class="detail-row"><span class="icon">👤</span><span>{{ student.parentFullName }}</span></div>
+          <div class="detail-row"><span class="icon">📱</span><span>{{ student.parentMobile }}</span></div>
+        </div>
+      </div>
+
+      <div class="status-badge" [class.active]="student.isActive" [class.inactive]="!student.isActive">
+        {{ student.isActive ? ('✓ ' + ('STUDENTS.ACTIVE' | translate)) : ('✕ ' + ('STUDENTS.INACTIVE' | translate)) }}
+      </div>
+
+      <button class="btn-id-card" (click)="openIdCard(student, $event)" title="View ID Card">
+        🪪 ID Card
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ TABLE VIEW ══ -->
+  <div class="students-table-container" *ngIf="!isLoading && viewMode === 'table' && filteredStudents.length > 0">
+    <table class="students-table">
+      <thead>
+        <tr>
+          <th class="th-check">
+            <input type="checkbox"
+              [checked]="allPageSelected"
+              [indeterminate]="somePageSelected && !allPageSelected"
+              (change)="toggleSelectAll($event)"
+              (click)="$event.stopPropagation()" />
+          </th>
+          <th>{{ 'STUDENTS.PHOTO' | translate }}</th>
+          <th>{{ 'STUDENTS.NAME' | translate }}</th>
+          <th>{{ 'STUDENTS.AGE' | translate }}</th>
+          <th>{{ 'STUDENTS.GENDER' | translate }}</th>
+          <th>{{ 'STUDENTS.PARENT' | translate }}</th>
+          <th>{{ 'STUDENTS.MOBILE' | translate }}</th>
+          <th>{{ 'STUDENTS.TYPE' | translate }}</th>
+          <th>{{ 'STUDENTS.STATUS' | translate }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let student of pagedStudents"
+            class="table-row"
+            [class.table-row--selected]="isSelected(student.studentId)"
+            (click)="viewStudent(student.studentId)">
+
+          <td class="td-check" (click)="$event.stopPropagation()">
+            <input type="checkbox"
+              [checked]="isSelected(student.studentId)"
+              (change)="toggleSelect(student.studentId, $event)" />
+          </td>
+          <td>
+            <div class="table-photo">
+              <img *ngIf="student.hasPhoto && getPhotoUrl(student.studentId)"
+                [src]="getPhotoUrl(student.studentId)" [alt]="student.fullName" />
+              <div *ngIf="!student.hasPhoto || !getPhotoUrl(student.studentId)" class="table-photo-placeholder">
+                {{ student.gender === 'Male' ? '👦' : '👧' }}
+              </div>
+            </div>
+          </td>
+          <td><strong>{{ student.fullName }}</strong></td>
+          <td>{{ student.age }}</td>
+          <td>
+            <span class="gender-badge">
+              {{ student.gender === 'Male' ? ('🚹 ' + ('STUDENTS.MALE' | translate)) : ('🚺 ' + ('STUDENTS.FEMALE' | translate)) }}
+            </span>
+          </td>
+          <td>{{ student.parentFullName }}</td>
+          <td>{{ student.parentMobile }}</td>
+          <td>
+            <span class="badge-self" *ngIf="student.isSelfRegistered">👤 {{ 'STUDENTS.SELF' | translate }}</span>
+            <span *ngIf="!student.isSelfRegistered" class="badge-parent">👨‍👩‍👧‍👦 {{ 'STUDENTS.PARENT' | translate }}</span>
+          </td>
+          <td>
+            <span class="status-badge-sm" [class.active]="student.isActive" [class.inactive]="!student.isActive">
+              {{ student.isActive ? '✓' : '✕' }}
+            </span>
+          </td>
+          <td>
+            <button class="btn-id-card-sm" (click)="openIdCard(student, $event)" title="View ID Card">
+              🪪 ID Card
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+    </div><!-- /.page-content -->
+  </div><!-- /.page-body-row -->
+</div><!-- /.students-list-container -->
+
+<!-- ID Card modal -->
+<app-student-id-card
+  *ngIf="idCardOpen && idCardStudent"
+  [isOpen]="idCardOpen"
+  [studentId]="idCardStudent.studentId"
+  [studentName]="idCardStudent.fullName"
+  [gender]="idCardStudent.gender"
+  [photoApiPath]="idCardStudent.hasPhoto ? '/api/students/' + idCardStudent.studentId + '/photo' : ''"
+  [parentMobile]="idCardStudent.parentMobile"
+  (closeCard)="closeIdCard()">
+</app-student-id-card>

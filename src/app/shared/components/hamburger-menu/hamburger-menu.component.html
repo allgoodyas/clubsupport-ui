@@ -1,0 +1,58 @@
+<div class="hamburger-menu">
+  <!-- Hamburger Button -->
+  <button 
+    class="hamburger-button" 
+    (click)="toggleMenu()"
+    [class.active]="isOpen"
+    [attr.aria-label]="'COMMON.MENU' | translate"
+    [attr.aria-expanded]="isOpen">
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+    <span class="hamburger-line"></span>
+  </button>
+
+  <!-- Overlay (darkens background when menu is open) -->
+  <div 
+    class="menu-overlay" 
+    [class.active]="isOpen"
+    (click)="closeMenu()">
+  </div>
+
+  <!-- Sidebar Menu -->
+  <nav 
+    class="menu-sidebar" 
+    [class.active]="isOpen"
+    role="navigation"
+    aria-label="Main navigation">
+    
+    <!-- Menu Header -->
+    <div class="menu-header">
+      <h3>{{ 'COMMON.MENU' | translate }}</h3>
+      <button 
+        class="close-button" 
+        (click)="closeMenu()"
+        [attr.aria-label]="'COMMON.CLOSE' | translate">
+        ✕
+      </button>
+    </div>
+
+    <!-- Menu Items -->
+    <ul class="menu-list">
+      <li *ngFor="let item of menuItems" class="menu-item">
+        <a 
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          (click)="closeMenu()"
+          class="menu-link">
+          <span class="menu-icon">{{ item.icon }}</span>
+          <span class="menu-label">{{ item.translationKey | translate }}</span>
+        </a>
+      </li>
+    </ul>
+
+    <!-- Menu Footer -->
+    <div class="menu-footer">
+      <p class="menu-footer-text">{{ 'AUTH.COPYRIGHT' | translate }}</p>
+    </div>
+  </nav>
+</div>

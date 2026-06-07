@@ -1,0 +1,540 @@
+<div class="dashboard-container page-with-sidebar">
+
+  <div class="page-header-row">
+    <app-page-header
+      pageIcon="ti-home"
+      pageTitle="Dashboard"
+      [pageSubtitle]="currentUser?.clubNameEn || ''">
+    </app-page-header>
+  </div>
+
+  <!-- Sidebar + content -->
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+    <div class="page-content">
+  <!-- Main Content -->
+  <main class="dashboard-main">
+    <div class="container">
+
+      <!-- Welcome -->
+      <div class="welcome-section">
+        <h1>{{ 'DASHBOARD.WELCOME' | translate:{name: currentUser?.fullName} }}</h1>
+        <p>{{ 'DASHBOARD.LOGGED_IN_AS' | translate }} <strong>{{ currentUser?.roleName }}</strong></p>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card" *ngIf="hasPermission('view_students')" (click)="viewStudents()" style="cursor:pointer">
+          <div class="stat-icon students">👥</div>
+          <div class="stat-info">
+            <h3>{{ 'DASHBOARD.STUDENTS' | translate }}</h3>
+            <p class="stat-value">-</p>
+            <small>{{ 'DASHBOARD.TOTAL_ENROLLED' | translate }}</small>
+          </div>
+        </div>
+
+        <div class="stat-card" *ngIf="hasPermission('view_users')" (click)="viewUsers()" style="cursor:pointer">
+          <div class="stat-icon users">👤</div>
+          <div class="stat-info">
+            <h3>{{ 'DASHBOARD.USERS' | translate }}</h3>
+            <p class="stat-value">-</p>
+            <small>{{ 'DASHBOARD.CLICK_VIEW_USERS' | translate }}</small>
+          </div>
+        </div>
+
+        <div class="stat-card" *ngIf="hasPermission('view_events')" (click)="viewEvents()" style="cursor:pointer">
+          <div class="stat-icon events">📅</div>
+          <div class="stat-info">
+            <h3>{{ 'DASHBOARD.EVENTS' | translate }}</h3>
+            <p class="stat-value" *ngIf="!loadingStats">{{ eventStats.activeEvents }}</p>
+            <p class="stat-value" *ngIf="loadingStats">...</p>
+            <small>
+              <span *ngIf="!loadingStats">{{ 'DASHBOARD.ACTIVE_NOW' | translate }} • {{ eventStats.upcomingEvents }} {{ 'DASHBOARD.UPCOMING_EVENTS' | translate }}</span>
+              <span *ngIf="loadingStats">{{ 'COMMON.LOADING' | translate }}</span>
+            </small>
+          </div>
+        </div>
+
+        <div class="stat-card" (click)="viewReports()" style="cursor:pointer">
+          <div class="stat-icon" style="background:rgba(16,185,129,0.13);box-shadow:0 4px 12px rgba(16,185,129,0.2)">📊</div>
+          <div class="stat-info">
+            <h3>{{ 'DASHBOARD.REPORTS' | translate }}</h3>
+            <p class="stat-value" style="font-size:1.3rem">{{ 'DASHBOARD.VIEW' | translate }}</p>
+            <small>{{ 'DASHBOARD.CASH_BALANCE_REVENUE' | translate }}</small>
+          </div>
+        </div>
+
+        <div class="stat-card" *ngIf="hasPermission('view_payments')" (click)="openPaymentHistory()" style="cursor:pointer">
+          <div class="stat-icon payments">💰</div>
+          <div class="stat-info">
+            <h3>{{ 'DASHBOARD.PAYMENTS' | translate }}</h3>
+            <p class="stat-value" *ngIf="!loadingPaymentStats">{{ pendingPaymentCount }}</p>
+            <p class="stat-value" *ngIf="loadingPaymentStats">...</p>
+            <small>{{ pendingPaymentCount > 0 ? pendingPaymentCount + ' ' + ('DASHBOARD.PENDING' | translate) : ('DASHBOARD.ALL_PAID' | translate) }}</small>
+          </div>
+        </div>
+
+        <!-- Notification Analytics stat card -->
+        <div class="stat-card stat-card--notif" (click)="goToNotifLog()" style="cursor:pointer">
+          <div class="stat-icon" style="background:rgba(0,212,255,0.13);box-shadow:0 4px 12px rgba(0,212,255,0.2)">📈</div>
+          <div class="stat-info">
+            <h3>Notifications</h3>
+            <p class="stat-value" style="font-size:1.3rem">Analytics</p>
+            <small>Opt-ins · delivery · Twilio cost</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Events Widget -->
+      <div class="upcoming-events-widget" *ngIf="hasPermission('view_events')">
+        <div class="widget-header">
+          <h2>📅 {{ 'DASHBOARD.UPCOMING_EVENTS_WIDGET' | translate }}</h2>
+          <button class="btn-view-all" (click)="viewEvents()">{{ 'DASHBOARD.VIEW_ALL' | translate }} →</button>
+        </div>
+
+        <div class="widget-content" *ngIf="!loadingUpcomingEvents && upcomingEvents.length > 0">
+          <div class="event-item" *ngFor="let event of upcomingEvents" (click)="viewEvents()">
+            <div class="event-icon">
+              <span *ngIf="event.eventType === 'Training'">🏋️</span>
+              <span *ngIf="event.eventType === 'Tournament'">🏆</span>
+              <span *ngIf="event.eventType === 'Camp'">🏝️</span>
+              <span *ngIf="event.eventType === 'Workshop'">🎯</span>
+              <span *ngIf="event.eventType === 'Match'">⚽</span>
+              <span *ngIf="!['Training','Tournament','Camp','Workshop','Match'].includes(event.eventType)">📅</span>
+            </div>
+            <div class="event-details">
+              <h3>{{ event.eventNameEn }}</h3>
+              <div class="event-meta">
+                <span class="event-date">
+                  📅 {{ event.startDate | date:'MMM d' }}
+                  <span *ngIf="event.startDate !== event.endDate"> - {{ event.endDate | date:'MMM d, y' }}</span>
+                  <span *ngIf="event.startDate === event.endDate">, {{ event.startDate | date:'y' }}</span>
+                </span>
+                <span class="event-capacity">👥 {{ event.currentEnrollment }}/{{ event.maxParticipants }}</span>
+                <span class="event-price" *ngIf="event.isPaid">💰 {{ event.basePrice }} SAR</span>
+                <span class="event-price" *ngIf="!event.isPaid">🆓 {{ 'DASHBOARD.FREE' | translate }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="widget-loading" *ngIf="loadingUpcomingEvents">
+          <p>⏳ {{ 'DASHBOARD.LOADING_EVENTS' | translate }}</p>
+        </div>
+
+        <div class="widget-empty" *ngIf="!loadingUpcomingEvents && upcomingEvents.length === 0">
+          <p>📅 {{ 'DASHBOARD.NO_UPCOMING_EVENTS' | translate }}</p>
+          <button class="btn btn-primary" (click)="createEvent()" *ngIf="hasPermission('create_event')">
+            ➕ {{ 'DASHBOARD.CREATE_EVENT' | translate }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h2>{{ 'DASHBOARD.QUICK_ACTIONS' | translate }}</h2>
+        <div class="action-grid">
+          <button class="action-btn" *ngIf="hasPermission('create_student')" (click)="registerStudent()">
+            <span class="action-icon">➕</span>
+            <span class="action-text">{{ 'DASHBOARD.ADD_STUDENT' | translate }}</span>
+          </button>
+
+          <button class="action-btn" *ngIf="hasPermission('view_students')" (click)="viewStudents()">
+            <span class="action-icon">🏋️</span>
+            <span class="action-text">{{ 'DASHBOARD.VIEW_STUDENTS' | translate }}</span>
+          </button>
+
+          <button class="action-btn" *ngIf="hasPermission('create_event')" (click)="createEvent()">
+            <span class="action-icon">📆</span>
+            <span class="action-text">{{ 'DASHBOARD.CREATE_EVENT' | translate }}</span>
+          </button>
+
+          <button class="action-btn" *ngIf="hasPermission('create_user')" (click)="registerUser()">
+            <span class="action-icon">👤</span>
+            <span class="action-text">{{ 'DASHBOARD.ADD_USER' | translate }}</span>
+          </button>
+
+          <button class="action-btn" (click)="viewReports()">
+            <span class="action-icon">📊</span>
+            <span class="action-text">{{ 'DASHBOARD.VIEW_REPORTS' | translate }}</span>
+          </button>
+
+          <button class="action-btn" (click)="showAttendancePanel = true">
+            <span class="action-icon">✅</span>
+            <span class="action-text">{{ 'DASHBOARD.MARK_ATTENDANCE' | translate }}</span>
+          </button>
+
+          <button class="action-btn" (click)="manageSubscriptions()">
+            <span class="action-icon">📋</span>
+            <span class="action-text">{{ 'DASHBOARD.SUBSCRIPTION_PLANS' | translate }}</span>
+          </button>
+
+          <button class="action-btn" (click)="browseSubscriptions()">
+            <span class="action-icon">🎯</span>
+            <span class="action-text">{{ 'DASHBOARD.BROWSE_PLANS' | translate }}</span>
+          </button>
+
+          <!-- 📢 Send Notification -->
+          <button class="action-btn notif-btn" (click)="openSendNotification()">
+            <span class="action-icon">📢</span>
+            <span class="action-text">Send Notification</span>
+          </button>
+
+          <!-- 🔔 User Notification Preferences -->
+          <button class="action-btn" (click)="goToUserNotifPreferences()">
+            <span class="action-icon">🔔</span>
+            <span class="action-text">User Notification Preferences</span>
+          </button>
+
+          <!-- 📈 Notification Analytics -->
+          <button class="action-btn" (click)="goToNotifLog()">
+            <span class="action-icon">📈</span>
+            <span class="action-text">Notification Analytics</span>
+          </button>
+
+          <!-- 👛 Wallets -->
+          <button class="action-btn" (click)="goToWallets()">
+            <span class="action-icon">👛</span>
+            <span class="action-text">Parent Wallets</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+    </div><!-- /.page-content -->
+  </div><!-- /.page-body-row -->
+</div><!-- /.dashboard-container -->
+
+<!-- =================================================
+     PAYMENT HISTORY PANEL
+================================================= -->
+<div class="ph-overlay" *ngIf="showPaymentPanel" (click)="closePaymentHistory()"></div>
+<div class="ph-panel" [class.ph-open]="showPaymentPanel">
+  <div class="ph-header">
+    <div class="ph-header-left">
+      <h2>💳 Payment History</h2>
+      <span class="ph-count" *ngIf="!phLoading">{{ phFiltered.length }} record{{ phFiltered.length !== 1 ? 's' : '' }}</span>
+    </div>
+    <button class="ph-close" (click)="closePaymentHistory()">✕</button>
+  </div>
+  <div class="ph-filters">
+    <select class="ph-select" [(ngModel)]="phEventId" (change)="loadPaymentHistory()">
+      <option value="0">📅 All Events</option>
+      <option *ngFor="let ev of phEvents" [value]="ev.eventId">{{ ev.eventName }}</option>
+    </select>
+    <div class="ph-search-wrap">
+      <span>🔍</span>
+      <input type="text" class="ph-search" placeholder="Student name..."
+             [(ngModel)]="phStudentName" (ngModelChange)="onPhStudentSearch()" />
+      <button class="ph-clear" *ngIf="phStudentName" (click)="phStudentName=''; loadPaymentHistory()">✕</button>
+    </div>
+    <div class="ph-status-tabs">
+      <button [class.active]="phStatus==='all'"     (click)="setPhStatus('all')">All</button>
+      <button [class.active]="phStatus==='pending'" (click)="setPhStatus('pending')">⏳ Pending</button>
+      <button [class.active]="phStatus==='paid'"    (click)="setPhStatus('paid')">✅ Paid</button>
+      <button [class.active]="phStatus==='overdue'" (click)="setPhStatus('overdue')">🔴 Overdue</button>
+    </div>
+  </div>
+  <div class="ph-summary" *ngIf="!phLoading && phFiltered.length > 0">
+    <span class="ph-chip pending">Pending: {{ phSummary.pending | number:'1.2-2' }} SAR</span>
+    <span class="ph-chip paid">Paid: {{ phSummary.paid | number:'1.2-2' }} SAR</span>
+    <span class="ph-chip total">Total: {{ phSummary.total | number:'1.2-2' }} SAR</span>
+  </div>
+  <div class="ph-loading" *ngIf="phLoading">
+    <div class="ph-spinner"></div><p>Loading payment history...</p>
+  </div>
+  <div class="ph-table-wrap" *ngIf="!phLoading">
+    <div class="ph-empty" *ngIf="phFiltered.length === 0"><div>💳</div><p>No records found</p></div>
+    <table class="ph-table" *ngIf="phFiltered.length > 0">
+      <thead>
+        <tr>
+          <th>Invoice #</th><th>Student</th><th>Event</th><th>Date</th>
+          <th>Total</th><th>Paid</th><th>Refunded</th><th>Due</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of phFiltered" [class]="'row-' + row.status.toLowerCase()">
+          <td class="inv-num">{{ row.invoiceNumber }}</td>
+          <td>{{ row.studentName }}</td>
+          <td class="ev-name">
+            <span *ngIf="row.eventName">{{ row.eventName }}</span>
+            <ng-container *ngIf="!row.eventName">
+              <span class="inv-type-badge" [attr.data-type]="row.invoiceType">
+                {{ row.invoiceType === 'Adhoc' ? '💸 Adhoc' : row.invoiceType === 'Subscription' ? '📅 Sub' : row.invoiceType === 'Manual' ? '📝 Manual' : '📄 ' + row.invoiceType }}
+              </span>
+              <span *ngIf="row.notes" class="ev-notes" [title]="row.notes">{{ row.notes }}</span>
+            </ng-container>
+          </td>
+          <td class="date">
+            {{ row.createdAt | date:'MMM d, y' }}
+            <span class="by-label" *ngIf="row.createdByName">by {{ row.createdByName }}</span>
+          </td>
+          <td class="amount">{{ row.totalAmount | number:'1.2-2' }}</td>
+          <td class="amount paid">{{ row.amountPaid | number:'1.2-2' }}</td>
+          <td class="amount refunded" *ngIf="row.totalRefunded > 0">{{ row.totalRefunded | number:'1.2-2' }}</td>
+          <td class="amount" *ngIf="!row.totalRefunded">—</td>
+          <td class="amount" [class.due-red]="row.amountDue > 0">{{ row.amountDue | number:'1.2-2' }}</td>
+          <td class="action-cell">
+            <span class="ph-badge" [class]="'badge-' + row.status.toLowerCase()">{{ row.status }}</span>
+            <button class="ph-info-btn" (click)="openAudit(row); $event.stopPropagation()">ⓘ Audit</button>
+            <button *ngIf="row.amountDue > 0" class="ph-pay-btn" (click)="openQuickPay(row); $event.stopPropagation()">💳 Pay</button>
+            <button *ngIf="row.amountPaid > 0" class="ph-refund-btn" (click)="openRefund(row); $event.stopPropagation()">↩ Refund</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- =================================================
+     REFUND PANEL
+================================================= -->
+<div class="ph-overlay" *ngIf="showRefundPanel" (click)="closeRefund()"></div>
+<div class="rp-panel" [class.rp-open]="showRefundPanel">
+  <div class="rp-header">
+    <div class="rp-header-left">
+      <h2>↩ Issue Refund</h2>
+      <span class="rp-inv" *ngIf="refundData">{{ refundData.invoiceNumber }}</span>
+    </div>
+    <button class="ph-close" (click)="closeRefund()">✕</button>
+  </div>
+  <div class="rp-body" *ngIf="refundData">
+    <div class="rp-context">
+      <div class="rp-ctx-row"><span class="rp-ctx-label">👤 Student</span><span class="rp-ctx-val">{{ refundData.studentName }}</span></div>
+      <div class="rp-ctx-row"><span class="rp-ctx-label">📅 Event</span><span class="rp-ctx-val">{{ refundData.eventName }}</span></div>
+      <div class="rp-ctx-row"><span class="rp-ctx-label">💰 Total Paid</span><span class="rp-ctx-val accent">{{ refundData.amountPaid | number:'1.2-2' }} SAR</span></div>
+    </div>
+    <div class="rp-success" *ngIf="refundSuccess">
+      <div class="rp-success-icon">✅</div>
+      <h3>Refund Issued!</h3>
+      <p class="rp-success-num">{{ refundSuccess.refundNumber }}</p>
+      <button class="rp-btn-done" (click)="onRefundDone()">Back to History →</button>
+    </div>
+    <div class="rp-form" *ngIf="!refundSuccess">
+      <div class="rp-field">
+        <label>Refund Amount (SAR) <span class="rp-max">max {{ refundData.amountPaid | number:'1.2-2' }}</span></label>
+        <input type="number" class="rp-input" [(ngModel)]="refundAmount" step="0.01" min="0.01" [max]="refundData.amountPaid" />
+      </div>
+      <div class="rp-field">
+        <label>Refund Method</label>
+        <select class="rp-input" [(ngModel)]="refundMethod">
+          <option *ngFor="let m of refundMethods" [value]="m.value">{{ m.label }}</option>
+        </select>
+      </div>
+      <div class="rp-field">
+        <label>Reference Number <span class="rp-optional">(optional)</span></label>
+        <input type="text" class="rp-input" [(ngModel)]="refundReference" placeholder="Transaction ID..." />
+      </div>
+      <div class="rp-field">
+        <label>Reason <span class="rp-optional">(optional)</span></label>
+        <textarea class="rp-input rp-textarea" [(ngModel)]="refundReason" rows="3"></textarea>
+      </div>
+      <button class="rp-btn-submit" [disabled]="isProcessingRefund || refundAmount <= 0 || refundAmount > refundData.amountPaid" (click)="submitRefund()">
+        <span *ngIf="!isProcessingRefund">↩ Issue Refund — {{ refundAmount | number:'1.2-2' }} SAR</span>
+        <span *ngIf="isProcessingRefund">⏳ Processing...</span>
+      </button>
+    </div>
+    <div class="rp-history" *ngIf="refundHistory.length > 0">
+      <h4>📃 Previous Refunds</h4>
+      <div class="rp-hist-item" *ngFor="let r of refundHistory">
+        <div class="rp-hist-left">
+          <span class="rp-hist-num">{{ r.refundNumber }}</span>
+          <span class="rp-hist-date">{{ r.createdAt | date:'MMM d, y' }}</span>
+          <span class="rp-hist-method">{{ r.refundMethod }}</span>
+        </div>
+        <span class="rp-hist-amount">−{{ r.amount | number:'1.2-2' }} SAR</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================
+     AUDIT TRAIL PANEL
+================================================= -->
+<div class="ph-overlay" *ngIf="showAuditPanel" (click)="closeAudit()"></div>
+<div class="audit-panel" [class.audit-open]="showAuditPanel">
+  <div class="audit-header" *ngIf="auditRow">
+    <div class="audit-header-left">
+      <h3>📋 Invoice Audit Trail</h3>
+      <span class="audit-inv-num">{{ auditRow.invoiceNumber }}</span>
+    </div>
+    <button class="ph-close" (click)="closeAudit()">✕</button>
+  </div>
+  <div class="audit-body" *ngIf="auditRow">
+    <div class="audit-invoice-card">
+      <div class="aic-row"><span class="aic-label">👤 Student</span><span class="aic-val">{{ auditRow.studentName }}</span></div>
+      <div class="aic-row" *ngIf="auditRow.eventName"><span class="aic-label">📅 Event</span><span class="aic-val">{{ auditRow.eventName }}</span></div>
+      <div class="aic-row"><span class="aic-label">💰 Total</span><span class="aic-val">{{ auditRow.totalAmount | number:'1.2-2' }} SAR</span></div>
+      <div class="aic-row"><span class="aic-label">✅ Paid</span><span class="aic-val green">{{ auditRow.amountPaid | number:'1.2-2' }} SAR</span></div>
+      <div class="aic-row" *ngIf="auditRow.amountDue > 0"><span class="aic-label">⏳ Due</span><span class="aic-val orange">{{ auditRow.amountDue | number:'1.2-2' }} SAR</span></div>
+    </div>
+    <div class="audit-timeline">
+      <div class="at-item">
+        <div class="at-dot dot-create">📄</div>
+        <div class="at-content">
+          <p class="at-action">Invoice created</p>
+          <p class="at-by" *ngIf="auditRow.createdByName">by <strong>{{ auditRow.createdByName }}</strong></p>
+          <p class="at-time">{{ auditRow.createdAt | date:'MMM d, y — h:mm a' }}</p>
+        </div>
+      </div>
+      <div class="at-item" *ngIf="auditRow.amountPaid > 0">
+        <div class="at-dot dot-payment">💳</div>
+        <div class="at-content">
+          <p class="at-action">Payment recorded</p>
+          <p class="at-time" *ngIf="auditRow.lastPaymentAt">{{ auditRow.lastPaymentAt | date:'MMM d, y — h:mm a' }}</p>
+        </div>
+      </div>
+      <div class="at-item" *ngIf="auditRow.amountDue > 0">
+        <div class="at-dot dot-pending">⏳</div>
+        <div class="at-content">
+          <p class="at-action">Awaiting payment</p>
+          <p style="color:#FF8C42;font-size:0.78rem;font-weight:700;margin-top:4px">{{ auditRow.amountDue | number:'1.2-2' }} SAR remaining</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================================================
+     SEND NOTIFICATION PANEL
+================================================= -->
+<div class="ph-overlay" *ngIf="showNotifPanel" (click)="closeNotifPanel()"></div>
+
+<div class="notif-panel" [class.notif-panel-open]="showNotifPanel">
+  <div class="ph-header">
+    <div class="ph-header-left">
+      <h2>📢 Send Notification</h2>
+      <span class="ph-count">Manual push to parents</span>
+    </div>
+    <button class="ph-close" (click)="closeNotifPanel()">✕</button>
+  </div>
+
+  <div class="notif-panel-body">
+
+    <!-- Type selector -->
+    <div class="notif-field">
+      <label class="notif-label">Notification Type</label>
+      <select class="notif-select" [(ngModel)]="notifType" (change)="resetNotifState()">
+        <option value="">— Select type —</option>
+        <option value="attendance_marked">✅ Today's Attendance Summary</option>
+        <option value="event_reminder">⏰ Event Schedule Reminder</option>
+      </select>
+      <p class="notif-hint" *ngIf="notifType === 'attendance_marked'">
+        Sends today's attendance status to all parents whose children have sessions
+        <strong>today</strong> — one notification per parent listing all their children.
+      </p>
+      <p class="notif-hint" *ngIf="notifType === 'event_reminder'">
+        Sends a reminder to parents whose children have sessions
+        <strong>today or tomorrow</strong>.
+      </p>
+    </div>
+
+    <!-- Preview -->
+    <div class="notif-preview" *ngIf="notifType && !notifSending && !notifResult">
+      <button class="notif-btn-preview" (click)="previewNotification()" [disabled]="notifPreviewing">
+        <span *ngIf="!notifPreviewing">🔍 Preview</span>
+        <span *ngIf="notifPreviewing">⏳ Loading...</span>
+      </button>
+
+      <div class="notif-preview-result" *ngIf="notifPreview">
+        <div class="notif-stat-row">
+          <div class="notif-stat" *ngIf="notifType === 'event_reminder'">
+            <span class="notif-stat-num">{{ notifPreview.events?.length || 0 }}</span>
+            <span class="notif-stat-label">Events found</span>
+          </div>
+          <div class="notif-stat" *ngIf="notifType === 'attendance_marked'">
+            <span class="notif-stat-num">{{ notifPreview.eventCount || 0 }}</span>
+            <span class="notif-stat-label">Events today</span>
+          </div>
+          <div class="notif-stat" *ngIf="notifType === 'attendance_marked'">
+            <span class="notif-stat-num">{{ notifPreview.students?.length || 0 }}</span>
+            <span class="notif-stat-label">Students</span>
+          </div>
+          <div class="notif-stat">
+            <span class="notif-stat-num">{{ notifPreview.parentCount || 0 }}</span>
+            <span class="notif-stat-label">Parents with devices</span>
+          </div>
+        </div>
+
+        <div class="notif-event-list" *ngIf="notifType === 'event_reminder' && notifPreview.events?.length > 0">
+          <div class="notif-event-item" *ngFor="let ev of notifPreview.events">
+            <span class="notif-when-badge"
+                  [class.today]="ev.whenLabel === 'Today'"
+                  [class.tomorrow]="ev.whenLabel === 'Tomorrow'">
+              {{ ev.whenLabel }}
+            </span>
+            <span class="notif-event-name">{{ ev.eventName }}</span>
+            <span class="notif-event-time">{{ ev.startTime }}</span>
+            <span class="notif-enrolled">👥 {{ ev.enrolledCount }}</span>
+          </div>
+        </div>
+
+        <div class="notif-event-list" *ngIf="notifType === 'attendance_marked' && notifPreview.students?.length > 0">
+          <div class="notif-event-item" *ngFor="let s of notifPreview.students">
+            <span class="notif-when-badge"
+                  [class.today]="s.status === 'Present'"
+                  [class.tomorrow]="s.status === 'Absent'"
+                  [style.background]="s.status === 'not_marked' ? 'rgba(148,163,184,0.15)' : ''"
+                  [style.color]="s.status === 'not_marked' ? '#94A3B8' : ''">
+              {{ getAttendanceEmoji(s.status) }} {{ s.status === 'not_marked' ? 'Not Marked' : s.status }}
+            </span>
+            <span class="notif-event-name">{{ s.studentName }}</span>
+            <span class="notif-event-time" style="opacity:0.6">{{ s.eventName }}</span>
+          </div>
+        </div>
+
+        <div class="notif-no-events"
+             *ngIf="(notifType === 'event_reminder' && notifPreview.events?.length === 0)
+                  || (notifType === 'attendance_marked' && notifPreview.students?.length === 0)">
+          <p>📅 No data found for today.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Send button -->
+    <div class="notif-send-section"
+         *ngIf="notifPreview && notifPreview.parentCount > 0 && !notifResult">
+      <button class="notif-btn-send" (click)="sendNotification()" [disabled]="notifSending">
+        <span *ngIf="!notifSending">🚀 Send to {{ notifPreview.parentCount }} parent(s)</span>
+        <span *ngIf="notifSending">⏳ Sending...</span>
+      </button>
+    </div>
+
+    <!-- Success -->
+    <div class="notif-result success" *ngIf="notifResult?.success">
+      <div class="notif-result-icon">✅</div>
+      <h3>Notifications Sent!</h3>
+      <p>{{ notifResult.message }}</p>
+      <button class="notif-btn-preview" (click)="resetNotifState()">Send Another</button>
+    </div>
+
+    <!-- Error -->
+    <div class="notif-result error" *ngIf="notifResult && !notifResult.success">
+      <div class="notif-result-icon">❌</div>
+      <h3>Failed to send</h3>
+      <p>{{ notifResult.message }}</p>
+      <button class="notif-btn-preview" (click)="resetNotifState()">Try Again</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- =================================================
+     OTHER PANELS
+================================================= -->
+<app-quick-attendance-panel
+  [isOpen]="showAttendancePanel"
+  (closePanel)="showAttendancePanel = false">
+</app-quick-attendance-panel>
+
+<app-payment-panel
+  *ngIf="showQuickPay && quickPayData"
+  [isOpen]="showQuickPay"
+  [eventId]="quickPayData.eventId"
+  [eventName]="quickPayData.eventName"
+  [preSelectPayment]="quickPayData"
+  [disableOverlayClose]="false"
+  (closePanel)="closeQuickPay()"
+  (paymentRecorded)="onQuickPayRecorded()">
+</app-payment-panel>

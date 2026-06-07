@@ -1,0 +1,64 @@
+<div class="payment-success">
+  <div class="success-container">
+    <!-- Success Icon -->
+    <div class="success-icon-wrapper">
+      <div class="success-icon">✓</div>
+      <div class="success-circle"></div>
+    </div>
+
+    <!-- Success Message -->
+    <h1 class="success-title">Payment Successful!</h1>
+    <p class="success-subtitle">Your payment has been processed successfully</p>
+
+    <!-- Payment Details -->
+    <div class="payment-details-card">
+      <div class="detail-row">
+        <span class="detail-label">Amount Paid:</span>
+        <span class="detail-value highlight">{{ formatCurrency(totalAmount) }}</span>
+      </div>
+
+      <div class="detail-row">
+        <span class="detail-label">Invoices Paid:</span>
+        <span class="detail-value">{{ invoiceCount }}</span>
+      </div>
+
+      <div class="detail-row receipts">
+        <span class="detail-label">Receipt Number(s):</span>
+        <div class="receipt-list">
+          <div class="receipt-number" *ngFor="let receipt of receiptNumbers">
+            📄 {{ receipt }}
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <span class="detail-label">Date & Time:</span>
+        <span class="detail-value">{{ currentDate | date:'medium' }}</span>
+      </div>
+    </div>
+
+    <!-- Success Info -->
+    <div class="success-info">
+      <div class="info-icon">ℹ️</div>
+      <div class="info-text">
+        <p><strong>Receipt sent to your email</strong></p>
+        <p>You can view and download your payment receipt anytime from your payment history.</p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="success-actions">
+      <button class="btn-secondary" (click)="printReceipt()">
+        🖨️ Print Receipt
+      </button>
+      <button class="btn-primary" (click)="goToDashboard()">
+        ← Back to Dashboard
+      </button>
+    </div>
+
+    <!-- Additional Links -->
+    <div class="additional-links">
+      <a class="link" (click)="viewPaymentHistory()">View Payment History →</a>
+    </div>
+  </div>
+</div>

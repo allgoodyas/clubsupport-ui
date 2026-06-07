@@ -1,0 +1,368 @@
+<div class="register-container">
+  <!-- Compact Header -->
+  <header class="register-header">
+    <div class="header-content">
+      <div class="page-title-section">
+        <button class="btn-dashboard" (click)="goToDashboard()" [title]="'DASHBOARD.TITLE' | translate">
+          🏠
+        </button>
+        <button class="btn-students" (click)="goToStudents()" [title]="'STUDENTS.TITLE' | translate">
+          🏃
+        </button>
+        <h1 class="page-title">📝 {{ 'STUDENTS.REGISTER_STUDENT' | translate }}</h1>
+      </div>
+      
+      <div class="header-actions">
+        <button class="btn btn-outline" (click)="goToSettings()" [title]="'DASHBOARD.CLUB_SETTINGS' | translate">
+          ⚙️
+        </button>
+        <app-language-switcher [iconOnly]="true"></app-language-switcher>
+        <button class="btn btn-outline" (click)="logout()" [title]="'COMMON.LOGOUT' | translate">
+          🚪
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="register-card">
+      
+      <!-- Loading Spinner -->
+      <div class="spinner" *ngIf="isLoading"></div>
+
+      <!-- Registration Mode Selection -->
+      <div class="registration-mode">
+        <label class="mode-option" [class.active]="registrationMode === 'parent'">
+          <input 
+            type="radio" 
+            name="registrationMode" 
+            value="parent"
+            [(ngModel)]="registrationMode"
+            (change)="onModeChange()"
+          />
+          <div class="mode-content">
+            <div class="mode-icon">👨‍👩‍👧‍👦</div>
+            <div class="mode-text">
+              <h3>{{ 'STUDENTS.PARENT_REGISTRATION' | translate }}</h3>
+              <p>{{ 'STUDENTS.REGISTER_YOUR_CHILDREN' | translate }}</p>
+            </div>
+          </div>
+        </label>
+        
+        <label class="mode-option" [class.active]="registrationMode === 'self'">
+          <input 
+            type="radio" 
+            name="registrationMode" 
+            value="self"
+            [(ngModel)]="registrationMode"
+            (change)="onModeChange()"
+          />
+          <div class="mode-content">
+            <div class="mode-icon">👤</div>
+            <div class="mode-text">
+              <h3>{{ 'STUDENTS.SELF_REGISTRATION' | translate }}</h3>
+              <p>{{ 'STUDENTS.REGISTER_YOURSELF' | translate }}</p>
+            </div>
+          </div>
+        </label>
+      </div>
+
+      <!-- Contact Information Section -->
+      <div class="form-section">
+        <h2 class="section-title">📱 {{ registrationMode === 'self' ? ('STUDENTS.YOUR_CONTACT_INFO' | translate) : ('STUDENTS.PARENT_INFO' | translate) }}</h2>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="parentMobile">{{ 'STUDENTS.MOBILE_NUMBER' | translate }}*</label>
+            <input
+              type="tel"
+              id="parentMobile"
+              [(ngModel)]="parentMobile"
+              (input)="formatMobileNumber()"
+              (blur)="onMobileBlur()"
+              placeholder="+966501234567"
+              [disabled]="isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="parentName">{{ 'STUDENTS.FULL_NAME' | translate }}*</label>
+            <input
+              type="text"
+              id="parentName"
+              [(ngModel)]="parentName"
+              [placeholder]="registrationMode === 'self' ? ('STUDENTS.YOUR_FULL_NAME' | translate) : ('STUDENTS.PARENT_FULL_NAME' | translate)"
+              [disabled]="isSaving"
+              [readonly]="parentExists"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="parentEmail">{{ 'STUDENTS.EMAIL_OPTIONAL' | translate }}</label>
+          <input
+            type="email"
+            id="parentEmail"
+            [(ngModel)]="parentEmail"
+            [placeholder]="registrationMode === 'self' ? 'your@email.com' : 'parent@example.com'"
+            [disabled]="isSaving"
+            [readonly]="parentExists"
+          />
+        </div>
+
+        <!-- Existing Students Display -->
+        <div class="existing-students" *ngIf="parentExists && existingStudents.length > 0">
+          <div class="existing-students-header">
+            <h3>📚 Existing Students ({{ existingStudents.length }})</h3>
+          </div>
+
+          <!-- Student Tabs (if multiple) -->
+          <div class="student-tabs" *ngIf="existingStudents.length > 1">
+            <button 
+              *ngFor="let student of existingStudents; let i = index"
+              class="tab-btn"
+              [class.active]="selectedStudentTab === i"
+              (click)="selectStudentTab(i)"
+            >
+              {{ student.fullName }}
+            </button>
+          </div>
+
+          <!-- Student Details -->
+          <div class="student-card-compact" *ngFor="let student of existingStudents; let i = index">
+            <div *ngIf="existingStudents.length === 1 || selectedStudentTab === i" class="student-info">
+              <div class="info-row">
+                <span class="info-label">Name:</span>
+                <span class="info-value">{{ student.fullName }}</span>
+                <span class="badge-self" *ngIf="student.isSelfRegistered">👤 SELF</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Age:</span>
+                <span class="info-value">{{ student.age }} years old</span>
+                <span class="info-label" style="margin-left: 16px;">Gender:</span>
+                <span class="info-value">{{ student.gender === 'Male' ? '🚹 Male' : '🚺 Female' }}</span>
+              </div>
+              <div class="info-row" *ngIf="student.hasPhoto">
+                <span class="info-label">Photo:</span>
+                <span class="info-value">✅ Uploaded</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-alert">
+            ✓ New student(s) will be added to this parent account.
+          </div>
+        </div>
+
+        <!-- Parent Exists Alert (no students) -->
+        <div class="info-alert" *ngIf="parentExists && existingStudents.length === 0">
+          ✓ Existing parent found. Student will be linked to this parent.
+        </div>
+      </div>
+
+      <!-- Student/Your Details Section -->
+      <div class="form-section" *ngFor="let student of students; let i = index">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span *ngIf="registrationMode === 'self'">👤 {{ 'STUDENTS.YOUR_DETAILS' | translate }}</span>
+            <span *ngIf="registrationMode === 'parent'">👤 {{ 'STUDENTS.STUDENT' | translate }} {{ i + 1 }}</span>
+          </h2>
+          <button 
+            type="button" 
+            class="btn-remove" 
+            *ngIf="students.length > 1 && registrationMode === 'parent'"
+            (click)="removeStudent(i)"
+            [disabled]="isSaving"
+          >
+            ✕ {{ 'COMMON.DELETE' | translate }}
+          </button>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label [for]="'studentName' + i">{{ 'STUDENTS.FULL_NAME' | translate }}*</label>
+            <input
+              type="text"
+              [id]="'studentName' + i"
+              [(ngModel)]="student.fullName"
+              [placeholder]="registrationMode === 'self' ? 'Your full name' : 'Student full name'"
+              [disabled]="isSaving"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label [for]="'studentDob' + i">{{ 'STUDENTS.DATE_OF_BIRTH' | translate }}*</label>
+            <input
+              type="date"
+              [id]="'studentDob' + i"
+              [(ngModel)]="student.dateOfBirth"
+              [disabled]="isSaving"
+              required
+            />
+          </div>
+        </div>
+
+        <!-- Gender Selection (Button Toggle) -->
+        <div class="form-group">
+          <label>{{ 'STUDENTS.GENDER' | translate }}*</label>
+          <div class="gender-buttons">
+            <button
+              type="button"
+              class="gender-btn"
+              [class.active]="student.gender === 'Male'"
+              (click)="student.gender = 'Male'"
+              [disabled]="isSaving"
+            >
+              🚹 {{ 'STUDENTS.MALE' | translate }}
+            </button>
+            <button
+              type="button"
+              class="gender-btn"
+              [class.active]="student.gender === 'Female'"
+              (click)="student.gender = 'Female'"
+              [disabled]="isSaving"
+            >
+              🚺 {{ 'STUDENTS.FEMALE' | translate }}
+            </button>
+          </div>
+        </div>
+
+        <!-- Medical Notes (Expandable) -->
+        <div class="form-group">
+          <button
+            type="button"
+            class="btn-expand"
+            *ngIf="!student.medicalExpanded"
+            (click)="toggleMedicalNotes(i)"
+            [disabled]="isSaving"
+          >
+            ⚕️ {{ 'STUDENTS.ADD_MEDICAL_NOTES' | translate }}
+          </button>
+
+          <div *ngIf="student.medicalExpanded">
+            <label [for]="'medicalNotes' + i">{{ 'STUDENTS.MEDICAL_NOTES' | translate }}</label>
+            <textarea
+              [id]="'medicalNotes' + i"
+              [(ngModel)]="student.medicalNotes"
+              [placeholder]="'STUDENTS.MEDICAL_NOTES_PLACEHOLDER' | translate"
+              rows="3"
+              [disabled]="isSaving"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Photo Upload -->
+        <div class="form-group">
+          <label>{{ 'STUDENTS.PHOTO_OPTIONAL' | translate }}</label>
+          
+          <div class="photo-preview" *ngIf="student.photoPreview">
+            <img [src]="student.photoPreview" alt="Student photo" />
+            <button 
+              type="button" 
+              class="btn-remove-photo" 
+              (click)="removePhoto(i)"
+              [disabled]="isSaving"
+            >
+              ✕
+            </button>
+          </div>
+
+          <div class="photo-upload" *ngIf="!student.photoPreview">
+            <input
+              type="file"
+              [id]="'photo' + i"
+              accept="image/*"
+              (change)="onPhotoSelected($event, i)"
+              [disabled]="isSaving"
+              hidden
+            />
+            <label [for]="'photo' + i" class="btn-upload">
+              📤 {{ 'STUDENTS.UPLOAD_PHOTO' | translate }}
+            </label>
+            <small>{{ 'STUDENTS.MAX_FILE_SIZE' | translate }}</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Another Student/Family Member Button -->
+      <div class="add-student-section">
+        <button 
+          type="button" 
+          class="btn-add-student" 
+          (click)="addStudent()"
+          [disabled]="isSaving"
+        >
+          <span *ngIf="registrationMode === 'parent'">+ {{ 'STUDENTS.ADD_ANOTHER_STUDENT' | translate }}</span>
+          <span *ngIf="registrationMode === 'self'">+ {{ 'STUDENTS.ADD_FAMILY_MEMBER' | translate }}</span>
+        </button>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button 
+          type="button" 
+          class="btn btn-outline" 
+          (click)="goBack()"
+          [disabled]="isSaving"
+        >
+          {{ 'COMMON.CANCEL' | translate }}
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="register()"
+          [disabled]="isSaving || isLoading"
+        >
+          <span *ngIf="!isSaving">
+            {{ registrationMode === 'self' ? ('STUDENTS.REGISTER' | translate) : ('STUDENTS.REGISTER_PARENT_STUDENTS' | translate) }}
+          </span>
+          <span *ngIf="isSaving">{{ 'STUDENTS.REGISTERING' | translate }}...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login Credentials Modal -->
+  <div class="credentials-modal" *ngIf="showCredentials && registrationResponse">
+    <div class="credentials-overlay" (click)="closeCredentials()"></div>
+    <div class="credentials-card">
+      <div class="credentials-header">
+        <h2>✅ Registration Successful!</h2>
+        <button class="btn-close" (click)="closeCredentials()">✕</button>
+      </div>
+
+      <div class="credentials-body">
+        <div class="credentials-box">
+          <h3>📱 Your Login Credentials</h3>
+          
+          <div class="credential-item">
+            <label>Mobile Number:</label>
+            <div class="credential-value">{{ parentMobile }}</div>
+          </div>
+
+          <div class="credential-item">
+            <label>Temporary Password:</label>
+            <div class="credential-value password">{{ registrationResponse.temporaryPassword }}</div>
+          </div>
+
+          <div class="warning-box">
+            ⚠️ Please save these credentials and change your password after first login.
+          </div>
+        </div>
+
+        <div class="credentials-actions">
+          <button class="btn btn-outline" (click)="closeCredentials()">
+            Close
+          </button>
+          <button class="btn btn-primary" (click)="goToLogin()">
+            Go to Login →
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

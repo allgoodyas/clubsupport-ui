@@ -1,0 +1,152 @@
+<div class="pi-container">
+
+  <!-- ── STICKY HEADER ─────────────────────────────────────────────── -->
+  <div class="pi-header">
+    <div class="pi-header-inner">
+      <button class="btn-back" routerLink="/parent/dashboard">← Back</button>
+      <div class="pi-header-title">
+        <span class="pi-title">💳 Pending Invoices</span>
+      </div>
+      <div class="pi-header-right"></div>
+    </div>
+  </div>
+
+  <!-- ── LOADING ───────────────────────────────────────────────────── -->
+  <div *ngIf="isLoading" class="pi-loading">
+    <div class="spinner"></div>
+    <p>Loading invoices...</p>
+  </div>
+
+  <!-- ── ERROR ─────────────────────────────────────────────────────── -->
+  <div *ngIf="error && !isLoading" class="pi-error">
+    <div class="pi-error-icon">⚠️</div>
+    <p>{{ error }}</p>
+    <button class="btn-retry" (click)="loadInvoices()">Try Again</button>
+  </div>
+
+  <!-- ── CONTENT ───────────────────────────────────────────────────── -->
+  <div *ngIf="!isLoading && !error" class="pi-content">
+
+    <!-- Summary chips row -->
+    <div class="pi-summary-row">
+      <div class="pi-chip chip-total">
+        <span class="chip-icon">📄</span>
+        <div>
+          <div class="chip-val">{{ totalInvoices }}</div>
+          <div class="chip-lbl">Invoices</div>
+        </div>
+      </div>
+      <div class="pi-chip chip-amount">
+        <span class="chip-icon">💰</span>
+        <div>
+          <div class="chip-val">{{ formatCurrency(totalPendingAmount) }}</div>
+          <div class="chip-lbl">Total Pending</div>
+        </div>
+      </div>
+      <div class="pi-chip chip-overdue" *ngIf="overdueCount > 0">
+        <span class="chip-icon">⚠️</span>
+        <div>
+          <div class="chip-val">{{ overdueCount }}</div>
+          <div class="chip-lbl">Overdue</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter + list actions -->
+    <div class="pi-toolbar">
+      <select [(ngModel)]="selectedChildId" (change)="onChildFilterChange()" class="pi-select">
+        <option [ngValue]="null">👨‍👩‍👧‍👦 All children</option>
+        <option *ngFor="let child of children" [ngValue]="child.studentId">
+          {{ child.studentName }} · {{ formatCurrency(child.pendingAmount) }}
+        </option>
+      </select>
+
+      <div class="pi-list-actions" *ngIf="invoices.length > 0">
+        <button class="btn-link" (click)="selectAll()">Select all</button>
+        <button class="btn-link" (click)="clearSelection()">Clear</button>
+        <span class="pi-sel-info" *ngIf="getSelectedCount() > 0">
+          {{ getSelectedCount() }} selected · {{ formatCurrency(getSelectedTotal()) }}
+        </span>
+      </div>
+    </div>
+
+    <!-- ── INVOICE CARDS ─────────────────────────────────────────────── -->
+    <div class="pi-list" *ngIf="invoices.length > 0">
+      <div class="pi-card"
+           *ngFor="let invoice of invoices"
+           [class.pi-card-selected]="isInvoiceSelected(invoice.invoiceId)"
+           [class.pi-card-overdue]="invoice.isOverdue"
+           (click)="toggleInvoiceSelection(invoice.invoiceId)">
+
+        <!-- Checkbox -->
+        <div class="pi-check" (click)="$event.stopPropagation()">
+          <input type="checkbox"
+                 [id]="'inv-' + invoice.invoiceId"
+                 [checked]="isInvoiceSelected(invoice.invoiceId)"
+                 (change)="toggleInvoiceSelection(invoice.invoiceId)">
+        </div>
+
+        <!-- Card body -->
+        <div class="pi-card-body">
+          <!-- Top row: invoice # + amount -->
+          <div class="pi-card-top">
+            <span class="pi-inv-num">{{ invoice.invoiceNumber }}</span>
+            <span class="pi-amount">{{ formatCurrency(invoice.amountDue) }}</span>
+          </div>
+
+          <!-- Details -->
+          <div class="pi-details">
+            <span class="pi-detail">👤 {{ invoice.studentName }}</span>
+            <span class="pi-detail" *ngIf="invoice.eventName">📅 {{ invoice.eventName }}</span>
+            <span class="pi-detail" *ngIf="invoice.notes && !invoice.eventName">📝 {{ invoice.notes }}</span>
+            <span class="pi-detail">📆 Issued {{ formatDate(invoice.invoiceDate) }}</span>
+          </div>
+
+          <!-- Due / status strip -->
+          <div class="pi-status-row">
+            <span class="pi-due-badge"
+                  [class.due-overdue]="invoice.isOverdue"
+                  [class.due-soon]="!invoice.isOverdue && invoice.daysUntilDue <= 3"
+                  [class.due-normal]="!invoice.isOverdue && invoice.daysUntilDue > 3">
+              {{ invoice.isOverdue ? '⚠️ OVERDUE' : invoice.daysUntilDue <= 3 ? '⏰ DUE SOON' : '✓ PENDING' }}
+            </span>
+            <span class="pi-due-label" [class.text-danger]="invoice.isOverdue"
+                                       [class.text-warning]="!invoice.isOverdue && invoice.daysUntilDue <= 3">
+              {{ getDaysUntilDue(invoice) }}
+            </span>
+          </div>
+
+          <!-- Notes -->
+          <div class="pi-notes" *ngIf="invoice.parentNotes">
+            📝 {{ invoice.parentNotes }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── EMPTY ──────────────────────────────────────────────────────── -->
+    <div class="pi-empty" *ngIf="invoices.length === 0">
+      <div class="pi-empty-icon">🎉</div>
+      <h3>All paid up!</h3>
+      <p>No pending invoices. Great job!</p>
+      <button class="btn-back-dash" routerLink="/parent/dashboard">
+        ← Back to Dashboard
+      </button>
+    </div>
+
+  </div>
+
+  <!-- ── FIXED PAYMENT BAR (shown when selection > 0) ─────────────── -->
+  <div class="pi-pay-bar" *ngIf="getSelectedCount() > 0">
+    <div class="pi-pay-bar-inner">
+      <div class="pi-pay-info">
+        <span class="pi-pay-count">{{ getSelectedCount() }} invoice(s) selected</span>
+        <span class="pi-pay-total">{{ formatCurrency(getSelectedTotal()) }}</span>
+      </div>
+      <button class="btn-pay" (click)="proceedToPayment()">
+        💳 Pay Now →
+      </button>
+    </div>
+  </div>
+
+</div>

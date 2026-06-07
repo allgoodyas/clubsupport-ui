@@ -1,0 +1,428 @@
+// ====================================================
+// EVENT FORM - DYNAMIC THEME STYLES
+// Uses enhanced CSS variables from theme configuration
+// ====================================================
+
+.event-form-container {
+  width: 100%;
+  padding: 16px 24px;
+  background: var(--bg-app, #0A0F1E);
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.event-form-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+  
+  .page-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary, #E2E8F0);
+    margin: 0;
+  }
+}
+
+.event-form {
+  background: var(--bg-card, #1A2235);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  border: 1px solid var(--bg-border, #1E2D45);
+}
+
+.form-section {
+  padding: 24px;
+  border-bottom: 1px solid var(--bg-border, #1E2D45);
+  
+  &:last-of-type {
+    border-bottom: none;
+  }
+  
+  .section-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary, #E2E8F0);
+    margin: 0 0 20px 0;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent-primary, #00D4FF);
+  }
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-group {
+  margin-bottom: 16px;
+  
+  label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary, #E2E8F0);
+    margin-bottom: 6px;
+    
+    .required {
+      color: var(--accent-danger, #FF4757);
+    }
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid var(--bg-border, #1E2D45);
+    border-radius: 4px;
+    background: var(--bg-panel, #111827);
+    color: var(--text-primary, #E2E8F0);
+    transition: all 0.2s ease;
+    
+    &:focus {
+      outline: none;
+      border-color: var(--accent-primary, #00D4FF);
+      box-shadow: 0 0 0 0.2rem rgba(0, 212, 255, 0.25);
+    }
+    
+    &.is-invalid {
+      border-color: var(--accent-danger, #FF4757);
+    }
+    
+    &::placeholder {
+      color: var(--text-disabled, #4A5568);
+    }
+  }
+  
+  textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  select.form-control {
+    cursor: pointer;
+    
+    option {
+      background: var(--bg-panel, #111827);
+      color: var(--text-primary, #E2E8F0);
+    }
+  }
+  
+  .error-message {
+    color: var(--accent-danger, #FF4757);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-bottom: 8px;
+  color: var(--text-primary, #E2E8F0);
+  
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--accent-primary, #00D4FF);
+  }
+}
+
+.radio-group {
+  display: flex;
+  gap: 24px;
+  
+  .radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text-primary, #E2E8F0);
+    
+    input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--accent-primary, #00D4FF);
+    }
+  }
+}
+
+.checkboxes-group {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.recurring-section {
+  background: var(--bg-panel, #111827);
+  padding: 16px;
+  border-radius: 6px;
+  margin-top: 16px;
+  border: 1px solid var(--bg-border, #1E2D45);
+}
+
+.days-selector {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  
+  .day-button {
+    padding: 8px 16px;
+    background: var(--bg-panel, #111827);
+    border: 2px solid var(--bg-border, #1E2D45);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    color: var(--text-primary, #E2E8F0);
+    
+    &:hover {
+      background: var(--bg-card, #1A2235);
+      border-color: var(--accent-primary, #00D4FF);
+    }
+    
+    &.selected {
+      background: var(--accent-primary, #00D4FF);
+      color: white;
+      border-color: var(--accent-primary, #00D4FF);
+    }
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 24px;
+  background: var(--bg-panel, #111827);
+  border-top: 1px solid var(--bg-border, #1E2D45);
+  
+  .btn {
+    padding: 10px 24px;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    &.btn-secondary {
+      background: var(--bg-card, #1A2235);
+      color: var(--text-primary, #E2E8F0);
+      border: 1px solid var(--bg-border, #1E2D45);
+      
+      &:hover:not(:disabled) {
+        background: var(--bg-panel, #111827);
+        border-color: var(--accent-primary, #00D4FF);
+      }
+    }
+    
+    &.btn-primary {
+      background: var(--gradient-primary, linear-gradient(135deg, #00D4FF, #A855F7));
+      color: white;
+      
+      &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 212, 255, 0.3);
+      }
+    }
+  }
+}
+
+.loading-container {
+  text-align: center;
+  padding: 60px 20px;
+  
+  .spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid var(--bg-border, #1E2D45);
+    border-top: 5px solid var(--accent-primary, #00D4FF);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+  }
+  
+  p {
+    color: var(--text-secondary, #94A3B8);
+    font-size: 16px;
+  }
+}
+
+// ── Tax pricing block ─────────────────────────────────────────────────────
+
+.tax-group {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+
+  .tax-toggle-label {
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+
+  .tax-pct-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    label {
+      white-space: nowrap;
+      margin-bottom: 0;
+      font-size: 13px;
+      color: var(--text-secondary, #94A3B8);
+    }
+
+    .tax-pct-input {
+      width: 90px;
+      padding: 6px 10px;
+      font-size: 13px;
+    }
+  }
+}
+
+.total-price-display {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(0, 212, 255, 0.07);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  border-radius: 8px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+
+  .total-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary, #94A3B8);
+  }
+
+  .total-amount {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-primary, #00D4FF);
+  }
+
+  .tax-note {
+    font-size: 0.78rem;
+    color: var(--text-secondary, #94A3B8);
+
+    &.inclusive {
+      color: var(--accent-success, #00FF9D);
+      font-weight: 600;
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  .event-form-container {
+    padding: 8px 12px;
+  }
+  
+  .form-section {
+    padding: 16px;
+  }
+  
+  .form-actions {
+    flex-direction: column;
+    
+    .btn {
+      width: 100%;
+    }
+  }
+}
+
+// ── Subscription pricing styles ────────────────────────────────────────────
+
+.sub-toggle-row {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  background: rgba(0,212,255,0.04);
+  border: 1px solid rgba(0,212,255,0.15);
+  border-radius: 8px;
+}
+
+.sub-toggle-label {
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; font-size: 0.9rem; font-weight: 600;
+  input[type='checkbox'] { width: 17px; height: 17px; cursor: pointer; flex-shrink: 0; }
+  small { font-size: 0.75rem; font-weight: 400; color: var(--text-secondary, #94A3B8); }
+}
+
+.sub-pricing-section {
+  background: rgba(0,212,255,0.03);
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 10px;
+
+  .form-row { flex-wrap: wrap; }
+  small { display: block; font-size: 0.72rem; color: var(--text-secondary, #94A3B8); margin-top: 3px; }
+  .optional { font-size: 0.72rem; font-weight: 400; color: var(--text-secondary, #94A3B8); }
+}
+
+.sub-price-hint {
+  margin-top: 8px; padding: 7px 12px;
+  background: rgba(0,255,157,0.08);
+  border: 1px solid rgba(0,255,157,0.2);
+  border-radius: 6px;
+  font-size: 0.82rem; color: #00C87A;
+}
+
+.sibling-quota-label {
+  align-items: flex-start !important;
+  gap: 10px;
+
+  span {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary, #E2E8F0);
+  }
+
+  small {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--text-secondary, #94A3B8);
+    margin-top: 0;
+  }
+
+  input[type='checkbox'] {
+    margin-top: 3px;
+    flex-shrink: 0;
+    accent-color: #A855F7;
+  }
+}

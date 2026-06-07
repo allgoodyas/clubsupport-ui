@@ -1,0 +1,176 @@
+<!-- user-registration.component.html -->
+<!-- User Registration Form -->
+
+<div class="registration-container">
+  <div class="registration-card">
+    <!-- Card Header -->
+    <div class="card-header">
+      <h2>{{ getPageTitle() | translate }}</h2>
+    </div>
+
+    <!-- Master admin mode banner -->
+    <div class="master-club-banner" *ngIf="isMasterAdminMode">
+      <span class="master-club-icon">🏠</span>
+      <div>
+        <strong>Adding admin user for:</strong>
+        <span class="master-club-name">{{ targetClubName || 'Club #' + targetClubId }}</span>
+      </div>
+      <span class="master-club-note">This user will be saved under this club and can log in using the club’s login URL.</span>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading" class="loading-section">
+      <div class="spinner"></div>
+      <p>{{ 'COMMON.LOADING' | translate }}</p>
+    </div>
+
+    <!-- Registration Form -->
+    <form [formGroup]="userForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading">
+      
+      <!-- Full Name -->
+      <div class="form-group">
+        <label for="fullName">
+          {{ 'USER_REGISTRATION.FULL_NAME' | translate }} <span class="required">*</span>
+        </label>
+        <input
+          id="fullName"
+          type="text"
+          formControlName="fullName"
+          class="form-control"
+          [class.error]="isFieldInvalid('fullName')"
+          [placeholder]="'USER_REGISTRATION.FULL_NAME_PLACEHOLDER' | translate"
+        />
+        <span class="error-message" *ngIf="isFieldInvalid('fullName')">
+          {{ getFieldError('fullName') }}
+        </span>
+      </div>
+
+      <!-- Mobile Number -->
+      <div class="form-group">
+        <label for="mobileNumber">
+          {{ 'USER_REGISTRATION.MOBILE_NUMBER' | translate }} <span class="required">*</span>
+        </label>
+        <input
+          id="mobileNumber"
+          type="tel"
+          formControlName="mobileNumber"
+          class="form-control"
+          [class.error]="isFieldInvalid('mobileNumber')"
+          [placeholder]="'USER_REGISTRATION.MOBILE_PLACEHOLDER' | translate"
+        />
+        <span class="error-message" *ngIf="isFieldInvalid('mobileNumber')">
+          {{ getFieldError('mobileNumber') }}
+        </span>
+      </div>
+
+      <!-- Email (Optional) -->
+      <div class="form-group">
+        <label for="email">{{ 'USER_REGISTRATION.EMAIL_OPTIONAL' | translate }}</label>
+        <input
+          id="email"
+          type="email"
+          formControlName="email"
+          class="form-control"
+          [class.error]="isFieldInvalid('email')"
+          [placeholder]="'USER_REGISTRATION.EMAIL_PLACEHOLDER' | translate"
+        />
+        <span class="error-message" *ngIf="isFieldInvalid('email')">
+          {{ getFieldError('email') }}
+        </span>
+      </div>
+
+      <!-- Role -->
+      <div class="form-group">
+        <label for="roleId">
+          {{ 'USER_REGISTRATION.ROLE' | translate }} <span class="required">*</span>
+        </label>
+        <select
+          id="roleId"
+          formControlName="roleId"
+          class="form-control"
+          [class.error]="isFieldInvalid('roleId')"
+        >
+          <option value="">{{ 'USER_REGISTRATION.SELECT_ROLE' | translate }}</option>
+          <option *ngFor="let role of roles" [value]="role.roleId">
+            {{ role.roleName }}
+            <span *ngIf="role.description"> - {{ role.description }}</span>
+          </option>
+        </select>
+        <span class="error-message" *ngIf="isFieldInvalid('roleId')">
+          {{ getFieldError('roleId') }}
+        </span>
+      </div>
+
+      <!-- Password -->
+      <div class="form-group">
+        <label for="password">
+          {{ 'USER_REGISTRATION.PASSWORD' | translate }} <span class="required" *ngIf="!isEditMode">*</span>
+          <span class="optional-text" *ngIf="isEditMode">({{ 'USER_REGISTRATION.LEAVE_BLANK_TO_KEEP' | translate }})</span>
+        </label>
+        <div class="password-input-wrapper">
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            formControlName="password"
+            class="form-control"
+            [class.error]="isFieldInvalid('password')"
+            [placeholder]="'USER_REGISTRATION.PASSWORD_PLACEHOLDER' | translate"
+          />
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="togglePasswordVisibility()"
+            tabindex="-1"
+          >
+            {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+          </button>
+        </div>
+        <span class="error-message" *ngIf="isFieldInvalid('password')">
+          {{ getFieldError('password') }}
+        </span>
+      </div>
+
+      <!-- Confirm Password -->
+      <div class="form-group">
+        <label for="confirmPassword">
+          {{ 'USER_REGISTRATION.CONFIRM_PASSWORD' | translate }} <span class="required" *ngIf="!isEditMode">*</span>
+          <span class="optional-text" *ngIf="isEditMode">({{ 'USER_REGISTRATION.ONLY_IF_CHANGING' | translate }})</span>
+        </label>
+        <input
+          id="confirmPassword"
+          [type]="showPassword ? 'text' : 'password'"
+          formControlName="confirmPassword"
+          class="form-control"
+          [class.error]="isFieldInvalid('confirmPassword') || userForm.errors?.['passwordMismatch']"
+          [placeholder]="'USER_REGISTRATION.CONFIRM_PASSWORD_PLACEHOLDER' | translate"
+        />
+        <span class="error-message" *ngIf="isFieldInvalid('confirmPassword') || userForm.errors?.['passwordMismatch']">
+          {{ getFieldError('confirmPassword') }}
+        </span>
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button
+          type="button"
+          class="btn-cancel"
+          (click)="cancel()"
+          [disabled]="isSubmitting"
+        >
+          {{ 'COMMON.CANCEL' | translate }}
+        </button>
+        <button
+          type="submit"
+          class="btn-submit"
+          [disabled]="isSubmitting"
+        >
+          <span *ngIf="!isSubmitting">✅ {{ (isEditMode ? 'USER_REGISTRATION.UPDATE_USER' : 'USER_REGISTRATION.CREATE_USER') | translate }}</span>
+          <span *ngIf="isSubmitting">
+            <span class="spinner-small"></span> {{ (isEditMode ? 'USER_REGISTRATION.UPDATING' : 'USER_REGISTRATION.CREATING') | translate }}
+          </span>
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>

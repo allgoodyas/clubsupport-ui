@@ -1,0 +1,451 @@
+<!-- payment-panel.component.html - UPDATED WITHOUT BUTTONS -->
+<div class="payment-panel-overlay" *ngIf="isOpen" (click)="!disableOverlayClose && close()">
+  <div class="payment-panel-container" (click)="$event.stopPropagation()" [class.slide-in]="isOpen">
+    
+    <!-- Header -->
+    <div class="panel-header">
+      <div class="header-left">
+        <h2>💳 {{ mode === 'student' ? 'My Invoices & Payments' : 'Receive Payment' }}</h2>
+        <span class="step-indicator">Step {{currentStep}} of {{totalSteps}}</span>
+      </div>
+      <button class="btn-close" (click)="close()" [disabled]="isProcessing">
+        <span class="close-icon">✕</span>
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="panel-body">
+      
+      <!-- ========================================== -->
+      <!-- STUDENT MODE: Step 1 - Select Invoice -->
+      <!-- ========================================== -->
+      <div *ngIf="mode === 'student' && currentStep === 1" class="step-content">
+        <div class="step-header">
+          <h3>Select Invoice to Pay</h3>
+          <p class="step-description">Choose an invoice to make a payment</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="invoice-filters">
+          <div class="filter-row">
+            <!-- Status Filter -->
+            <div class="filter-group">
+              <label>Status:</label>
+              <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()" class="filter-select">
+                <option value="all">All Invoices</option>
+                <option value="unpaid">Unpaid Only</option>
+                <option value="paid">Paid Only</option>
+              </select>
+            </div>
+
+            <!-- Date Range -->
+            <div class="filter-group">
+              <label>From:</label>
+              <input type="date" [(ngModel)]="fromDate" (ngModelChange)="onFilterChange()" class="filter-date" />
+            </div>
+
+            <div class="filter-group">
+              <label>To:</label>
+              <input type="date" [(ngModel)]="toDate" (ngModelChange)="onFilterChange()" class="filter-date" />
+            </div>
+
+            <button class="btn-clear-filters" (click)="clearFilters()" *ngIf="statusFilter !== 'all' || fromDate || toDate">
+              ✕ Clear
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading Invoices -->
+        <div *ngIf="loadingInvoices" class="loading-state">
+          <div class="spinner"></div>
+          <p>⏳ Loading invoices...</p>
+        </div>
+
+        <!-- Invoice List -->
+        <div *ngIf="!loadingInvoices" class="invoice-list">
+          <div *ngFor="let invoice of filteredInvoices" 
+               class="invoice-card" 
+               [class.unpaid]="invoice.status === 'Sent' || invoice.status === 'Partial'"
+               [class.paid]="invoice.status === 'Paid'"
+               (click)="selectInvoice(invoice)">
+            
+            <div class="invoice-header">
+              <div class="invoice-title">
+                <span class="invoice-icon">{{ getInvoiceTypeIcon(invoice.invoiceType) }}</span>
+                <div>
+                  <h4>{{ invoice.eventName || 'Manual Invoice' }}</h4>
+                  <span class="invoice-number">{{ invoice.invoiceNumber }}</span>
+                </div>
+              </div>
+              <span class="invoice-status" [ngClass]="getStatusBadgeClass(invoice.status)">
+                {{ invoice.status }}
+              </span>
+            </div>
+
+            <div class="invoice-details">
+              <div class="detail-row">
+                <span class="label">Invoice Date:</span>
+                <span class="value">{{ formatDate(invoice.invoiceDate) }}</span>
+              </div>
+              <div class="detail-row" *ngIf="invoice.eventStartDate">
+                <span class="label">Event Date:</span>
+                <span class="value">{{ formatDate(invoice.eventStartDate) }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Total Amount:</span>
+                <span class="value amount">{{ invoice.totalAmount | number:'1.2-2' }} SAR</span>
+              </div>
+              <div class="detail-row" *ngIf="invoice.amountPaid > 0">
+                <span class="label">Paid:</span>
+                <span class="value paid">{{ invoice.amountPaid | number:'1.2-2' }} SAR ✓</span>
+              </div>
+              <div class="detail-row" *ngIf="invoice.amountDue > 0">
+                <span class="label"><strong>Amount Due:</strong></span>
+                <span class="value amount-due"><strong>{{ invoice.amountDue | number:'1.2-2' }} SAR</strong></span>
+              </div>
+            </div>
+
+            <div class="invoice-actions">
+              <button class="btn-pay" *ngIf="invoice.amountDue > 0">Pay Now →</button>
+              <button class="btn-view" *ngIf="invoice.amountDue === 0">View Details</button>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div *ngIf="filteredInvoices.length === 0" class="empty-state">
+            <div class="empty-icon">📄</div>
+            <p>No invoices found</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- EVENT MODE: Loading Students -->
+      <!-- ========================================== -->
+      <div *ngIf="mode === 'event' && loadingStudents && currentStep === 1" class="loading-state">
+        <div class="spinner"></div>
+        <p>⏳ Loading students...</p>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- EVENT MODE: Step 1 - Select Student -->
+      <!-- ========================================== -->
+      <div *ngIf="mode === 'event' && !loadingStudents && currentStep === 1" class="step-content">
+        <div class="step-header">
+          <h3>Select Student</h3>
+          <p class="step-description">Choose a student to receive payment for</p>
+        </div>
+        
+        <div class="student-list">
+          <div *ngFor="let student of students" 
+               class="student-card" 
+               [class.has-balance]="student.hasBalance" 
+               [class.paid]="!student.hasBalance"
+               (click)="selectStudent(student)">
+            <div class="student-info">
+              <div class="student-name">{{student.studentName}}</div>
+              <div class="student-meta">
+                <span class="meta-item">👤 {{student.age}} years</span>
+                <span class="meta-item">{{student.gender}}</span>
+              </div>
+            </div>
+            <div class="student-payment">
+              <div *ngIf="student.hasBalance" class="balance-badge unpaid">
+                <span class="badge-icon">⚠️</span>
+                <span class="badge-amount">{{student.amountDue | number:'1.2-2'}} SAR</span>
+              </div>
+              <div *ngIf="!student.hasBalance" class="balance-badge paid">
+                <span class="badge-icon">✓</span>
+                <span class="badge-text">Paid</span>
+              </div>
+            </div>
+          </div>
+          
+          <div *ngIf="students.length === 0" class="empty-state">
+            <div class="empty-icon">👥</div>
+            <p>No enrolled students found</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Payment Amount -->
+      <div *ngIf="currentStep === 2" class="step-content">
+        <div class="step-header">
+          <h3>Payment Amount</h3>
+          <p class="step-description">Enter the amount to receive</p>
+        </div>
+        
+        <!-- Student Info -->
+        <div class="info-card">
+          <div class="info-row">
+            <span class="label">Student:</span>
+            <span class="value">{{selectedStudent?.studentName}}</span>
+          </div>
+          <div class="info-row" *ngIf="selectedStudent?.invoiceNumber">
+            <span class="label">Invoice:</span>
+            <span class="value">{{selectedStudent?.invoiceNumber}}</span>
+          </div>
+          <div class="info-row" *ngIf="!selectedStudent?.invoiceNumber">
+            <span class="label">Status:</span>
+            <span class="value">No invoice yet - Will be created with payment</span>
+          </div>
+        </div>
+
+        <!-- Invoice Summary -->
+        <div class="invoice-summary">
+          <div class="summary-row" *ngIf="selectedStudent?.totalAmount">
+            <span>Event Fee:</span>
+            <span class="amount">{{selectedStudent?.totalAmount | number:'1.2-2'}} SAR</span>
+          </div>
+          <div class="summary-row" *ngIf="selectedStudent?.amountPaid && (selectedStudent?.amountPaid ?? 0) > 0">
+            <span>Already Paid:</span>
+            <span class="amount paid-amount">{{selectedStudent?.amountPaid | number:'1.2-2'}} SAR ✓</span>
+          </div>
+          <div class="summary-row total-row">
+            <span><strong>Balance Due:</strong></span>
+            <span class="amount balance-amount">
+              <strong>{{selectedStudent?.amountDue | number:'1.2-2'}} SAR</strong>
+            </span>
+          </div>
+        </div>
+
+        <!-- Wallet Balance (info only — no controls here) -->
+        <div class="wallet-section" *ngIf="walletLoaded">
+          <div class="wallet-header">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+              <rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/>
+              <circle cx="17" cy="15" r="1.5" fill="currentColor"/>
+            </svg>
+            <span class="wallet-label">Wallet Balance</span>
+            <span class="wallet-bal" [class.wallet-bal--zero]="walletBalance <= 0">
+              {{ walletBalance | number:'1.2-2' }} SAR
+            </span>
+            <span class="wallet-hint" *ngIf="walletBalance > 0">
+              &nbsp;&mdash; select Wallet as a payment method in the next step
+            </span>
+          </div>
+        </div>
+
+        <!-- Payment Amount Input -->
+        <div class="form-group">
+          <label class="form-label">Payment Amount (SAR) <span class="required">*</span></label>
+          <input 
+            type="number" 
+            [(ngModel)]="paymentAmount" 
+            (ngModelChange)="onPaymentAmountChange()"
+            class="form-control amount-input" 
+            step="0.01"
+            min="0.01"
+            [max]="selectedStudent?.amountDue ?? 0"
+            placeholder="Enter amount"
+            [disabled]="isProcessing">
+          
+          <!-- Payment Type Indicator (Auto-detected) -->
+          <div class="payment-type-indicator">
+            <div *ngIf="isFullPayment" class="indicator-full">
+										
+										
+              <span class="indicator-icon">💰</span>
+              <span class="indicator-text">Full Payment - Invoice will be marked as "Paid"</span>
+																																										
+            </div>
+            <div *ngIf="!isFullPayment && paymentAmount > 0" class="indicator-partial">
+						   
+									   
+											 
+										
+              <span class="indicator-icon">📊</span>
+              <span class="indicator-text">Partial Payment - Remaining: {{getRemainingBalance() | number:'1.2-2'}} SAR</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: Payment Methods -->
+      <div *ngIf="currentStep === 3" class="step-content">
+		
+																				  
+        <div class="step-header">
+          <h3>Payment Methods</h3>
+          <p class="step-description">Add one or more payment methods</p>
+																					   
+																   
+				  
+        </div>
+        
+        <div class="receiving-info">
+          <span class="label">Total Payment:</span>
+          <span class="amount-value">{{paymentAmount | number:'1.2-2'}} SAR</span>
+        </div>
+
+        <!-- Payment Methods List -->
+        <div class="payment-methods-list">
+          <div *ngFor="let method of paymentMethods; let i = index" class="payment-method-card">
+            
+            <div class="method-header">
+              <span class="method-number">Method {{i + 1}}</span>
+              <button 
+                type="button"
+                class="btn-remove" 
+                (click)="removePaymentMethod(i)"
+                [disabled]="paymentMethods.length === 1 || isProcessing"
+                title="Remove this payment method">
+                <span class="remove-icon">🗑️</span>
+                <span class="remove-text">Remove</span>
+              </button>
+            </div>
+
+            <div class="method-form">
+              <!-- Method Type -->
+              <div class="form-group">
+                <label class="form-label">Payment Method</label>
+                <select 
+                  [(ngModel)]="method.methodType"
+                  (ngModelChange)="onMethodTypeChange(method)"
+                  class="form-control"
+                  [disabled]="isProcessing">
+                  <option *ngFor="let m of availableMethods" [value]="m.value">
+                    {{m.label}}
+                  </option>
+                </select>
+                <!-- Wallet balance label -->
+                <div class="method-wallet-info" *ngIf="method.methodType === 'Wallet' && walletLoaded">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                    <rect x="2" y="6" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/>
+                    <path d="M2 10h20" stroke="currentColor" stroke-width="1.8"/>
+                    <circle cx="17" cy="15" r="1.5" fill="currentColor"/>
+                  </svg>
+                  Available balance: <strong [class.wallet-over]="method.amount > walletBalance">{{ walletBalance | number:'1.2-2' }} SAR</strong>
+                  <span class="wallet-over-warn" *ngIf="method.amount > walletBalance">
+                    &nbsp;&#9888; Exceeds balance
+                  </span>
+                </div>
+              </div>
+
+              <!-- Amount -->
+              <div class="form-group">
+                <label class="form-label">Amount (SAR)</label>
+                <input 
+                  type="number" 
+                  [(ngModel)]="method.amount" 
+                  class="form-control"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="0.00"
+                  [disabled]="isProcessing">
+              </div>
+
+              <!-- Reference -->
+              <div class="form-group">
+                <label class="form-label">Reference Number (Optional)</label>
+                <input 
+                  type="text" 
+                  [(ngModel)]="method.referenceNumber" 
+                  class="form-control"
+                  placeholder="Transaction ID, Check number..."
+                  [disabled]="isProcessing">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Method Button -->
+        <button 
+          type="button"
+          class="btn-add-method" 
+          (click)="addPaymentMethod()"
+          [disabled]="isProcessing">
+          <span class="add-icon">➕</span>
+          <span class="add-text">Add Another Payment Method</span>
+        </button>
+
+        <!-- Total Calculation -->
+        <div class="total-calculation">
+          <div class="calc-row">
+            <span>Total Allocated:</span>
+            <span class="amount">{{getTotalAllocated() | number:'1.2-2'}} SAR</span>
+          </div>
+          <div class="calc-row">
+            <span>Remaining:</span>
+            <span class="amount" [class.error]="getMethodsRemaining() > 0.01">
+              {{getMethodsRemaining() | number:'1.2-2'}} SAR
+            </span>
+          </div>
+          <div class="calc-row total">
+            <span><strong>Payment Amount:</strong></span>
+            <span class="amount"><strong>{{paymentAmount | number:'1.2-2'}} SAR</strong></span>
+          </div>
+        </div>
+
+        <!-- Validation Message -->
+        <div class="validation-message" [class.error]="!isPaymentValid()" [class.success]="isPaymentValid()">
+          <span *ngIf="!isPaymentValid()" class="validation-icon">⚠️</span>
+          <span *ngIf="isPaymentValid()" class="validation-icon">✓</span>
+          <span class="validation-text">
+            {{isPaymentValid() ? 'Payment is valid and ready' : 'Total allocated must equal payment amount'}}
+          </span>
+        </div>
+
+        <!-- Notes -->
+        <div class="form-group">
+          <label class="form-label">Payment Notes (Optional)</label>
+          <textarea 
+            [(ngModel)]="paymentNotes" 
+            class="form-control"
+            rows="3"
+            placeholder="Add any notes about this payment..."
+            [disabled]="isProcessing"></textarea>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="panel-footer">
+      <div class="footer-actions">
+        <button 
+          *ngIf="currentStep > 1"
+          type="button"
+          class="btn btn-secondary" 
+          (click)="previousStep()"
+          [disabled]="isProcessing">
+          <span class="btn-icon">←</span>
+          <span class="btn-text">Back</span>
+        </button>
+
+        <div class="spacer"></div>
+
+        <button 
+          *ngIf="currentStep < totalSteps"
+          type="button"
+          class="btn btn-primary" 
+          (click)="nextStep()"
+          [disabled]="(currentStep === 1 && !selectedStudent) || (currentStep === 2 && paymentAmount <= 0)">
+          <span class="btn-text">Next</span>
+          <span class="btn-icon">→</span>
+        </button>
+
+        <button 
+          *ngIf="currentStep === totalSteps"
+          type="button"
+          class="btn btn-primary btn-submit" 
+          (click)="recordPayment()"
+          [disabled]="!isPaymentValid() || isProcessing">
+          <span *ngIf="!isProcessing" class="btn-icon">💳</span>
+          <span *ngIf="isProcessing" class="btn-icon spinner-small"></span>
+          <span class="btn-text">{{isProcessing ? 'Processing...' : 'Record Payment'}}</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Payment Receipt Modal -->
+<app-payment-receipt
+  *ngIf="showReceipt"
+  [receiptData]="receiptData"
+  [isOpen]="showReceipt"
+  (closeReceipt)="closeReceipt()">
+</app-payment-receipt>
