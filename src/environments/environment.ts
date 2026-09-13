@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
-   apiUrl: 'http://localhost:5000/api',   
+  apiUrl: 'https://clubsupport-api.fly.dev/api',
+  // apiUrl: 'http://localhost:5000/api',
   // apiUrl: 'https://cfaapi-dgdab9ghg8akbebn.canadacentral-01.azurewebsites.net/api',
   tokenKey: 'football_tournament_token',
   refreshTokenKey: 'football_tournament_refresh_token',
