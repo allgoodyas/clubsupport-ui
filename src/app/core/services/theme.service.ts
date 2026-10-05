@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { BehaviorSubject, Observable, timer } from 'rxjs';
+import { tap, retry } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
 export interface ClubTheme {
@@ -246,6 +246,9 @@ export class ThemeService {
     return this.http
       .get<any>(`${this.apiUrl}/ClubTheme/public/${clubCode}`)
       .pipe(
+        // Retry up to 3 times with increasing delay to survive cold-start 5xx errors.
+        // Attempt 1 fails → wait 2s → attempt 2 → wait 4s → attempt 3 → wait 6s → give up.
+        retry({ count: 3, delay: (_err, attempt) => timer(attempt * 2000) }),
         tap(response => {
           if (response.success && response.club) {
             // Map PublicClubThemeDto fields into the ClubTheme shape the applyTheme() expects

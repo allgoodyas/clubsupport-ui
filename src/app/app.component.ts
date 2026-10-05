@@ -45,10 +45,10 @@ export class AppComponent implements OnInit {
         }
       });
     } else {
-      // Not logged in — clear any stale club theme and apply master admin default
-      // This ensures the login page never shows a leftover club theme
+      // Not logged in — clear any stale club theme so the login page starts neutral.
+      // Do NOT apply a theme here: LoginComponent will apply the correct club branding
+      // (or master admin fallback) once it resolves the ?c= / :clubSlug param.
       localStorage.removeItem('club-theme');
-      this.themeService.applyDefaultTheme();
     }
   }
 }

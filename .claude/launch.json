@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "club-support-ui",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start", "--", "--open", "false"],
+      "port": 4200
+    }
+  ]
+}
