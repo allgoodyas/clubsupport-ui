@@ -1,0 +1,23 @@
+<div class="cc-card" (click)="open()"
+     [style.--ch-color]="'var(' + chapter.color + ', ' + chapter.colorHex + ')'">
+
+  <div class="cc-number">{{ index + 1 }}</div>
+
+  <div class="cc-icon-wrap">
+    <span class="cc-icon">{{ chapter.icon }}</span>
+  </div>
+
+  <div class="cc-body">
+    <h3 class="cc-title">{{ chapter.title }}</h3>
+    <p class="cc-subtitle">{{ chapter.subtitle }}</p>
+    <div class="cc-meta">
+      <span class="cc-badge" [class.cc-badge-video]="!!chapter.videoUrl">
+        {{ chapter.videoUrl ? '▶ Video' : '📖 Guide' }}
+      </span>
+      <span class="cc-duration">⏱ {{ chapter.duration }}</span>
+      <span class="cc-steps">{{ chapter.steps.length }} steps</span>
+    </div>
+  </div>
+
+  <div class="cc-arrow">›</div>
+</div>

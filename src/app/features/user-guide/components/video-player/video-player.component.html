@@ -1,0 +1,54 @@
+<div class="vp-wrapper">
+
+  <!-- ── Placeholder when no video exists ── -->
+  <div *ngIf="!hasVideo" class="vp-placeholder">
+    <div class="vp-icon-ring" [style.--ch-color]="'var(' + chapter.color + ', ' + chapter.colorHex + ')'">
+      <span class="vp-icon">{{ chapter.icon }}</span>
+    </div>
+    <p class="vp-coming-title">Walkthrough video coming soon</p>
+    <p class="vp-coming-sub">Estimated length · <strong>{{ chapter.duration }}</strong></p>
+    <p class="vp-coming-hint">Follow the step-by-step guide below while we finish recording.</p>
+  </div>
+
+  <!-- ── Real video player ── -->
+  <div *ngIf="hasVideo" class="vp-video-area">
+    <video
+      #videoEl
+      class="vp-video"
+      [src]="chapter.videoUrl"
+      (timeupdate)="onTimeUpdate()"
+      (loadedmetadata)="onLoaded()"
+      (ended)="isPlaying = false"
+      preload="metadata"
+    ></video>
+
+    <!-- Overlay play button when paused -->
+    <div class="vp-overlay" *ngIf="!isPlaying" (click)="togglePlay()">
+      <div class="vp-play-big">▶</div>
+    </div>
+
+    <!-- Controls bar -->
+    <div class="vp-controls">
+      <button class="vp-btn" (click)="togglePlay()">
+        {{ isPlaying ? '⏸' : '▶' }}
+      </button>
+
+      <!-- Progress bar -->
+      <div class="vp-progress-bar" (click)="seek($event)">
+        <div class="vp-progress-fill" [style.width.%]="progress"></div>
+      </div>
+
+      <span class="vp-time">{{ currentTime }} / {{ totalTime }}</span>
+
+      <!-- Volume -->
+      <div class="vp-volume-wrap" (mouseenter)="showVolume=true" (mouseleave)="showVolume=false">
+        <button class="vp-btn">🔊</button>
+        <input *ngIf="showVolume" class="vp-volume-slider" type="range" min="0" max="1" step="0.05"
+          [value]="volume" (input)="setVolume($event)">
+      </div>
+
+      <button class="vp-btn" (click)="toggleFullscreen()">⛶</button>
+    </div>
+  </div>
+
+</div>

@@ -122,6 +122,14 @@ export const routes: Routes = [
   { path: 'wallets', canActivate: [AuthGuard],
     loadComponent: () => import('./features/wallet/wallet-management.component').then(m => m.WalletManagementComponent) },
 
+  // User Guide
+  { path: 'guide', canActivate: [AuthGuard],
+    loadComponent: () => import('./features/user-guide/user-guide-landing/user-guide-landing.component').then(m => m.UserGuideLandingComponent) },
+  { path: 'guide/watch-all', canActivate: [AuthGuard],
+    loadComponent: () => import('./features/user-guide/watch-all/watch-all.component').then(m => m.WatchAllComponent) },
+  { path: 'guide/chapter/:id', canActivate: [AuthGuard],
+    loadComponent: () => import('./features/user-guide/user-guide-chapter/user-guide-chapter.component').then(m => m.UserGuideChapterComponent) },
+
   // Wildcard — MUST BE LAST
   { path: '**', redirectTo: '/login' }
 ];

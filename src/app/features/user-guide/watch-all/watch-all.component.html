@@ -1,0 +1,104 @@
+<div class="wa-container page-with-sidebar" *ngIf="current">
+
+  <div class="page-header-row">
+    <app-page-header
+      pageIcon="ti-player-play"
+      pageTitle="Watch All Chapters"
+      pageSubtitle="Complete walkthrough playlist — {{ chapters.length }} chapters">
+    </app-page-header>
+  </div>
+
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+
+    <div class="page-content">
+      <main class="wa-main">
+
+        <!-- ── Back link ── -->
+        <nav class="wa-breadcrumb">
+          <button class="bc-btn" (click)="goBack()">← User Guide</button>
+          <span class="bc-sep">/</span>
+          <span>Watch All</span>
+        </nav>
+
+        <div class="wa-layout">
+
+          <!-- ── Main player area ── -->
+          <section class="wa-player-area">
+
+            <!-- Current chapter header -->
+            <div class="wa-now-playing" [style.--ch-color]="'var(' + current.color + ', ' + current.colorHex + ')'">
+              <span class="wa-np-icon">{{ current.icon }}</span>
+              <div class="wa-np-text">
+                <p class="wa-np-label">Now playing · Chapter {{ currentIndex + 1 }} of {{ chapters.length }}</p>
+                <h2 class="wa-np-title">{{ current.title }}</h2>
+              </div>
+            </div>
+
+            <!-- Video player -->
+            <app-guide-video-player [chapter]="current" [playlistMode]="true"></app-guide-video-player>
+
+            <!-- Player controls -->
+            <div class="wa-controls">
+              <button class="wa-ctrl-btn" [disabled]="currentIndex === 0" (click)="prev()">
+                ⏮ Previous
+              </button>
+              <div class="wa-overall-progress">
+                <div class="wa-prog-bar">
+                  <div class="wa-prog-fill" [style.width.%]="progress"></div>
+                </div>
+                <span class="wa-prog-label">{{ currentIndex + 1 }} / {{ chapters.length }}</span>
+              </div>
+              <button class="wa-ctrl-btn" [disabled]="currentIndex === chapters.length - 1" (click)="next()">
+                Next ⏭
+              </button>
+            </div>
+
+            <!-- Current chapter steps (collapsed preview) -->
+            <div class="wa-steps-preview">
+              <h3 class="wa-steps-title">Steps in this chapter</h3>
+              <ol class="wa-steps-list">
+                <li *ngFor="let step of current.steps" class="wa-step-li">
+                  <strong>{{ step.title }}</strong>
+                  <span class="wa-step-body">{{ step.body }}</span>
+                </li>
+              </ol>
+              <button class="wa-open-full" (click)="openChapter()">
+                Open full chapter guide →
+              </button>
+            </div>
+          </section>
+
+          <!-- ── Playlist sidebar ── -->
+          <aside class="wa-playlist">
+            <h3 class="wa-pl-title">Playlist</h3>
+            <div class="wa-pl-list">
+              <div class="wa-pl-item"
+                   *ngFor="let ch of chapters; let i = index"
+                   [class.wa-pl-active]="i === currentIndex"
+                   [class.wa-pl-done]="i < currentIndex"
+                   (click)="select(i)"
+                   [style.--ch-color]="'var(' + ch.color + ', ' + ch.colorHex + ')'">
+
+                <div class="wa-pl-num">
+                  <span *ngIf="i < currentIndex">✓</span>
+                  <span *ngIf="i >= currentIndex">{{ i + 1 }}</span>
+                </div>
+
+                <div class="wa-pl-icon">{{ ch.icon }}</div>
+
+                <div class="wa-pl-info">
+                  <div class="wa-pl-name">{{ ch.title }}</div>
+                  <div class="wa-pl-dur">⏱ {{ ch.duration }}</div>
+                </div>
+
+                <span class="wa-pl-video" *ngIf="ch.videoUrl">▶</span>
+              </div>
+            </div>
+          </aside>
+
+        </div>
+      </main>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,144 @@
+<div class="guide-container page-with-sidebar">
+
+  <div class="page-header-row">
+    <app-page-header pageIcon="ti-book" pageTitle="User Guide" pageSubtitle="Everything you need to get the most out of Club Management"></app-page-header>
+  </div>
+
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+
+    <div class="page-content">
+      <main class="guide-main">
+
+        <!-- ── Hero banner ── -->
+        <section class="guide-hero">
+          <div class="hero-text">
+            <h1 class="hero-title">📚 Club Management User Guide</h1>
+            <p class="hero-desc">
+              Step-by-step walkthroughs for every feature in the app — filtered for your role.
+              Read each chapter or watch the complete video walkthrough below.
+            </p>
+            <div class="hero-stats">
+              <div class="hs-pill">
+                <span class="hs-num">{{ chapters.length }}</span>
+                <span class="hs-lbl">Chapters</span>
+              </div>
+              <div class="hs-pill">
+                <span class="hs-num">{{ totalDuration }}</span>
+                <span class="hs-lbl">Reading time</span>
+              </div>
+              <div class="hs-pill">
+                <span class="hs-num">{{ videoCount > 0 ? videoCount : 'Soon' }}</span>
+                <span class="hs-lbl">Videos</span>
+              </div>
+            </div>
+            <button class="btn-watch-all" (click)="watchAll()">
+              ▶ Watch the Complete Walkthrough
+            </button>
+          </div>
+        </section>
+
+        <!-- ── Search bar ── -->
+        <section class="guide-search-wrap">
+          <div class="guide-search-bar">
+            <span class="gs-icon">🔍</span>
+            <input
+              class="gs-input"
+              type="text"
+              placeholder="Search chapters, steps, features…"
+              [(ngModel)]="searchQuery"
+              (ngModelChange)="onSearch()"
+            />
+            <button *ngIf="isSearching" class="gs-clear" (click)="clearSearch()">✕</button>
+          </div>
+        </section>
+
+        <!-- ── Search results ── -->
+        <section *ngIf="isSearching" class="guide-section">
+          <h2 class="section-title">
+            Search results for "{{ searchQuery }}"
+            <span class="sr-count">{{ searchResults.length }} found</span>
+          </h2>
+          <div *ngIf="searchResults.length === 0" class="guide-empty">
+            No chapters match your search. Try different keywords.
+          </div>
+          <div class="chapter-list">
+            <app-chapter-card
+              *ngFor="let ch of searchResults; let i = index"
+              [chapter]="ch"
+              [index]="i">
+            </app-chapter-card>
+          </div>
+        </section>
+
+        <!-- ── Chapter list (default) ── -->
+        <section *ngIf="!isSearching" class="guide-section">
+          <h2 class="section-title">Chapters for your role</h2>
+          <div class="chapter-list">
+            <app-chapter-card
+              *ngFor="let ch of chapters; let i = index"
+              [chapter]="ch"
+              [index]="i">
+            </app-chapter-card>
+          </div>
+        </section>
+
+        <!-- ── Sample data story ── -->
+        <section class="guide-story-card">
+          <h2 class="story-title">🏟️ Meet Al-Noor Sports Club</h2>
+          <p class="story-body">
+            All screenshots and walkthroughs in this guide follow <strong>Al-Noor Sports Club</strong> —
+            a fictional football and swimming club managing <strong>45 students</strong> across
+            <strong>3 teams</strong>. The admin team uses Club Management to register students,
+            schedule weekly training sessions, track daily attendance, and collect monthly subscription fees.
+            Parents log in to follow their children's progress and pay invoices with one tap.
+          </p>
+          <p class="story-hint">
+            The sample data in the demo account reflects a typical week at Al-Noor — real-looking
+            names, events, and payments — so every feature works out of the box when you explore it.
+          </p>
+        </section>
+
+        <!-- ── Demo accounts ── -->
+        <section class="guide-section">
+          <h2 class="section-title">Demo accounts <span class="demo-note">(passwords not shown here — ask your club admin)</span></h2>
+          <div class="demo-accounts-grid">
+            <div class="demo-card" *ngFor="let acc of demoAccounts">
+              <div class="demo-role-badge">{{ acc.role }}</div>
+              <div class="demo-phone">{{ acc.phone }}</div>
+              <div class="demo-note-text">{{ acc.note }}</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── How to use this guide ── -->
+        <section class="guide-how-to">
+          <h2 class="section-title">How to use this guide</h2>
+          <div class="how-to-grid">
+            <div class="ht-card">
+              <span class="ht-icon">📖</span>
+              <h3>Read step by step</h3>
+              <p>Each chapter breaks a feature into clear steps with tips. Follow along in the app as you read.</p>
+            </div>
+            <div class="ht-card">
+              <span class="ht-icon">▶</span>
+              <h3>Watch the walkthrough</h3>
+              <p>Click "Watch the Complete Walkthrough" to watch all chapter videos sequentially in the playlist player.</p>
+            </div>
+            <div class="ht-card">
+              <span class="ht-icon">🔍</span>
+              <h3>Search any feature</h3>
+              <p>Use the search bar above to find a specific feature, button, or action instantly across all chapters.</p>
+            </div>
+            <div class="ht-card">
+              <span class="ht-icon">🎯</span>
+              <h3>Role-filtered content</h3>
+              <p>This guide shows only the chapters relevant to your role. Admins and parents see different sets of chapters.</p>
+            </div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,98 @@
+<div class="chapter-container page-with-sidebar" *ngIf="chapter">
+
+  <div class="page-header-row">
+    <app-page-header
+      pageIcon="ti-book"
+      [pageTitle]="chapter.title"
+      [pageSubtitle]="chapter.subtitle">
+    </app-page-header>
+  </div>
+
+  <div class="page-body-row">
+    <app-sidebar-navigation></app-sidebar-navigation>
+
+    <div class="page-content">
+      <main class="chapter-main">
+
+        <!-- ── Breadcrumb ── -->
+        <nav class="ch-breadcrumb">
+          <button class="bc-btn" (click)="goBack()">← User Guide</button>
+          <span class="bc-sep">/</span>
+          <span class="bc-current">{{ chapter.title }}</span>
+        </nav>
+
+        <!-- ── Chapter header ── -->
+        <div class="ch-header" [style.--ch-color]="'var(' + chapter.color + ', ' + chapter.colorHex + ')'">
+          <div class="ch-icon-wrap">
+            <span class="ch-icon">{{ chapter.icon }}</span>
+          </div>
+          <div class="ch-info">
+            <h1 class="ch-title">{{ chapter.title }}</h1>
+            <p class="ch-sub">{{ chapter.subtitle }}</p>
+            <div class="ch-meta">
+              <span>⏱ {{ chapter.duration }}</span>
+              <span>{{ chapter.steps.length }} steps</span>
+              <span *ngIf="chapter.videoUrl" class="ch-video-badge">▶ Video included</span>
+              <span *ngIf="!chapter.videoUrl" class="ch-soon-badge">📖 Video coming soon</span>
+            </div>
+          </div>
+          <button class="btn-watch-all-sm" (click)="watchAll()">▶ Watch All</button>
+        </div>
+
+        <!-- ── Video player ── -->
+        <section class="ch-video-section">
+          <app-guide-video-player [chapter]="chapter"></app-guide-video-player>
+        </section>
+
+        <!-- ── Steps ── -->
+        <section class="ch-steps-section">
+          <h2 class="steps-heading">Step-by-step walkthrough</h2>
+
+          <div class="step-item" *ngFor="let step of chapter.steps; let i = index"
+               [class.step-expanded]="expandedStep === i">
+
+            <div class="step-header" (click)="toggleStep(i)">
+              <div class="step-num" [style.--ch-color]="'var(' + chapter.color + ', ' + chapter.colorHex + ')'">
+                {{ i + 1 }}
+              </div>
+              <h3 class="step-title">{{ step.title }}</h3>
+              <span class="step-chevron">{{ expandedStep === i ? '▲' : '▼' }}</span>
+            </div>
+
+            <div class="step-body" *ngIf="expandedStep === i">
+              <p class="step-desc">{{ step.body }}</p>
+              <div class="step-tip" *ngIf="step.tip">
+                <span class="tip-icon">💡</span>
+                <span>{{ step.tip }}</span>
+              </div>
+              <div class="step-route" *ngIf="step.route">
+                <span class="route-label">Go to:</span>
+                <code class="route-code">{{ step.route }}</code>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Prev / Next navigation ── -->
+        <div class="ch-nav-row">
+          <button class="ch-nav-btn" *ngIf="prev" (click)="goPrev()">
+            <div class="nav-dir">← Previous</div>
+            <div class="nav-title">{{ prev.title }}</div>
+          </button>
+          <div *ngIf="!prev"></div>
+          <button class="ch-nav-btn ch-nav-next" *ngIf="next" (click)="goNext()">
+            <div class="nav-dir">Next →</div>
+            <div class="nav-title">{{ next.title }}</div>
+          </button>
+        </div>
+
+      </main>
+    </div>
+  </div>
+</div>
+
+<!-- Not found -->
+<div *ngIf="!chapter" class="ch-not-found">
+  <p>Chapter not found.</p>
+  <button (click)="goBack()">← Back to Guide</button>
+</div>

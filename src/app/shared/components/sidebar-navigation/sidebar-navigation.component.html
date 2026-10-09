@@ -74,6 +74,11 @@
       <span class="sb-label">{{ 'DASHBOARD.CLUB_SETTINGS' | translate }}</span>
     </li>
 
+    <li class="sb-item" [class.active]="isActive('/guide')" (click)="navigateTo('/guide')" title="User Guide">
+      <span class="sb-icon-cell">📚</span>
+      <span class="sb-label">User Guide</span>
+    </li>
+
     <li class="sb-item sb-logout" (click)="logout()" title="Logout">
       <span class="sb-icon-cell">🚪</span>
       <span class="sb-label">{{ 'COMMON.LOGOUT' | translate }}</span>
