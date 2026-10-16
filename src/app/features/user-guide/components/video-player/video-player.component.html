@@ -10,8 +10,11 @@
     <p class="vp-coming-hint">Follow the step-by-step guide below while we finish recording.</p>
   </div>
 
-  <!-- ── Real video player ── -->
-  <div *ngIf="hasVideo" class="vp-video-area">
+  <!-- ── Narrated GIF demo ── -->
+  <app-narrated-demo *ngIf="hasVideo && isGif" [chapter]="chapter" />
+
+  <!-- ── Real video player (mp4 / webm) ── -->
+  <div *ngIf="hasVideo && !isGif" class="vp-video-area">
     <video
       #videoEl
       class="vp-video"

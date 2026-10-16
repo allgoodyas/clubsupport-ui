@@ -1,0 +1,82 @@
+<div class="nd-shell">
+
+  <!-- ── Visual: animated walkthrough ── -->
+  <div class="nd-visual">
+    <img [src]="chapter.videoUrl" [alt]="chapter.title" class="nd-gif" />
+
+    <!-- Idle overlay — big play button -->
+    <div class="nd-idle-overlay" *ngIf="state === 'idle'" (click)="play()">
+      <div class="nd-play-ring">
+        <span class="nd-play-icon">▶</span>
+      </div>
+      <p class="nd-idle-label">Play narrated demo</p>
+    </div>
+
+    <!-- Done overlay -->
+    <div class="nd-idle-overlay nd-done-overlay" *ngIf="state === 'done'" (click)="play()">
+      <div class="nd-play-ring">
+        <span class="nd-play-icon">↺</span>
+      </div>
+      <p class="nd-idle-label">Replay from start</p>
+    </div>
+  </div>
+
+  <!-- ── Narration panel ── -->
+  <div class="nd-panel" *ngIf="state !== 'idle'">
+
+    <!-- Step info -->
+    <div class="nd-step-header">
+      <span class="nd-step-num">Step {{ currentStep + 1 }} of {{ total }}</span>
+      <span class="nd-step-title">{{ step?.title }}</span>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="nd-progress-track">
+      <div class="nd-progress-fill" [style.width.%]="progress"></div>
+    </div>
+
+    <!-- Step body -->
+    <p class="nd-step-body" *ngIf="step?.body">{{ step.body }}</p>
+
+    <!-- Controls row -->
+    <div class="nd-controls">
+      <button class="nd-btn nd-btn-ghost" (click)="skipPrev()" [disabled]="currentStep === 0" title="Previous step">
+        ⏮
+      </button>
+
+      <button class="nd-btn nd-btn-ghost" *ngIf="state === 'playing'" (click)="pause()" title="Pause">
+        ⏸
+      </button>
+      <button class="nd-btn nd-btn-primary" *ngIf="state === 'paused'" (click)="resume()" title="Resume">
+        ▶
+      </button>
+      <button class="nd-btn nd-btn-primary" *ngIf="state === 'done'" (click)="play()" title="Replay">
+        ↺
+      </button>
+
+      <button class="nd-btn nd-btn-ghost" (click)="skipNext()" [disabled]="currentStep >= total - 1 && state === 'done'" title="Next step">
+        ⏭
+      </button>
+
+      <button class="nd-btn nd-btn-ghost nd-stop" (click)="stop()" title="Stop">
+        ✕
+      </button>
+
+      <!-- Voice selector -->
+      <select class="nd-voice-select" (change)="changeVoice($event)" *ngIf="voices.length > 1">
+        <option *ngFor="let v of voices" [value]="v.name"
+          [selected]="selectedVoice?.name === v.name">{{ v.name }}</option>
+      </select>
+    </div>
+
+    <!-- Speaking indicator -->
+    <div class="nd-speaking" *ngIf="state === 'playing'">
+      <span class="nd-dot"></span>
+      <span class="nd-dot"></span>
+      <span class="nd-dot"></span>
+      <span class="nd-speaking-label">Speaking…</span>
+    </div>
+
+  </div>
+
+</div>

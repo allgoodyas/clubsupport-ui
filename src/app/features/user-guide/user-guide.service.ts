@@ -34,6 +34,7 @@ const CHAPTERS: GuideChapter[] = [
     title: 'Getting Started — Dashboard Overview',
     subtitle: 'Log in, explore your stats, and learn your way around the admin dashboard.',
     duration: '3 min',
+    videoUrl: 'assets/guide/dashboard.gif',
     tags: ['login', 'dashboard', 'overview', 'stats', 'welcome', 'home'],
     steps: [
       {
@@ -71,6 +72,7 @@ const CHAPTERS: GuideChapter[] = [
     title: 'Managing Students',
     subtitle: 'Register, search, view, and edit student profiles and their linked parent accounts.',
     duration: '5 min',
+    videoUrl: 'assets/guide/students.gif',
     tags: ['students', 'register', 'profile', 'parent', 'enroll', 'search', 'edit'],
     steps: [
       {
@@ -108,6 +110,7 @@ const CHAPTERS: GuideChapter[] = [
     title: 'Events, Enrollment & Attendance',
     subtitle: 'Create training sessions, enroll students, assign trainers, and mark daily attendance.',
     duration: '6 min',
+    videoUrl: 'assets/guide/events.gif',
     tags: ['events', 'attendance', 'enrollment', 'training', 'schedule', 'trainer', 'session'],
     steps: [
       {
@@ -177,6 +180,7 @@ const CHAPTERS: GuideChapter[] = [
     title: 'Payments & Financial Reports',
     subtitle: 'Track all incoming payments, issue refunds, and generate financial summaries.',
     duration: '5 min',
+    videoUrl: 'assets/guide/payments.gif',
     tags: ['payments', 'invoices', 'reports', 'finance', 'history', 'refund', 'revenue'],
     steps: [
       {

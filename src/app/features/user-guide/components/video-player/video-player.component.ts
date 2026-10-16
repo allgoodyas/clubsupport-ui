@@ -1,11 +1,12 @@
 import { Component, Input, OnChanges, ViewChild, ElementRef, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { GuideChapter } from '../../user-guide.service';
+import { NarratedDemoComponent } from '../narrated-demo/narrated-demo.component';
 
 @Component({
   selector: 'app-guide-video-player',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, NarratedDemoComponent],
   templateUrl: './video-player.component.html',
   styleUrls: ['./video-player.component.scss'],
 })
@@ -25,6 +26,10 @@ export class VideoPlayerComponent implements OnChanges {
 
   get hasVideo(): boolean {
     return !!this.chapter?.videoUrl;
+  }
+
+  get isGif(): boolean {
+    return !!this.chapter?.videoUrl?.toLowerCase().endsWith('.gif');
   }
 
   ngOnChanges(changes: SimpleChanges): void {
