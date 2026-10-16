@@ -54,6 +54,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   loadingStats = true;
   upcomingEvents: any[] = [];
   loadingUpcomingEvents = true;
+
+  totalStudents: number | null = null;
+  totalUsers: number | null = null;
+  loadingCounts = true;
   isSidebarOpen = false;
 
   private readonly apiBase = environment.apiUrl;
@@ -130,6 +134,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.permissions = this.authService.permissions;
     this.loadEventStats();
     this.loadUpcomingEvents();
+    this.loadDashboardCounts();
     if (this.hasPermission('view_payments')) this.loadPendingCount();
   }
 
@@ -183,6 +188,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   // ── Stats ────────────────────────────────────────────────────
+
+  loadDashboardCounts(): void {
+    this.loadingCounts = true;
+    this.http.get<any>(`${this.apiBase}/dashboard/stats`).subscribe({
+      next: (r) => {
+        if (r.success && r.data) {
+          this.totalStudents = r.data.totalStudents;
+          this.totalUsers    = r.data.totalUsers;
+        }
+        this.loadingCounts = false;
+      },
+      error: () => { this.loadingCounts = false; }
+    });
+  }
 
   loadEventStats(): void {
     if (!this.hasPermission('view_events')) { this.loadingStats = false; return; }

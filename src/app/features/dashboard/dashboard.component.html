@@ -28,7 +28,8 @@
           <div class="stat-icon students">👥</div>
           <div class="stat-info">
             <h3>{{ 'DASHBOARD.STUDENTS' | translate }}</h3>
-            <p class="stat-value">-</p>
+            <p class="stat-value" *ngIf="!loadingCounts">{{ totalStudents }}</p>
+            <p class="stat-value" *ngIf="loadingCounts">...</p>
             <small>{{ 'DASHBOARD.TOTAL_ENROLLED' | translate }}</small>
           </div>
         </div>
@@ -37,7 +38,8 @@
           <div class="stat-icon users">👤</div>
           <div class="stat-info">
             <h3>{{ 'DASHBOARD.USERS' | translate }}</h3>
-            <p class="stat-value">-</p>
+            <p class="stat-value" *ngIf="!loadingCounts">{{ totalUsers }}</p>
+            <p class="stat-value" *ngIf="loadingCounts">...</p>
             <small>{{ 'DASHBOARD.CLICK_VIEW_USERS' | translate }}</small>
           </div>
         </div>
