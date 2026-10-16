@@ -547,9 +547,9 @@ export class EnrollStudentComponent implements OnInit {
       this.enrollSvc.enrollWithPayment({
         studentId: card.studentId, eventId: this.eventId,
         enrollmentNotes: card.enrollmentNotes || undefined,
-        payNow:    this.remainingCash(card) > 0,
+        payNow:    card.payNow && this.remainingCash(card) > 0,
         paymentMethod:    card.paymentMethod,
-        paymentAmount:    this.remainingCash(card) > 0 ? this.remainingCash(card) : undefined,
+        paymentAmount:    card.payNow && this.remainingCash(card) > 0 ? this.remainingCash(card) : undefined,
         paymentReference: card.paymentReference || undefined,
         paymentNotes:     card.paymentNotes     || undefined,
         siblingQuotaApplied:   card.applyingQuota || undefined,

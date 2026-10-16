@@ -34,6 +34,11 @@ export class EditParentComponent implements OnInit {
   parentEmail: string = '';
   parentRoleId: number = 0; // Store parent's role ID
 
+  // Link parent account
+  linkMobile: string = '';
+  isLinking: boolean = false;
+  linkResult: { success: boolean; message: string } | null = null;
+
   // Original values for comparison
   originalParentName: string = '';
   originalParentMobile: string = '';
@@ -46,6 +51,33 @@ export class EditParentComponent implements OnInit {
     private userService: UserService,
     private toastService: ToastService
   ) {}
+
+  linkParentAccount(): void {
+    if (!this.linkMobile.trim()) {
+      this.toastService.error('Enter a mobile number');
+      return;
+    }
+    this.isLinking = true;
+    this.linkResult = null;
+    this.studentService.linkParentAccount(this.studentId, this.linkMobile.trim()).subscribe({
+      next: (r) => {
+        this.isLinking = false;
+        this.linkResult = r;
+        if (r.success) {
+          this.toastService.success(r.message);
+          this.loadStudentDetails();
+        } else {
+          this.toastService.error(r.message);
+        }
+      },
+      error: (e) => {
+        this.isLinking = false;
+        const msg = e.error?.message || 'Failed to link account';
+        this.linkResult = { success: false, message: msg };
+        this.toastService.error(msg);
+      }
+    });
+  }
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');

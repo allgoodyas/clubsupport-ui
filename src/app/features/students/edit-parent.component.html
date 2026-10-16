@@ -130,5 +130,36 @@
       </div>
     </div>
 
+    <!-- Link Parent Account -->
+    <div class="info-box" style="margin-top:16px; border-color: #f97316;">
+      <div class="info-icon">🔗</div>
+      <div class="info-content" style="width:100%">
+        <h4>Link to an Existing Parent Account</h4>
+        <p style="font-size:13px; color:#64748b; margin:4px 0 12px;">
+          If the parent already has an account (can log in to the mobile app), enter their mobile number here to link them to this student.
+        </p>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input
+            type="tel"
+            [(ngModel)]="linkMobile"
+            name="linkMobile"
+            placeholder="+966XXXXXXXXX"
+            style="flex:1; min-width:180px; padding:8px 12px; border:1px solid #cbd5e1; border-radius:8px; font-size:14px; color:#1e293b; background:#fff;"
+          />
+          <button
+            type="button"
+            class="btn btn-primary"
+            (click)="linkParentAccount()"
+            [disabled]="isLinking || !linkMobile.trim()">
+            <span *ngIf="!isLinking">🔗 Link Account</span>
+            <span *ngIf="isLinking">⏳ Linking...</span>
+          </button>
+        </div>
+        <div *ngIf="linkResult" [style.color]="linkResult.success ? '#10b981' : '#ef4444'" style="margin-top:8px; font-size:13px;">
+          {{ linkResult.success ? '✓' : '✗' }} {{ linkResult.message }}
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>

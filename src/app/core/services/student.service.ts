@@ -43,6 +43,13 @@ export class StudentService {
     return this.apiService.put<UpdateStudentResponse>(`students/${studentId}`, request);
   }
 
+  linkParentAccount(studentId: number, mobileNumber: string): Observable<{ success: boolean; message: string }> {
+    return this.apiService.put<{ success: boolean; message: string }>(
+      `students/${studentId}/link-parent`,
+      { mobileNumber }
+    );
+  }
+
   getStudentPhotoUrl(studentId: number): string {
     return `${environment.apiUrl}/students/${studentId}/photo`;
   }
